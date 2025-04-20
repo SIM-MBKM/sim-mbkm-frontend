@@ -6,12 +6,17 @@ import { StatusCards } from "./status-card"
 import { CalendarSection } from './calendar-section';
 import { ActivityFeed } from './activity-feed';
 import { ReviewSection } from './review-section';
+import { ReactQueryProvider } from "@/lib/api/providers/query-provider";
+import { Suspense } from "react";
 
 export function DashboardContent() {
   return (
     <DashboardLayout>
-      {/* Status Cards */}
-      <StatusCards />
+      <ReactQueryProvider>
+        {/* Status Cards */}
+      <Suspense fallback={<div>Loading...</div>}>  
+        <StatusCards />
+      </Suspense>
 
       {/* Calendar and Activities */}
       <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm mb-6 md:mb-8">
@@ -26,6 +31,7 @@ export function DashboardContent() {
 
       {/* Review Section */}
       <ReviewSection />
+    </ReactQueryProvider>
     </DashboardLayout>
   )
 }

@@ -1,4 +1,4 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   activityService,
@@ -167,28 +167,28 @@ export const useUpcomingActivities = () => {
 
 // REGISTRATION HOOKS
 
-type ProgramFilters = {
-  category?: string;
-  status?: string;
-  partner?: string;
-  search?: string;
-};
+// type ProgramFilters = {
+//   category?: string;
+//   status?: string;
+//   partner?: string;
+//   search?: string;
+// };
 
-export const usePrograms = (page = 1, limit = 10, filters?: ProgramFilters) => {
-  return useQuery({
-    queryKey: ['programs', page, limit, filters],
-    queryFn: () => registrationService.getPrograms(page, limit, filters),
-    placeholderData: keepPreviousData,
-  });
-};
+// export const usePrograms = (page = 1, limit = 10, filters?: ProgramFilters) => {
+//   return useQuery({
+//     queryKey: ['programs', page, limit, filters],
+//     queryFn: () => registrationService.getPrograms(page, limit, filters),
+//     placeholderData: keepPreviousData,
+//   });
+// };
 
-export const useProgramById = (id?: string) => {
-  return useQuery({
-    queryKey: ['program', id],
-    queryFn: () => registrationService.getProgramById(id!),
-    enabled: !!id,
-  });
-};
+// export const useProgramById = (id?: string) => {
+//   return useQuery({
+//     queryKey: ['program', id],
+//     queryFn: () => registrationService.getProgramById(id!),
+//     enabled: !!id,
+//   });
+// };
 
 export const useRegisterForProgram = () => {
   const queryClient = useQueryClient();
@@ -215,6 +215,13 @@ export const useUserRegistrations = () => {
   return useQuery({
     queryKey: ['userRegistrations'],
     queryFn: () => registrationService.getUserRegistrations(),
+  });
+};
+
+export const useStudentRegistrations = (page = 1, limit = 10) => {
+  return useQuery({
+    queryKey: ['studentRegistrations', page, limit],
+    queryFn: () => registrationService.getRegistrationByStudent(page, limit),
   });
 };
 
