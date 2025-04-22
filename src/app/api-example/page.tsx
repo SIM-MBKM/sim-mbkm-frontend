@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 // import { ActivitiesList } from '@/components/examples/activities-list';
-// import { ProgramRegistration } from '@/components/examples/program-registration';
+import { ProgramRegistration } from '@/components/examples/activity-registration';
 import { StudentRegistrations } from '@/components/examples/student-registrations';
 import { ReactQueryProvider } from '@/lib/api/providers/query-provider';
 
@@ -20,14 +20,14 @@ export default function ApiExamplePage() {
             </div>
           </section> */}
           
-          {/* <section>
+          <section>
             <h2 className="text-xl font-semibold mb-4">Registration Service</h2>
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <Suspense fallback={<div>Loading programs...</div>}>
                 <ProgramRegistration />
               </Suspense>
             </div>
-          </section> */}
+          </section>
           
           <section>
             <h2 className="text-xl font-semibold mb-4">Student Registrations</h2>

@@ -1,6 +1,13 @@
 import { apiServices } from '../axios-instance';
+import { PaginatedResponse } from './registration-service';
 
 const activityApi = apiServices.activity;
+
+export interface ProgramTypeResponse {
+  id: string
+  name: string
+  rules: string
+}
 
 export interface Activity {
   id: string;
@@ -27,6 +34,11 @@ export const activityService = {
     const response = await activityApi.get<Activity[]>('/activities');
     return response.data;
   },
+
+  getAllProgramTypes: async(page: number = 1, limit: number = 10) => {
+    const response = await activityApi.get<PaginatedResponse<ProgramTypeResponse>>(`/program_type?limit=${limit}&page=${page}`);
+    return response.data;
+  },  
 
   // Get single activity by ID
   getActivityById: async (id: string) => {

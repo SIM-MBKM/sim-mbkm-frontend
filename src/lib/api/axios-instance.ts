@@ -12,6 +12,8 @@ const SERVICE_URLS = {
 
 // Create axios instances for each service
 const createAxiosInstance = (baseURL: string) => {
+  console.log(`Creating axios instance for ${baseURL}`);
+  // const isActivityService = baseURL.includes('ACTIVITY') || baseURL === SERVICE_URLS.ACTIVITY;
   const instance = axios.create({
     baseURL,
     timeout: 15000,
@@ -24,7 +26,9 @@ const createAxiosInstance = (baseURL: string) => {
   instance.interceptors.request.use(
     (config) => {
       const token = localStorage.getItem('auth_token');
+      console.log("LOCAL STORAGE TOKEN: ", token);
       if (token) {
+        console.log("TOKEN EXISTS: ", token);
         config.headers.Authorization = `Bearer ${token}`;
       }
       return config;

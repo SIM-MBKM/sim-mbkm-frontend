@@ -45,7 +45,7 @@ export function Header() {
         </nav>
         <div className="flex items-center space-x-2">
           <Avatar className="h-10 w-10 border-2 border-white">
-            <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
+            <AvatarImage src="/logo.png?height=40&width=40" alt="User" />
             <AvatarFallback>U</AvatarFallback>
           </Avatar>
           <ChevronDown className="h-4 w-4 hidden md:block" />

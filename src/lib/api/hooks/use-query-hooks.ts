@@ -92,6 +92,18 @@ export const useUpdateUser = () => {
 
 // ACTIVITY HOOKS
 
+export const useAllProgramTypes = (page = 1, limit = 10) => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  
+  return useQuery({
+    queryKey: ['program_types', page, limit, token], // Add token to query key
+    queryFn: async () => {
+      const result = await activityService.getAllProgramTypes(page, limit);
+      return result;
+    },
+  });
+};
+
 export const useActivities = () => {
   return useQuery({
     queryKey: ['activities'],
@@ -226,6 +238,12 @@ export const useStudentRegistrations = (page = 1, limit = 10) => {
 };
 
 // MONITORING HOOKS
+export const useReportSchedulesByStudent = () => {
+  return useQuery({
+    queryKey: ['reportSchedulesByStudent'],
+    queryFn: () => monitoringService.getReportSchedulesByStudent(),
+  });
+};
 
 export const useUserLogbooks = (programId?: string) => {
   return useQuery({

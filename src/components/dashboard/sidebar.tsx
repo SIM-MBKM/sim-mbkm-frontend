@@ -57,9 +57,9 @@ export function Sidebar() {
 
           <div className="mb-6">
             <h2 className="text-[#003478] font-bold mb-4">Pendaftaran</h2>
-            <a href="#" className="flex items-center space-x-2 text-gray-700 mb-2">
+            <a href="/dashboard/mahasiswa/telusuri-program" className="flex items-center space-x-2 text-gray-700 mb-2">
               <Search className="h-5 w-5" />
-              <span>Telusuri Program</span>
+              <span className="">Telusuri Program</span>
             </a>
             <a href="#" className="flex items-center space-x-2 text-gray-700 mb-2">
               <User className="h-5 w-5" />
