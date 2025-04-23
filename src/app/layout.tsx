@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
+import React from "react";
+import { ReactQueryProvider } from "@/lib/api/providers/query-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,7 +17,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "SIM MBKM ITS",
-  description: "Sistem Informasi Manajemen MBKM Institut Teknologi Sepuluh Nopember",
+  description:
+    "Sistem Informasi Manajemen MBKM Institut Teknologi Sepuluh Nopember",
 };
 
 export default function RootLayout({
@@ -28,8 +31,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Toaster position="top-center" />
-        {children}
+        <ReactQueryProvider>
+          <Toaster position="top-center" />
+          {children}
+        </ReactQueryProvider>
       </body>
     </html>
   );
