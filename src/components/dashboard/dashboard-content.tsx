@@ -1,20 +1,19 @@
-"use client"
+"use client";
 
-
-import { DashboardLayout } from "./dashboard-layout"
-import { StatusCards } from "./status-card"
-import { CalendarSection } from './calendar-section';
-import { ActivityFeed } from './activity-feed';
-import { ReviewSection } from './review-section';
-import { ReactQueryProvider } from "@/lib/api/providers/query-provider";
+import { DashboardLayout } from "./dashboard-layout";
+import { StatusCards } from "./status-card";
+import { CalendarSection } from "./calendar-section";
+import { ActivityFeed } from "./activity-feed";
+import { ReviewSection } from "./review-section";
+// import { ReactQueryProvider } from "@/lib/api/providers/query-provider";
 import { Suspense } from "react";
 
 export function DashboardContent() {
   return (
     <DashboardLayout>
-      <ReactQueryProvider>
-        {/* Status Cards */}
-      <Suspense fallback={<div>Loading...</div>}>  
+      {/* <ReactQueryProvider> */}
+      {/* Status Cards */}
+      <Suspense fallback={<div>Loading...</div>}>
         <StatusCards />
       </Suspense>
 
@@ -31,7 +30,7 @@ export function DashboardContent() {
 
       {/* Review Section */}
       <ReviewSection />
-    </ReactQueryProvider>
+      {/* </ReactQueryProvider> */}
     </DashboardLayout>
-  )
+  );
 }
