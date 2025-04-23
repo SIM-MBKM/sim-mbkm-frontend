@@ -35,8 +35,8 @@ export const activityService = {
     return response.data;
   },
 
-  getAllProgramTypes: async(page: number = 1, limit: number = 10) => {
-    const response = await activityApi.get<PaginatedResponse<ProgramTypeResponse>>(`/program_type?limit=${limit}&page=${page}`);
+  getAllProgramTypes: async() => {
+    const response = await activityApi.get<PaginatedResponse<ProgramTypeResponse>>(`/level`);
     return response.data;
   },  
 

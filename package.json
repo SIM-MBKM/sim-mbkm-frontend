@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "dev:server": "bun server.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "6.10.3",
@@ -56,6 +57,7 @@
     "dotenv": "16.4.7",
     "drizzle-orm": "0.39.0",
     "embla-carousel-react": "^8.5.2",
+    "http-proxy-middleware": "^3.0.5",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.501.0",
     "next": "15.3.1",

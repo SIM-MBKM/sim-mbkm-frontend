@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { Link } from "lucide-react"
 import { Button } from "@/components/ui/button"
 // import { Input } from "@/components/ui/input"
 import { ProgramSubmissionForm } from "./program-submission-form"
+import { ReactQueryProvider } from "@/lib/api/providers/query-provider";
 // import { useAllProgramTypes } from '@/lib/api/hooks'
 
 export function ProgramSubmission() {
@@ -49,8 +50,11 @@ export function ProgramSubmission() {
           Ajukan Program Lain
         </Button>
       </div>
-
-      {showForm && <ProgramSubmissionForm onClose={() => setShowForm(false)} />}
+      <ReactQueryProvider>
+        <Suspense fallback={<div>Loading...</div>}>
+          {showForm && <ProgramSubmissionForm onClose={() => setShowForm(false)} />}
+        </Suspense>
+      </ReactQueryProvider>
     </div>
   )
 }

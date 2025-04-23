@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -61,9 +61,7 @@ export function ProgramSubmissionForm({ onClose }: ProgramSubmissionFormProps) {
     data: programTypes,
     isLoading: programTypesLoading,
     error: programTypesError
-  } = useAllProgramTypes(1, 10);
-
-  console.log('Token available:', !!localStorage.getItem('auth_token'));
+  } = useAllProgramTypes();
 
   if (programTypesLoading) {
     return <div>Loading...</div>;

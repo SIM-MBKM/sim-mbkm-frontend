@@ -4,8 +4,8 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { SearchBar } from "./search-bar"
 import { ProgramSubmission } from "./program-submission"
 import { ProgramCard } from "./program-card"
-import { ReactQueryProvider } from "@/lib/api/providers/query-provider";
-import { Suspense } from "react";
+// import { ReactQueryProvider } from "@/lib/api/providers/query-provider";
+// import { Suspense } from "react";
 
 const programs = [
   "Studi Independen",
@@ -22,11 +22,11 @@ export function ProgramSearchContent() {
   return (
     <DashboardLayout>
       <SearchBar />
-      <ReactQueryProvider>
-        <Suspense fallback={<div>Loading...</div>}>
+      {/* <ReactQueryProvider> */}
+        {/* <Suspense fal?lback={<div>Loading...</div>}> */}
           <ProgramSubmission />  
-        </Suspense>
-      </ReactQueryProvider>
+        {/* </Suspense> */}
+      {/* </ReactQueryProvider> */}
 
       <div className="w-auto h-100 overflow-y-scroll">
         {
