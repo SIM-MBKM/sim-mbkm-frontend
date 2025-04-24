@@ -9,36 +9,96 @@ export interface ProgramTypeResponse {
   rules: string
 }
 
+
+
 export interface Activity {
   id: string;
-  title: string;
-  description: string;
-  startDate: string;
-  endDate: string;
-  status: string;
-  type: string;
+  program_type_id: string
+  level_id: string
+  group_id: string
+  name: string
+  description: string
+  start_period: string
+  months_duration: number
+  activity_type: string
+  location: string
+  web_portal: string
+  academic_year: string
+  program_provider: string
+  approval_status: string
+  submitted_by: string
+  program_type_name: string
+  level_name: string;
+  group_name: string;
+  matching: Matching[];
 }
 
+export interface Matching {
+  id: string;
+  mata_kuliah: string;
+  kode: string;
+  semester: string;
+  prodi_penyelenggara: string;
+  sks: number;
+  kelas: string;
+  departemen: string;
+  tipe_mata_kuliah: string
+  document: Document[]
+}
+
+export interface Document {
+  id: string;
+  subject_id: string;
+  file_storage_id: string;
+  name: string;
+  document_type: string;
+}
+
+
 export interface ActivityCreateInput {
-  title: string;
-  description: string;
-  startDate: string;
-  endDate: string;
-  type: string;
+  program_type_id: string;
+  level_id: string
+  group_id: string
+  name: string
+  description: string
+  start_period: string
+  months_duration: number
+  activity_type: string
+  location: string
+  academic_year: string
+  program_provider: string
 }
 
 // Activity management service endpoints
 export const activityService = {
   // Get all activities
-  getActivities: async () => {
-    const response = await activityApi.get<Activity[]>('/activities');
+  getActivities: async (page = 1, limit = 10, filters = {}) => {
+    const response = await activityApi.post<PaginatedResponse<Activity>>(
+      `/activity/filter?page=${page}&limit=${limit}`,
+      {
+        ...filters,
+      }
+    );
     return response.data;
   },
 
   getAllProgramTypes: async() => {
-    const response = await activityApi.get<PaginatedResponse<ProgramTypeResponse>>(`/level`);
+    const response = await activityApi.get<PaginatedResponse<ProgramTypeResponse>>("/program_type");
     return response.data;
   },  
+
+  getAllLevels: async() => {
+    const response = await activityApi.get<PaginatedResponse<ProgramTypeResponse>>("/level");
+    console.log("RESPONSE LEVEL", response.data)
+    return response.data;
+  },
+
+
+  getAllGroups: async() => {
+    const response = await activityApi.get<PaginatedResponse<ProgramTypeResponse>>("/group");
+    console.log("RESPONSE GROUP", response.data);
+    return response.data;
+  },
 
   // Get single activity by ID
   getActivityById: async (id: string) => {
@@ -48,7 +108,8 @@ export const activityService = {
 
   // Create new activity
   createActivity: async (activityData: ActivityCreateInput) => {
-    const response = await activityApi.post<Activity>('/activities', activityData);
+    console.log("ACTIVITY DATA", activityData);
+    const response = await activityApi.post<Activity>('/activity', activityData);
     return response.data;
   },
 

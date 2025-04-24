@@ -1,7 +1,6 @@
 "use client";
 
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
-import { SearchBar } from "./search-bar";
 import { ProgramSubmission } from "./program-submission";
 import { ProgramCard } from "./program-card";
 // import { ReactQueryProvider } from "@/lib/api/providers/query-provider";
@@ -21,7 +20,7 @@ const programs = [
 export function ProgramSearchContent() {
   return (
     <DashboardLayout>
-      <SearchBar />
+      {/* <SearchBar /> */}
       {/* <ReactQueryProvider> */}
       <Suspense fallback={<div>Loading...</div>}>
         <ProgramSubmission />

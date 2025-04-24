@@ -14,7 +14,7 @@ export function ProgramSubmission() {
   
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
+    <div className="bg-white p-6 rounded-lg mt-20 shadow-sm mb-6">
       <h2 className="text-2xl font-bold mb-2">Ajukan Program.</h2>
       <p className="text-gray-700 mb-6">
         Tidak menemukan program yang anda cari? Ajukan secara manual dengan peraturan yang berlaku.

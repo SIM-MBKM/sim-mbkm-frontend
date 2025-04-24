@@ -14,6 +14,8 @@ import {
   type LogbookInput,
   type EquivalenceRequest,
   type RegisterInput,
+  PaginatedResponse,
+  Activity,
 } from '../services';
 
 // AUTH HOOKS
@@ -99,10 +101,25 @@ export const useAllProgramTypes = () => {
   });
 };
 
-export const useActivities = () => {
+export const useAllLevels = () => {
   return useQuery({
-    queryKey: ['activities'],
-    queryFn: () => activityService.getActivities(),
+    queryKey: ['levels'], // Add token to query key
+    queryFn: () => activityService.getAllLevels(),
+  });
+};
+
+export const useAllGroups = () => {
+  return useQuery({
+    queryKey: ['groups'], // Add token to query key
+    queryFn: () => activityService.getAllGroups(),
+  });
+};
+
+export const useActivities = (page = 1, limit = 10, filters = {}) => {
+  return useQuery<PaginatedResponse<Activity>, Error>({
+    queryKey: ['activities', page, limit, filters],
+    queryFn: () => activityService.getActivities(page, limit, filters),
+    staleTime: 5000, // 5 seconds
   });
 };
 
