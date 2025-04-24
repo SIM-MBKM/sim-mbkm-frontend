@@ -52,7 +52,7 @@ export function InternshipList({
           <div className="flex items-start gap-4">
             <div className="flex-shrink-0">
               <Image
-                src="/placeholder.svg?height=60&width=60&text=Icon"
+                src="/logo.png?height=60&width=60&text=Icon"
                 alt="Company Logo"
                 width={60}
                 height={60}

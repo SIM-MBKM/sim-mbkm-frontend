@@ -5,6 +5,7 @@ import { SearchFilters } from "./search-filter";
 import { InternshipList } from "./internship-list";
 import { InternshipDetail } from "./internship-detail";
 import { useActivities } from "@/lib/api/hooks";
+import { Activity } from "@/lib/api/services/activity-service";
 
 interface Internship {
   id: string;
@@ -30,18 +31,14 @@ export function InternshipSearch() {
   console.log('Current filters:', filters);
   console.log('Activities data in InternshipSearch:', activitiesData);
 
-  const [selectedInternship, setSelectedInternship] = useState<Internship | null>(null);
+  // Use Activity type for selectedInternship
+  const [selectedInternship, setSelectedInternship] = useState<Activity | null>(null);
 
   // Update selectedInternship when activities data changes
   useEffect(() => {
     if (activitiesData && activitiesData.data && activitiesData.data.length > 0) {
-      const firstActivity = activitiesData.data[0];
-      setSelectedInternship({
-        id: firstActivity.id,
-        name: firstActivity.name,
-        program_provider: firstActivity.program_provider,
-        location: firstActivity.location || "",
-      });
+      // Set the first activity as the selected one
+      setSelectedInternship(activitiesData.data[0]);
     } else if (activitiesData && activitiesData.data && activitiesData.data.length === 0) {
       // Reset selected internship if no results
       setSelectedInternship(null);
@@ -74,12 +71,15 @@ export function InternshipSearch() {
             activities={activitiesData}
             isLoading={activitiesLoading}
             error={activitiesError}
-            onSelect={(internship) => setSelectedInternship({
-              id: internship.id,
-              name: internship.name,
-              program_provider: internship.program_provider,
-              location: internship.location || "",
-            })} 
+            onSelect={(internship) => {
+              // Find the full activity data from the available activities
+              const selectedActivity = activitiesData?.data.find(
+                (activity) => activity.id === internship.id
+              );
+              if (selectedActivity) {
+                setSelectedInternship(selectedActivity);
+              }
+            }} 
             currentPage={currentPage}
             totalPages={activitiesData?.total_pages || 1}
             onPageChange={handlePageChange}
