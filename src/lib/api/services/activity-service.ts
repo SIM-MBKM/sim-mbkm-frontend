@@ -27,9 +27,9 @@ export interface Activity {
   program_provider: string
   approval_status: string
   submitted_by: string
-  program_type_name: string
-  level_name: string;
-  group_name: string;
+  program_type: string
+  level: string;
+  group: string;
   matching: Matching[];
 }
 

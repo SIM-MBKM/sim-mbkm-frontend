@@ -28,9 +28,9 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
           <p className="text-gray-700">{internship.program_provider}</p>
           <p className="text-gray-700">{internship.location || "Location not specified"}</p>
           <div className="mt-2">
-            <p className="text-sm text-gray-600">Program Type: {internship.program_type_name || "Unknown"}</p>
-            <p className="text-sm text-gray-600">Level: {internship.level_name || "Unknown"}</p>
-            <p className="text-sm text-gray-600">Group: {internship.group_name || "Unknown"}</p>
+            <p className="text-sm text-gray-600">Program Type: {internship.program_type || "Unknown"}</p>
+            <p className="text-sm text-gray-600">Level: {internship.level || "Unknown"}</p>
+            <p className="text-sm text-gray-600">Group: {internship.group || "Unknown"}</p>
             <p className="text-sm text-gray-600">Academic Year: {internship.academic_year || "Unknown"}</p>
             <p className="text-sm text-gray-600">Duration: {internship.months_duration || 0} months</p>
             <p className="text-sm text-gray-600">Status: {internship.approval_status || "Unknown"}</p>
