@@ -7,12 +7,6 @@ import { InternshipDetail } from "./internship-detail";
 import { useActivities } from "@/lib/api/hooks";
 import { Activity } from "@/lib/api/services/activity-service";
 
-interface Internship {
-  id: string;
-  name: string;
-  program_provider: string;
-  location: string;
-}
 
 export function InternshipSearch() {
   const [searchTerm, setSearchTerm] = useState('');

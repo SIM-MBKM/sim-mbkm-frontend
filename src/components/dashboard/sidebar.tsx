@@ -10,6 +10,7 @@ import {
   Home,
   Search,
   User,
+  Upload,
   X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -57,9 +58,13 @@ export function Sidebar() {
 
           <div className="mb-6">
             <h2 className="text-[#003478] font-bold mb-4">Pendaftaran</h2>
-            <a href="/dashboard/mahasiswa/telusuri-program" className="flex items-center space-x-2 text-gray-700 mb-2">
+            <a href="/dashboard/mahasiswa/programs" className="flex items-center space-x-2 text-gray-700 mb-2">
               <Search className="h-5 w-5" />
               <span className="">Telusuri Program</span>
+            </a>
+            <a href="/dashboard/mahasiswa/telusuri-program" className="flex items-center space-x-2 text-gray-700 mb-2">
+              <Upload className="h-5 w-5" />
+              <span className="">Ajukan Program</span>
             </a>
             <a href="#" className="flex items-center space-x-2 text-gray-700 mb-2">
               <User className="h-5 w-5" />

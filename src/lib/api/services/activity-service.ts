@@ -69,6 +69,12 @@ export interface ActivityCreateInput {
   program_provider: string
 }
 
+export interface MetaDataActivity<T> {
+  message: string;
+  status: string
+  data: T
+}
+
 // Activity management service endpoints
 export const activityService = {
   // Get all activities
@@ -102,7 +108,8 @@ export const activityService = {
 
   // Get single activity by ID
   getActivityById: async (id: string) => {
-    const response = await activityApi.get<Activity>(`/activities/${id}`);
+    const response = await activityApi.get<MetaDataActivity<Activity>>(`/activity/${id}`);
+    console.log("ACTIVITY DATA BY ID", response)
     return response.data;
   },
 

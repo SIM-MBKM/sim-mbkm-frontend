@@ -2,14 +2,21 @@ import Image from "next/image"
 import { Link } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Activity } from "@/lib/api/services/activity-service"
+import { useRouter } from "next/navigation"
 
 interface InternshipDetailProps {
   internship: Activity;
 }
 
 export function InternshipDetail({ internship }: InternshipDetailProps) {
+  const router = useRouter();
   // Check if matching data exists
   const hasMatchings = internship.matching && internship.matching.length > 0;
+  
+  // Navigate to registration form
+  const handleRegisterClick = () => {
+    router.push(`/dashboard/mahasiswa/programs/${internship.id}`);
+  };
   
   return (
     <div className="bg-white border rounded-lg p-6">
@@ -39,7 +46,11 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
       </div>
 
       <div className="flex gap-3 mb-6">
-        <Button variant="secondary" className="bg-gray-100 hover:bg-gray-200">
+        <Button 
+          variant="secondary" 
+          className="bg-gray-100 hover:bg-gray-200"
+          onClick={handleRegisterClick}
+        >
           Daftar
         </Button>
         <Button variant="outline">Simpan</Button>

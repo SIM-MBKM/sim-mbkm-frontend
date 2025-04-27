@@ -90,10 +90,30 @@ export interface PaginatedResponse<T> {
   total_pages: number;
 }
 
+// CreateRegistrationRequest struct {
+//   ActivityID           string `form:"activity_id" binding:"required"`
+//   AcademicAdvisorID    string `form:"academic_advisor_id" binding:"required"`
+//   AdvisingConfirmation bool   `form:"advising_confirmation" binding:"required"`
+//   AcademicAdvisor      string `form:"academic_advisor" binding:"required"` // This field doesn't match what's in your form
+//   AcademicAdvisorEmail string `form:"academic_advisor_email" binding:"required"`
+//   MentorName           string `form:"mentor_name" binding:"required"`
+//   MentorEmail          string `form:"mentor_email" binding:"required"`
+//   Semester             string `form:"semester" binding:"required"`
+//   TotalSKS             int    `form:"total_sks" binding:"required"`
+// }
+
 export interface RegisterInput {
   activityId: string;
   acceptanceLetter?: File;
   geoletter?: File;
+  academic_advisor_id: string;
+  advising_confirmation: boolean;
+  academic_advisor: string;
+  academic_advisor_email: string;
+  mentor_name: string;
+  mentor_email: string;
+  semester: number;
+  total_sks: number;
 }
 
 // Registration management service endpoints
@@ -128,30 +148,42 @@ export const registrationService = {
 
   // Register for a program
   registerForProgram: async (registrationData: RegisterInput) => {
-    // Create FormData if files are included
-    if (registrationData.acceptanceLetter || registrationData.geoletter) {
-      const formData = new FormData();
-      formData.append('activity_id', registrationData.activityId);
-      
-      if (registrationData.acceptanceLetter) {
-        formData.append('file', registrationData.acceptanceLetter);
-      }
-      
-      if (registrationData.geoletter) {
-        formData.append('geoletter', registrationData.geoletter);
-      }
-      
-      const response = await registrationApi.post<Registration>('/registration', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      return response.data;
-    } else {
-      // Use JSON if only document URLs are provided
-      const response = await registrationApi.post<Registration>('/registration', registrationData);
-      return response.data;
+    // Always use FormData for registration
+    const formData = new FormData();
+    
+    // Add activity ID
+    formData.append('activity_id', registrationData.activityId);
+    
+    // Add advisor information
+    formData.append('academic_advisor_id', registrationData.academic_advisor_id);
+    formData.append('advising_confirmation', String(registrationData.advising_confirmation));
+    formData.append('academic_advisor', registrationData.academic_advisor);
+    formData.append('academic_advisor_email', registrationData.academic_advisor_email);
+    
+    // Add mentor information
+    formData.append('mentor_name', registrationData.mentor_name);
+    formData.append('mentor_email', registrationData.mentor_email);
+    
+    // Add academic information
+    formData.append('semester', String(registrationData.semester));
+    formData.append('total_sks', String(registrationData.total_sks));
+    
+    // Add files if they exist
+    if (registrationData.acceptanceLetter) {
+      formData.append('file', registrationData.acceptanceLetter);
     }
+    
+    if (registrationData.geoletter) {
+      formData.append('geoletter', registrationData.geoletter);
+    }
+    
+    // Send the request
+    const response = await registrationApi.post<Registration>('/registration', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
   },
 
   // Get user's registrations
