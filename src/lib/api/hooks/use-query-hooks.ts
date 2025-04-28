@@ -14,8 +14,11 @@ import {
   type LogbookInput,
   type EquivalenceRequest,
   type RegisterInput,
+  type TranscriptInput,
   PaginatedResponse,
   Activity,
+  SyllabusInput,
+  ReportInput,
 } from '../services';
 
 // AUTH HOOKS
@@ -191,29 +194,6 @@ export const useUpcomingActivities = () => {
 
 // REGISTRATION HOOKS
 
-// type ProgramFilters = {
-//   category?: string;
-//   status?: string;
-//   partner?: string;
-//   search?: string;
-// };
-
-// export const usePrograms = (page = 1, limit = 10, filters?: ProgramFilters) => {
-//   return useQuery({
-//     queryKey: ['programs', page, limit, filters],
-//     queryFn: () => registrationService.getPrograms(page, limit, filters),
-//     placeholderData: keepPreviousData,
-//   });
-// };
-
-// export const useProgramById = (id?: string) => {
-//   return useQuery({
-//     queryKey: ['program', id],
-//     queryFn: () => registrationService.getProgramById(id!),
-//     enabled: !!id,
-//   });
-// };
-
 export const useRegisterForProgram = () => {
   const queryClient = useQueryClient();
 
@@ -242,6 +222,20 @@ export const useUserRegistrations = () => {
   });
 };
 
+export const useRegistrationTranscriptsByStudent = () => {
+  return useQuery({
+    queryKey: ['registrationTranscriptsByStudent'],
+    queryFn: () => registrationService.getRegistrationTranscriptsByStudent(),
+  });
+};
+
+export const useRegistrationSyllabusesByStudent = () => {
+  return useQuery({
+    queryKey: ['registrationSyllabusesByStudent'],
+    queryFn: () => registrationService.getRegistrationSyllabusesByStudent(),
+  });
+};
+
 export const useStudentRegistrations = (page = 1, limit = 10) => {
   return useQuery({
     queryKey: ['studentRegistrations', page, limit],
@@ -250,10 +244,119 @@ export const useStudentRegistrations = (page = 1, limit = 10) => {
 };
 
 // MONITORING HOOKS
+
+export const useSubmitTranscript = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (transcriptInput: TranscriptInput) => 
+      monitoringService.submitTranscript(transcriptInput),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['registrationTranscriptsByStudent'] });
+    },
+    onError: (error) => {
+      console.error('Error submitting transcripts:', error);
+    },  
+  });
+  
+  // Add isLoading property for backward compatibility
+  return {
+    ...mutation,
+    isLoading: mutation.isPending
+  };
+};
+
+
+export const useSubmitSyllabus = () => {
+  const queryClient = useQueryClient();
+  
+  const mutation = useMutation({
+    mutationFn: (syllabusInput: SyllabusInput) => 
+      monitoringService.submitSyllabus(syllabusInput),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['registrationSyllabusesByStudent'] });
+    },
+    onError: (error) => {
+      console.error('Error submitting syllabus', error);
+    }
+  })
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending
+  }
+}
+
+export const useDeleteTranscript = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (id: string) => 
+      monitoringService.deleteTranscript(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['registrationTranscriptsByStudent'] });
+    },
+    onError: (error) => {
+      console.error('Error deleting transcript:', error);
+    },  
+  });
+  
+  return {
+    ...mutation,
+    isLoading: mutation.isPending
+  };
+};
+
+export const useDeleteSyllabus = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (id: string) => 
+      monitoringService.deleteSyllabus(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['registrationSyllabusesByStudent'] });
+    },
+    onError: (error) => {
+      console.error('Error deleting syllabus:', error);
+    },  
+  });
+  
+  return {
+    ...mutation,
+    isLoading: mutation.isPending
+  };
+};
+
 export const useReportSchedulesByStudent = () => {
   return useQuery({
     queryKey: ['reportSchedulesByStudent'],
     queryFn: () => monitoringService.getReportSchedulesByStudent(),
+  });
+};
+
+export const useSubmitReport = () => {
+  const queryClient = useQueryClient();
+  
+  const mutation = useMutation({
+    mutationFn: (reportInput: ReportInput) => 
+      monitoringService.submitReport(reportInput),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reportSchedulesByStudent'] });
+    },
+    onError: (error) => {
+      console.error('Error submitting report', error);
+    }
+  })
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending
+  }
+}
+export const useTranscriptsByStudent = () => {
+  return useQuery({
+    queryKey: ['transcriptsByStudent'],
+    queryFn: () => monitoringService.getTranscriptsByStudent(),
   });
 };
 

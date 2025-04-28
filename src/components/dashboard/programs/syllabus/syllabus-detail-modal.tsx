@@ -1,0 +1,175 @@
+"use client"
+
+import { useState } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { FileText, Trash2, ExternalLink } from "lucide-react"
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { useDeleteSyllabus } from "@/lib/api/hooks"
+import { toast } from "react-toastify"
+
+// Define SyllabusData interface
+interface SyllabusData {
+  academic_advisor_email: string;
+  academic_advisor_id: string;
+  file_storage_id: string;
+  id: string;
+  registration_id: string;
+  title: string;
+  user_id: string;
+  user_nrp: string;
+}
+
+// Define RegistrationWithSyllabus interface
+interface RegistrationWithSyllabus {
+  registration_id: string;
+  activity_id: string;
+  activity_name: string;
+  semester: string;
+  total_sks: number;
+  approval_status: boolean;
+  lo_validation: string;
+  academic_advisor_validation: string;
+  syllabus_data: SyllabusData[] | null;
+  // Optionally include other fields
+  id?: string;
+  user_id?: string;
+  user_nrp?: string;
+  user_name?: string;
+  academic_advisor?: string;
+  academic_advisor_email?: string;
+  mentor_name?: string;
+  mentor_email?: string;
+}
+
+interface SyllabusDetailModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onDelete: () => void
+  registration: RegistrationWithSyllabus
+}
+
+export function SyllabusDetailModal({
+  isOpen,
+  onClose,
+  onDelete,
+  registration
+}: SyllabusDetailModalProps) {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const deleteSyllabusMutation = useDeleteSyllabus();
+  
+  const syllabus = registration.syllabus_data?.[0]
+  
+  if (!syllabus) {
+    return null
+  }
+
+  const handleDeleteClick = () => {
+    setIsDeleteDialogOpen(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteSyllabusMutation.mutateAsync(syllabus.id);
+      toast.success("Silabus berhasil dihapus!");
+      setIsDeleteDialogOpen(false);
+      onDelete();
+    } catch (error) {
+      console.error("Error deleting syllabus:", error);
+      toast.error("Gagal menghapus silabus. Silakan coba lagi.");
+    }
+  }
+
+  const fileUrl = syllabus.file_storage_id.startsWith('http') 
+    ? syllabus.file_storage_id 
+    : `${process.env.NEXT_PUBLIC_API_URL}/storage/${syllabus.file_storage_id}`
+
+  return (
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md bg-white z-100">
+          <DialogHeader>
+            <DialogTitle>Detail Silabus</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div>
+              <h3 className="font-medium">{registration.activity_name}</h3>
+              <p className="text-sm text-gray-500">
+                Semester {registration.semester} • {registration.total_sks} SKS
+              </p>
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg border">
+              <div className="flex items-start gap-3">
+                <div className="mt-1">
+                  <FileText className="h-10 w-10 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium">{syllabus.title}</h4>
+                  <p className="text-sm text-gray-500">Diunggah oleh: {syllabus.user_nrp}</p>
+                  <p className="text-sm text-gray-500">Pembimbing: {registration.academic_advisor}</p>
+                  <p className="text-sm text-gray-500">Email Pembimbing: {syllabus.academic_advisor_email}</p>
+                  
+                  <div className="mt-3">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex items-center gap-2"
+                      onClick={() => window.open(fileUrl, '_blank')}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      <span>Buka Dokumen</span>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex flex-row justify-between gap-2">
+            <Button 
+              variant="destructive" 
+              className="flex items-center gap-2 text-white bg-red-500" 
+              onClick={handleDeleteClick}
+              disabled={deleteSyllabusMutation.isPending}
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>{deleteSyllabusMutation.isPending ? "Menghapus..." : "Hapus Silabus"}</span>
+            </Button>
+            <Button onClick={onClose}>Tutup</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent className="bg-white z-200">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Silabus</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus silabus ini? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  )
+} 

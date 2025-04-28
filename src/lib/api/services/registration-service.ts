@@ -1,48 +1,7 @@
 import { apiServices } from '../axios-instance';
+import { Transcript } from './monitoring-service';
 
 const registrationApi = apiServices.registration;
-
-// GetRegistrationResponse struct {
-//   ID                        string             `json:"id"`
-//   ActivityID                string             `json:"activity_id"`
-//   UserID                    string             `json:"user_id"`
-//   UserNRP                   string             `json:"user_nrp"`
-//   UserName                  string             `json:"user_name"`
-//   AdvisingConfirmation      bool               `json:"advising_confirmation"`
-//   AcademicAdvisor           string             `json:"academic_advisor"`
-//   AcademicAdvisorEmail      string             `json:"academic_advisor_email"`
-//   MentorName                string             `json:"mentor_name"`
-//   MentorEmail               string             `json:"mentor_email"`
-//   LOValidation              string             `json:"lo_validation"`
-//   AcademicAdvisorValidation string             `json:"academic_advisor_validation"`
-//   Semester                  string             `json:"semester"`
-//   TotalSKS                  int                `json:"total_sks"`
-//   ActivityName              string             `json:"activity_name"`
-//   ApprovalStatus            bool               `json:"approval_status"`
-//   Documents                 []DocumentResponse `json:"documents"`
-//   Equivalents               interface{}        `json:"equivalents"`
-// }
-
-// DocumentResponse struct {
-//   ID             string `json:"id"`
-//   RegistrationID string `json:"registration_id"`
-//   FileStorageID  string `json:"file_storage_id"`
-//   Name           string `json:"name"`
-//   DocumentType   string `json:"document_type"`
-// }
-
-
-// CreateRegistrationRequest struct {
-//   ActivityID           string `form:"activity_id" binding:"required"`
-//   AcademicAdvisorID    string `form:"academic_advisor_id" binding:"required"`
-//   AdvisingConfirmation bool   `form:"advising_confirmation" binding:"required"`
-//   AcademicAdvisor      string `form:"academic_advisor" binding:"required"` // This field doesn't match what's in your form
-//   AcademicAdvisorEmail string `form:"academic_advisor_email" binding:"required"`
-//   MentorName           string `form:"mentor_name" binding:"required"`
-//   MentorEmail          string `form:"mentor_email" binding:"required"`
-//   Semester             string `form:"semester" binding:"required"`
-//   TotalSKS             int    `form:"total_sks" binding:"required"`
-// }
 
 
 export interface Document {
@@ -71,7 +30,20 @@ export interface Registration {
   activity_name: string;
   approval_status: boolean;
   documents: Document[];
-  equivalents: unknown;
+  equivalents: Equivalent[];
+}
+
+export interface Equivalent {
+  id: string;
+  departemen: string;
+  kelas: string;
+  kode: string;
+  mata_kuliah: string;
+  prodi_penyelenggara: string;
+  semester: string;
+  sks: string
+  tipe_mata_kuliah: string;
+  documents: Document[];
 }
 
 export interface PaginatedResponse<T> {
@@ -90,17 +62,6 @@ export interface PaginatedResponse<T> {
   total_pages: number;
 }
 
-// CreateRegistrationRequest struct {
-//   ActivityID           string `form:"activity_id" binding:"required"`
-//   AcademicAdvisorID    string `form:"academic_advisor_id" binding:"required"`
-//   AdvisingConfirmation bool   `form:"advising_confirmation" binding:"required"`
-//   AcademicAdvisor      string `form:"academic_advisor" binding:"required"` // This field doesn't match what's in your form
-//   AcademicAdvisorEmail string `form:"academic_advisor_email" binding:"required"`
-//   MentorName           string `form:"mentor_name" binding:"required"`
-//   MentorEmail          string `form:"mentor_email" binding:"required"`
-//   Semester             string `form:"semester" binding:"required"`
-//   TotalSKS             int    `form:"total_sks" binding:"required"`
-// }
 
 export interface RegisterInput {
   activityId: string;
@@ -116,35 +77,57 @@ export interface RegisterInput {
   total_sks: number;
 }
 
+export interface RegistrationTranscript {
+  registration_id: string;
+  activity_id: string;
+  activity_name: string;
+  semester: string;
+  total_sks: number;
+  approval_status: boolean;
+  lo_validation: string;
+  academic_advisor_validation: string;
+  transcript_data: Transcript[]
+}
+
+export interface RegistrationTranscriptData {
+  user_id: string;
+  user_nrp: string;
+  registrations: RegistrationTranscript[]
+}
+
+export interface RegistrationTranscriptsByStudentResponse {
+  message: string;
+  status: string;
+  data: RegistrationTranscriptData
+}
+
+// syllabuses
+export interface RegistrationSyllabus {
+  registration_id: string;
+  activity_id: string;
+  activity_name: string;
+  semester: string;
+  total_sks: number;
+  approval_status: boolean;
+  lo_validation: string;
+  academic_advisor_validation: string;
+  syllabus_data: Transcript[]
+}
+
+export interface RegistrationSyllabusData {
+  user_id: string;
+  user_nrp: string;
+  registrations: RegistrationSyllabus[]
+}
+
+export interface RegistrationSyllabusesByStudentResponse {
+  message: string;
+  status: string;
+  data: RegistrationSyllabusData
+}
+
 // Registration management service endpoints
 export const registrationService = {
-  // Get all available programs
-  // getPrograms: async (
-  //   page = 1, 
-  //   limit = 10, 
-  //   filters?: { 
-  //     category?: string; 
-  //     partner?: string;
-  //     status?: string;
-  //   }
-  // ) => {
-  //   let url = `/programs?page=${page}&limit=${limit}`;
-    
-  //   if (filters) {
-  //     if (filters.category) url += `&category=${filters.category}`;
-  //     if (filters.partner) url += `&partner=${filters.partner}`;
-  //     if (filters.status) url += `&status=${filters.status}`;
-  //   }
-    
-  //   const response = await registrationApi.get<{programs: Program[], total: number}>(url);
-  //   return response.data;
-  // },
-
-  // Get program by ID
-  // getProgramById: async (id: string) => {
-  //   const response = await registrationApi.get<Program>(`/programs/${id}`);
-  //   return response.data;
-  // },
 
   // Register for a program
   registerForProgram: async (registrationData: RegisterInput) => {
@@ -196,6 +179,36 @@ export const registrationService = {
   getRegistrationByStudent: async (page = 1, limit = 10) => {
     const response = await registrationApi.post<PaginatedResponse<Registration>>(
       `/registration/student?page=${page}&limit=${limit}`,
+      {
+        "activity_name": "",
+        "user_name": "",
+        "user_nrp": "",
+        "academic_advisor": "",
+        "lo_validation": "",
+        "academic_advisor_validation": ""
+    },
+    );
+    return response.data;
+  },
+
+  getRegistrationTranscriptsByStudent: async () => {
+    const response = await registrationApi.post<RegistrationTranscriptsByStudentResponse>(
+      '/registration/student/transcripts',
+      {
+        "activity_name": "",
+        "user_name": "",
+        "user_nrp": "",
+        "academic_advisor": "",
+        "lo_validation": "",
+        "academic_advisor_validation": ""
+    },
+    );
+    return response.data;
+  },
+
+  getRegistrationSyllabusesByStudent: async () => {
+    const response = await registrationApi.post<RegistrationSyllabusesByStudentResponse>(
+      '/registration/student/syllabuses',
       {
         "activity_name": "",
         "user_name": "",

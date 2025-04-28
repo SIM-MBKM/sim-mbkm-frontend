@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useDashboard } from "./dashboard-provider"
+import Link from "next/link"
 
 export function Sidebar() {
   const { sidebarOpen, toggleSidebar, isMobile } = useDashboard()
@@ -50,70 +51,62 @@ export function Sidebar() {
         <div className="p-4 overflow-y-auto h-[calc(100%-60px)]">
           <div className="mb-6">
             <h2 className="text-[#003478] font-bold mb-4">Beranda</h2>
-            <a href="#" className="flex items-center space-x-2 text-[#003478] mb-2">
+            <Link href="/dashboard/mahasiswa" className="flex items-center space-x-2 text-[#003478] mb-2">
               <Home className="h-5 w-5" />
               <span>Beranda</span>
-            </a>
+            </Link>
           </div>
 
           <div className="mb-6">
             <h2 className="text-[#003478] font-bold mb-4">Pendaftaran</h2>
-            <a href="/dashboard/mahasiswa/programs" className="flex items-center space-x-2 text-gray-700 mb-2">
+            <Link href="/dashboard/mahasiswa/programs" className="flex items-center space-x-2 text-gray-700 mb-2">
               <Search className="h-5 w-5" />
               <span className="">Telusuri Program</span>
-            </a>
-            <a href="/dashboard/mahasiswa/telusuri-program" className="flex items-center space-x-2 text-gray-700 mb-2">
+            </Link>
+            <Link href="/dashboard/mahasiswa/telusuri-program" className="flex items-center space-x-2 text-gray-700 mb-2">
               <Upload className="h-5 w-5" />
               <span className="">Ajukan Program</span>
-            </a>
-            <a href="#" className="flex items-center space-x-2 text-gray-700 mb-2">
+            </Link>
+            <Link href="/dashboard/mahasiswa/programs/me" className="flex items-center space-x-2 text-gray-700 mb-2">
               <User className="h-5 w-5" />
               <span>Program Saya</span>
-            </a>
+            </Link>
           </div>
 
           <div className="mb-6">
             <h2 className="text-[#003478] font-bold mb-4">Dokumentasi dan Monitoring</h2>
-            <a href="#" className="flex items-center space-x-2 text-gray-700 mb-2">
+            <Link href="/dashboard/mahasiswa/monitoring" className="flex items-center space-x-2 text-gray-700 mb-2">
               <ClipboardList className="h-5 w-5" />
               <span>Monitoring Status</span>
-            </a>
-            <a href="#" className="flex items-center space-x-2 text-gray-700 mb-2">
+            </Link>
+            <Link href="/dashboard/mahasiswa/logbook" className="flex items-center space-x-2 text-gray-700 mb-2">
               <FileText className="h-5 w-5" />
               <span>Input Logbook</span>
-            </a>
-            <a href="#" className="flex items-center space-x-2 text-gray-700 mb-2">
+            </Link>
+            <Link href="/dashboard/mahasiswa/transcript" className="flex items-center space-x-2 text-gray-700 mb-2">
               <FileText className="h-5 w-5" />
               <span>Input Transkrip</span>
-            </a>
-            <a href="#" className="flex items-center space-x-2 text-gray-700 mb-2">
+            </Link>
+            <Link href="/dashboard/mahasiswa/syllabus" className="flex items-center space-x-2 text-gray-700 mb-2">
               <FileText className="h-5 w-5" />
               <span>Input Silabus</span>
-            </a>
-            <a href="#" className="flex items-center space-x-2 text-gray-700 mb-2">
-              <FileText className="h-5 w-5" />
-              <span>Input Laporan Akhir</span>
-            </a>
-            <a href="#" className="flex items-center space-x-2 text-gray-700 mb-2">
-              <FileText className="h-5 w-5" />
-              <span>Input File Tambahan</span>
-            </a>
+            </Link>
           </div>
 
           <div className="mb-6">
             <h2 className="text-[#003478] font-bold mb-4">MBKM</h2>
-            <a href="#" className="flex items-center space-x-2 text-gray-700 mb-2">
+            <Link href="/dashboard/mahasiswa/mbkm" className="flex items-center space-x-2 text-gray-700 mb-2">
               <BookOpen className="h-5 w-5" />
               <span>MBKM</span>
-            </a>
-            <a href="#" className="flex items-center space-x-2 text-gray-700 mb-2">
+            </Link>
+            <Link href="/dashboard/mahasiswa/equivalence" className="flex items-center space-x-2 text-gray-700 mb-2">
               <FileText className="h-5 w-5" />
               <span>Ekivalensi MK</span>
-            </a>
-            <a href="#" className="flex items-center space-x-2 text-gray-700 mb-2">
+            </Link>
+            <Link href="/dashboard/mahasiswa/schedule" className="flex items-center space-x-2 text-gray-700 mb-2">
               <Calendar className="h-5 w-5" />
               <span>Jadwal</span>
-            </a>
+            </Link>
           </div>
 
           {/* Add extra space at the bottom for better scrolling experience */}
