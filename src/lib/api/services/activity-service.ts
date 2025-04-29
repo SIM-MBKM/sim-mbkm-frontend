@@ -43,7 +43,7 @@ export interface Matching {
   kelas: string;
   departemen: string;
   tipe_mata_kuliah: string
-  document: Document[]
+  documents: Document[]
 }
 
 export interface Document {

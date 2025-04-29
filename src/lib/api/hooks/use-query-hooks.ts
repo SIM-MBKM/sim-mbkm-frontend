@@ -12,13 +12,13 @@ import {
   type UserUpdateInput,
   type ActivityCreateInput,
   type LogbookInput,
-  type EquivalenceRequest,
   type RegisterInput,
   type TranscriptInput,
   PaginatedResponse,
   Activity,
   SyllabusInput,
   ReportInput,
+  EquivalentInput,
 } from '../services';
 
 // AUTH HOOKS
@@ -193,6 +193,12 @@ export const useUpcomingActivities = () => {
 };
 
 // REGISTRATION HOOKS
+export const useRegistrationStudentMatching = () => {
+  return useQuery({
+    queryKey: ['registrationStudentMatching'],
+    queryFn: () => registrationService.getRegistrationStudentMatching(),
+  });
+};
 
 export const useRegisterForProgram = () => {
   const queryClient = useQueryClient();
@@ -419,42 +425,22 @@ export const useMonitoringSessions = (programId?: string) => {
 
 // MATCHING HOOKS
 
-export const useUniversityCourses = (departmentId: string, page = 1, limit = 20) => {
-  return useQuery({
-    queryKey: ['universityCourses', departmentId, page, limit],
-    queryFn: () => matchingService.getUniversityCourses(departmentId, page, limit),
-    enabled: !!departmentId,
-  });
-};
-
 export const useSubmitEquivalenceRequest = () => {
   const queryClient = useQueryClient();
   
   const mutation = useMutation({
-    mutationFn: (equivalenceData: EquivalenceRequest) => 
-      matchingService.submitEquivalenceRequest(equivalenceData),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['equivalenceRequests', variables.programId] });
+    mutationFn: (equivalentInput: EquivalentInput) => 
+      matchingService.submitEquivalents(equivalentInput),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['registrationStudentMatching'] });
     },
+    onError: (error) => {
+      console.error('Error submitting equivalent ', error);
+    }
   });
   
   return {
     ...mutation,
     isLoading: mutation.isPending
   };
-};
-
-export const useEquivalenceRequests = (programId?: string) => {
-  return useQuery({
-    queryKey: ['equivalenceRequests', programId],
-    queryFn: () => matchingService.getUserEquivalenceRequests(programId),
-  });
-};
-
-export const useProgramCourses = (programId?: string) => {
-  return useQuery({
-    queryKey: ['programCourses', programId],
-    queryFn: () => matchingService.getProgramCourses(programId!),
-    enabled: !!programId,
-  });
 };

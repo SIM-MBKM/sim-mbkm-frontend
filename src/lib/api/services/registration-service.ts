@@ -31,17 +31,33 @@ export interface Registration {
   approval_status: boolean;
   documents: Document[];
   equivalents: Equivalent[];
+  matching: Matching[];
 }
 
-export interface Equivalent {
+export interface Matching {
   id: string;
+  subject_id: string;
   departemen: string;
   kelas: string;
   kode: string;
   mata_kuliah: string;
   prodi_penyelenggara: string;
   semester: string;
-  sks: string
+  sks: number;
+  tipe_mata_kuliah: string;
+  documents: Document[];
+}
+
+export interface Equivalent {
+  id: string;
+  subject_id: string;
+  departemen: string;
+  kelas: string;
+  kode: string;
+  mata_kuliah: string;
+  prodi_penyelenggara: string;
+  semester: string;
+  sks: number;
   tipe_mata_kuliah: string;
   documents: Document[];
 }
@@ -100,6 +116,20 @@ export interface RegistrationTranscriptsByStudentResponse {
   status: string;
   data: RegistrationTranscriptData
 }
+
+export interface RegistrationStudentMatchingData {
+  user_id: string;
+  user_nrp: string;
+  user_name: string;
+  registrations: Registration[]
+}
+
+export interface RegistrationStudentMatchingResponse {
+  message: string;
+  status: string;
+  data: RegistrationStudentMatchingData
+}
+
 
 // syllabuses
 export interface RegistrationSyllabus {
@@ -166,6 +196,21 @@ export const registrationService = {
         'Content-Type': 'multipart/form-data',
       },
     });
+    return response.data;
+  },
+
+  getRegistrationStudentMatching: async () => {
+    const response = await registrationApi.post<RegistrationStudentMatchingResponse>(
+      '/registration/student/matching',
+      {
+        "activity_name": "",
+        "user_name": "",
+        "user_nrp": "",
+        "academic_advisor": "",
+        "lo_validation": "",
+        "academic_advisor_validation": ""
+      },
+    );
     return response.data;
   },
 
