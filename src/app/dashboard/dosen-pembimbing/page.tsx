@@ -5,7 +5,7 @@ import { ProtectedDashboardLayout } from "@/components/dashboard/protected-dashb
 
 export default function MahasiswaDashboard() {
   return (
-    <ProtectedDashboardLayout allowedRole="MAHASISWA">
+    <ProtectedDashboardLayout allowedRole="DOSEN PEMBIMBING">
       <DashboardContent />
     </ProtectedDashboardLayout>
   )

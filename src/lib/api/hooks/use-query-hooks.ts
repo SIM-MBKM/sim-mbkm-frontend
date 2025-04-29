@@ -78,6 +78,14 @@ export const useCurrentUser = () => {
   });
 };
 
+export const useUserRole = () => {
+  return useQuery({
+    queryKey: ['userRole'],
+    queryFn: () => userService.getUserRole(),
+    retry: 1,
+  });
+};
+
 export const useUpdateUser = () => {
   const queryClient = useQueryClient();
   

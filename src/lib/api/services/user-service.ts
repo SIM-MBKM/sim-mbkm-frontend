@@ -13,6 +13,16 @@ export interface User {
   profilePicture?: string;
 }
 
+export interface UserRole {
+  role: string;
+}
+
+export interface UserRoleResponse {
+  message: string;
+  status: string;
+  data: UserRole;
+}
+
 export interface UserUpdateInput {
   name?: string;
   email?: string;
@@ -25,6 +35,12 @@ export const userService = {
   // Get current user profile
   getCurrentUser: async () => {
     const response = await userApi.get<User>('/users/me');
+    return response.data;
+  },
+
+  // Get user role
+  getUserRole: async () => {
+    const response = await userApi.get<UserRoleResponse>('/user/role');
     return response.data;
   },
 
