@@ -35,9 +35,10 @@ export interface Activity {
 
 export interface Matching {
   id: string;
+  subject_id: string;
   mata_kuliah: string;
   kode: string;
-  semester: string;
+  semester: number;
   prodi_penyelenggara: string;
   sks: number;
   kelas: string;

@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText } from "lucide-react"
 import { Document, Registration } from "@/lib/api/services/registration-service"
-import { Matching } from "@/lib/api/services/activity-service"
+import { Matching, Equivalent } from "@/lib/api/services/registration-service"
 
 interface RegistrationDetailProps {
   registration: Registration & { matching: Matching[] }
@@ -127,7 +127,7 @@ export function RegistrationDetail({ registration }: RegistrationDetailProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {registration.matching.map((match: Matching) => (
+            {registration.equivalents && registration.equivalents.map((match: Equivalent) => (
               <div key={match.id} className="border rounded-md p-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>

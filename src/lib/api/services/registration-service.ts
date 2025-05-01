@@ -25,7 +25,7 @@ export interface Registration {
   mentor_email: string;
   lo_validation: 'PENDING' | 'APPROVED' | 'REJECTED';
   academic_advisor_validation: 'PENDING' | 'APPROVED' | 'REJECTED';
-  semester: string;
+  semester: number;
   total_sks: number;
   activity_name: string;
   approval_status: boolean;
@@ -42,7 +42,7 @@ export interface Matching {
   kode: string;
   mata_kuliah: string;
   prodi_penyelenggara: string;
-  semester: string;
+  semester: number;
   sks: number;
   tipe_mata_kuliah: string;
   documents: Document[];
@@ -56,7 +56,7 @@ export interface Equivalent {
   kode: string;
   mata_kuliah: string;
   prodi_penyelenggara: string;
-  semester: string;
+  semester: number;
   sks: number;
   tipe_mata_kuliah: string;
   documents: Document[];
@@ -97,7 +97,7 @@ export interface RegistrationTranscript {
   registration_id: string;
   activity_id: string;
   activity_name: string;
-  semester: string;
+  semester: number;
   total_sks: number;
   approval_status: boolean;
   lo_validation: string;
@@ -136,7 +136,7 @@ export interface RegistrationSyllabus {
   registration_id: string;
   activity_id: string;
   activity_name: string;
-  semester: string;
+  semester: number;
   total_sks: number;
   approval_status: boolean;
   lo_validation: string;
@@ -154,6 +154,27 @@ export interface RegistrationSyllabusesByStudentResponse {
   message: string;
   status: string;
   data: RegistrationSyllabusData
+}
+
+export interface RegistrationUpdateRequest {
+  academic_advisor: string;
+  advising_confirmation: boolean;
+  academic_advisor_email: string;
+  mentor_name: string;
+  mentor_email: string;
+  semester: number;
+  total_sks: number;
+}
+
+export interface BaseResponse<T> {
+  message: string;
+  status: string;
+  data: T
+}
+
+export interface Eligibility {
+  eligible: boolean;
+  message: string;
 }
 
 // Registration management service endpoints
@@ -199,6 +220,22 @@ export const registrationService = {
     return response.data;
   },
 
+  checkEligibility: async(activity_id: string) => {
+    const response = await registrationApi.get<BaseResponse<Eligibility>>(
+      `/registration/check-eligibility?activity_id=${activity_id}`
+    );
+    return response.data;
+  },
+
+  updateRegistrationStudentById: async (id: string, data: RegistrationUpdateRequest) => {
+    data.advising_confirmation = true;
+    const response = await registrationApi.put<{data: string, message: string, status: string}>(
+      `/registration/${id}`,
+      data,
+    );
+    return response.data;
+  },
+  
   getRegistrationStudentMatching: async () => {
     const response = await registrationApi.post<RegistrationStudentMatchingResponse>(
       '/registration/student/matching',

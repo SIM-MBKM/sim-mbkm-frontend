@@ -4,9 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { format } from "date-fns"
-import { CalendarIcon } from "lucide-react"
+import { CalendarIcon, AlertCircle } from "lucide-react"
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -57,6 +58,7 @@ export function ProgramSubmissionForm({ onClose }: ProgramSubmissionFormProps) {
       academic_year: "2024/2025",
       program_provider: "",
     },
+    mode: "onChange" // Validate on change for real-time feedback
   })
 
   const {
@@ -78,6 +80,10 @@ export function ProgramSubmissionForm({ onClose }: ProgramSubmissionFormProps) {
   } = useAllGroups()
 
   const { mutate: createActivity, isLoading: isCreating } = useCreateActivity();
+  
+  // Get form state to determine if required fields are filled
+  const isValid = form.formState.isValid;
+  const isDirty = form.formState.isDirty;
 
   if (programTypesLoading && levelsLoading && groupsLoading) {
     return <div>Loading...</div>;
@@ -105,7 +111,10 @@ export function ProgramSubmissionForm({ onClose }: ProgramSubmissionFormProps) {
       onSuccess: () => {
         toast.success("Activity created successfully!");
         console.log("Activity created successfully");
-        onClose();
+        // Add delay before closing the form to ensure toast is visible
+        setTimeout(() => {
+          onClose();
+        }, 1500);
       },
       onError: (error) => {
         toast.error("Error creating activity: " + error.message);
@@ -114,6 +123,16 @@ export function ProgramSubmissionForm({ onClose }: ProgramSubmissionFormProps) {
     });
   }
 
+  // Style for required field label
+  const RequiredFieldIndicator = () => (
+    <span className="text-red-500 ml-1 font-medium">*</span>
+  );
+  
+  // Style for optional field label
+  const OptionalFieldIndicator = () => (
+    <span className="text-gray-400 ml-1 text-xs font-normal italic">(opsional)</span>
+  );
+
   return (
     <>
       <ToastContainer />
@@ -121,6 +140,18 @@ export function ProgramSubmissionForm({ onClose }: ProgramSubmissionFormProps) {
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] bg-white overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">Ajukan Program Baru</DialogTitle>
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="mt-2 flex items-start gap-2 bg-amber-50 p-3 rounded-md border border-amber-200"
+            >
+              <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-amber-800">
+                <p className="font-medium mb-1">Perhatian</p>
+                <p>Semua field dengan tanda <span className="text-red-500 font-medium">*</span> wajib diisi.</p>
+              </div>
+            </motion.div>
           </DialogHeader>
 
           <Form {...form}>
@@ -130,9 +161,12 @@ export function ProgramSubmissionForm({ onClose }: ProgramSubmissionFormProps) {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nama Program</FormLabel>
+                    <FormLabel>
+                      Nama Program
+                      <RequiredFieldIndicator />
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="Masukkan nama program" {...field} />
+                      <Input placeholder="Masukkan nama program" {...field} className={`${form.formState.errors.name ? "border-red-300 focus:border-red-500" : ""}`} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -144,9 +178,12 @@ export function ProgramSubmissionForm({ onClose }: ProgramSubmissionFormProps) {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Deskripsi Program</FormLabel>
+                    <FormLabel>
+                      Deskripsi Program
+                      <RequiredFieldIndicator />
+                    </FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Deskripsi lengkap program" className="min-h-[120px]" {...field} />
+                      <Textarea placeholder="Deskripsi lengkap program" className={`min-h-[120px] ${form.formState.errors.description ? "border-red-300 focus:border-red-500" : ""}`} {...field} />
                     </FormControl>
                     <FormDescription>Jelaskan detail program, persyaratan, dan manfaat yang akan didapat</FormDescription>
                     <FormMessage />
@@ -160,13 +197,20 @@ export function ProgramSubmissionForm({ onClose }: ProgramSubmissionFormProps) {
                   name="start_period"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Tanggal Mulai</FormLabel>
+                      <FormLabel>
+                        Tanggal Mulai
+                        <RequiredFieldIndicator />
+                      </FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
                               variant={"outline"}
-                              className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground",
+                                form.formState.errors.start_period ? "border-red-300" : ""
+                              )}
                             >
                               {field.value ? format(field.value, "dd MMMM yyyy") : <span>Pilih tanggal</span>}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
@@ -193,9 +237,18 @@ export function ProgramSubmissionForm({ onClose }: ProgramSubmissionFormProps) {
                   name="months_duration"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Durasi (Bulan)</FormLabel>
+                      <FormLabel>
+                        Durasi (Bulan)
+                        <RequiredFieldIndicator />
+                      </FormLabel>
                       <FormControl>
-                        <Input type="number" min="1" max="12" {...field} />
+                        <Input 
+                          type="number" 
+                          min="1" 
+                          max="12" 
+                          {...field} 
+                          className={form.formState.errors.months_duration ? "border-red-300 focus:border-red-500" : ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -209,10 +262,13 @@ export function ProgramSubmissionForm({ onClose }: ProgramSubmissionFormProps) {
                   name="activity_type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tipe Aktivitas</FormLabel>
+                      <FormLabel>
+                        Tipe Aktivitas
+                        <RequiredFieldIndicator />
+                      </FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className={form.formState.errors.activity_type ? "border-red-300" : ""}>
                             <SelectValue placeholder="Pilih tipe aktivitas" />
                           </SelectTrigger>
                         </FormControl>
@@ -232,9 +288,16 @@ export function ProgramSubmissionForm({ onClose }: ProgramSubmissionFormProps) {
                   name="location"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Lokasi</FormLabel>
+                      <FormLabel>
+                        Lokasi
+                        <RequiredFieldIndicator />
+                      </FormLabel>
                       <FormControl>
-                        <Input placeholder="Kota/Kabupaten" {...field} />
+                        <Input 
+                          placeholder="Kota/Kabupaten" 
+                          {...field} 
+                          className={form.formState.errors.location ? "border-red-300 focus:border-red-500" : ""} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -247,9 +310,16 @@ export function ProgramSubmissionForm({ onClose }: ProgramSubmissionFormProps) {
                 name="web_portal"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Web Portal (Opsional)</FormLabel>
+                    <FormLabel>
+                      Web Portal
+                      <OptionalFieldIndicator />
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="https://example.com" {...field} />
+                      <Input 
+                        placeholder="https://example.com" 
+                        {...field} 
+                        className={form.formState.errors.web_portal ? "border-red-300 focus:border-red-500" : ""} 
+                      />
                     </FormControl>
                     <FormDescription>Situs web resmi program atau portal pendaftaran</FormDescription>
                     <FormMessage />
@@ -257,16 +327,19 @@ export function ProgramSubmissionForm({ onClose }: ProgramSubmissionFormProps) {
                 )}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2  gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="program_type_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tipe Program</FormLabel>
+                      <FormLabel>
+                        Tipe Program
+                        <RequiredFieldIndicator />
+                      </FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value} >
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className={form.formState.errors.program_type_id ? "border-red-300" : ""}>
                             <SelectValue placeholder="Pilih tipe program" />
                           </SelectTrigger>
                         </FormControl>
@@ -292,10 +365,13 @@ export function ProgramSubmissionForm({ onClose }: ProgramSubmissionFormProps) {
                   name="group_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Kelompok Program</FormLabel>
+                      <FormLabel>
+                        Kelompok Program
+                        <RequiredFieldIndicator />
+                      </FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className={form.formState.errors.group_id ? "border-red-300" : ""}>
                             <SelectValue placeholder="Pilih kelompok" />
                           </SelectTrigger>
                         </FormControl>
@@ -323,10 +399,13 @@ export function ProgramSubmissionForm({ onClose }: ProgramSubmissionFormProps) {
                   name="level_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Level Program</FormLabel>
+                      <FormLabel>
+                        Level Program
+                        <RequiredFieldIndicator />
+                      </FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className={form.formState.errors.level_id ? "border-red-300" : ""}>
                             <SelectValue placeholder="Pilih level" />
                           </SelectTrigger>
                         </FormControl>
@@ -352,10 +431,13 @@ export function ProgramSubmissionForm({ onClose }: ProgramSubmissionFormProps) {
                   name="academic_year"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tahun Akademik</FormLabel>
+                      <FormLabel>
+                        Tahun Akademik
+                        <RequiredFieldIndicator />
+                      </FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className={form.formState.errors.academic_year ? "border-red-300" : ""}>
                             <SelectValue placeholder="Pilih tahun akademik" />
                           </SelectTrigger>
                         </FormControl>
@@ -376,20 +458,41 @@ export function ProgramSubmissionForm({ onClose }: ProgramSubmissionFormProps) {
                 name="program_provider"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Penyedia Program</FormLabel>
+                    <FormLabel>
+                      Penyedia Program
+                      <RequiredFieldIndicator />
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="Nama perusahaan/institusi" {...field} />
+                      <Input 
+                        placeholder="Nama perusahaan/institusi" 
+                        {...field} 
+                        className={form.formState.errors.program_provider ? "border-red-300 focus:border-red-500" : ""} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-blue-50 p-3 rounded-md border border-blue-200 mt-6"
+              >
+                <p className="text-sm text-blue-800">
+                  <span className="font-medium">Catatan:</span> Semua field dengan tanda <span className="text-red-500 font-medium">*</span> wajib diisi. Field yang tidak diberi tanda tersebut bersifat opsional.
+                </p>
+              </motion.div>
+
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={onClose}>
                   Batal
                 </Button>
-                <Button type="submit" className="bg-[#003478] text-white hover:bg-[#00275a]" disabled={isCreating}>
+                <Button 
+                  type="submit" 
+                  className={`bg-[#003478] text-white hover:bg-[#00275a] transition-opacity ${(!isValid || !isDirty) ? 'opacity-50 cursor-not-allowed' : ''}`} 
+                  disabled={isCreating || !isValid || !isDirty}
+                >
                   {isCreating ? "Mengajukan..." : "Ajukan Program"}
                 </Button>
               </DialogFooter>

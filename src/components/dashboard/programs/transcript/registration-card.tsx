@@ -26,7 +26,7 @@ interface RegistrationWithTranscript {
   registration_id: string;
   activity_id: string;
   activity_name: string;
-  semester: string;
+  semester: number;
   total_sks: number;
   approval_status: boolean;
   lo_validation: string;

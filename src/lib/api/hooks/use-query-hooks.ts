@@ -19,6 +19,8 @@ import {
   SyllabusInput,
   ReportInput,
   EquivalentInput,
+  RegistrationUpdateRequest,
+  SubjectFilterRequest,
 } from '../services';
 
 // AUTH HOOKS
@@ -201,6 +203,13 @@ export const useUpcomingActivities = () => {
 };
 
 // REGISTRATION HOOKS
+export const useCheckEligibility = (activity_id: string) => {
+  return useQuery({
+    queryKey: ['checkEligibility', activity_id],
+    queryFn: () => registrationService.checkEligibility(activity_id),
+  });
+}
+
 export const useRegistrationStudentMatching = () => {
   return useQuery({
     queryKey: ['registrationStudentMatching'],
@@ -252,10 +261,37 @@ export const useRegistrationSyllabusesByStudent = () => {
 
 export const useStudentRegistrations = (page = 1, limit = 10) => {
   return useQuery({
-    queryKey: ['studentRegistrations', page, limit],
+    queryKey: ['registrationStudentMatching', page, limit],
     queryFn: () => registrationService.getRegistrationByStudent(page, limit),
   });
 };
+
+export const useUpdateRegistrationStudentById = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: ({ id, registrationInput }: { id: string; registrationInput: RegistrationUpdateRequest }) => 
+      registrationService.updateRegistrationStudentById(id, registrationInput),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['registrationStudentMatching'] });
+    },
+    onError: (error) => {
+      console.error('Error submitting transcripts:', error);
+    },  
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending
+  };
+}
+
+export const useFilterSubject = ({ limit, page, filter }: { limit: number, page: number, filter: SubjectFilterRequest }) => {
+  return useQuery({
+    queryKey: ['filterSubject', filter, limit, page],
+    queryFn: () => matchingService.getFilterSubject({ limit, page, filter }),
+  });
+}
 
 // MONITORING HOOKS
 

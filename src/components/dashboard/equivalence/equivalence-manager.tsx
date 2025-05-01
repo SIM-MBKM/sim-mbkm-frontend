@@ -20,7 +20,7 @@ interface MatchingItem {
   kode: string;
   mata_kuliah: string;
   prodi_penyelenggara: string;
-  semester: string;
+  semester: number;
   sks: number | string;
   tipe_mata_kuliah?: string;
   documents?: Array<{ id: string; name: string; url?: string; type?: string }>;
