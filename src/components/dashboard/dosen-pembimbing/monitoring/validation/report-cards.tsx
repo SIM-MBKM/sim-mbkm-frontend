@@ -8,24 +8,25 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ReportPreview } from "./report-preview"
-import { useToast } from "@/lib/api/hooks/use-toast"
+// import { useToast } from "@/lib/api/hooks/use-toast"
+import { ReportSchedule } from "@/lib/api/services";
 
 
 interface ReportCardsProps {
-  reports: any[]
+  reports: ReportSchedule[]
   updatedReports?: Record<string, { status: string; feedback: string }>
   onStatusChange?: (reportId: string, status: string, feedback: string) => void
 }
 
 export function ReportCards({ reports, updatedReports = {}, onStatusChange }: ReportCardsProps) {
-  const [selectedReport, setSelectedReport] = useState<any | null>(null)
-  const { toast } = useToast()
+  const [selectedReport, setSelectedReport] = useState<ReportSchedule | null>(null)
+  // const { toast } = useToast()
 
   const formatDate = (dateString: string) => {
     try {
       return format(parseISO(dateString), "MMM d, yyyy")
-    } catch (error) {
-      return dateString
+    } catch {
+      return "Invalid date"
     }
   }
 
@@ -35,7 +36,7 @@ export function ReportCards({ reports, updatedReports = {}, onStatusChange }: Re
     }
   }
 
-  const getStatusBadge = (report: any) => {
+  const getStatusBadge = (report: ReportSchedule) => {
     // Check if this report has been updated
     const updatedReport = updatedReports[report.id]
     const status = updatedReport?.status || report.report?.academic_advisor_status || "NOT_SUBMITTED"
@@ -117,7 +118,7 @@ export function ReportCards({ reports, updatedReports = {}, onStatusChange }: Re
                     {getStatusBadge(report)}
                   </div>
                   <p className="text-sm mt-1 text-white/80">
-                    {formatDate(report.start_date)} - {formatDate(report.end_date)}
+                    {formatDate(report.start_date?.toString() ?? '')} - {formatDate(report.end_date?.toString() ?? '')}
                   </p>
                 </div>
 

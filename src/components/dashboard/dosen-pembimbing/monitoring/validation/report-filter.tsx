@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
-import { Search } from "lucide-react"
+import { Search, Briefcase } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
 interface ReportFilterProps {
@@ -15,6 +15,7 @@ interface ReportFilterProps {
   onNRPChange: (nrp: string) => void
   searchQuery: string
   onSearchChange: (query: string) => void
+  currentActivity?: string | null
 }
 
 export function ReportFilter({
@@ -24,6 +25,7 @@ export function ReportFilter({
   onNRPChange,
   searchQuery,
   onSearchChange,
+  currentActivity
 }: ReportFilterProps) {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
@@ -68,6 +70,16 @@ export function ReportFilter({
               <div className="pt-2">
                 <Badge variant="outline" className="bg-primary/10">
                   Selected: {selectedNRP}
+                </Badge>
+              </div>
+            )}
+
+            {currentActivity && (
+              <div className="pt-2 flex items-center gap-2 text-sm">
+                <Briefcase className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Current activity:</span>
+                <Badge variant="secondary" className="font-medium bg-blue-100 text-blue-800">
+                  {currentActivity}
                 </Badge>
               </div>
             )}

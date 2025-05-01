@@ -9,9 +9,10 @@ import { format, parseISO } from "date-fns"
 import { useToast } from "@/lib/api/hooks/use-toast"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
+import { ReportSchedule } from "@/lib/api/services";
 
 interface ReportPreviewProps {
-  report: any
+  report: ReportSchedule
   onClose: () => void
   onStatusChange?: (reportId: string, status: string, feedback: string) => void
 }
@@ -49,7 +50,7 @@ export function ReportPreview({ report, onClose, onStatusChange }: ReportPreview
   const formatDate = (dateString: string) => {
     try {
       return format(parseISO(dateString), "MMMM d, yyyy")
-    } catch (error) {
+    } catch  {
       return dateString
     }
   }
@@ -95,7 +96,7 @@ export function ReportPreview({ report, onClose, onStatusChange }: ReportPreview
       })
 
       setIsEditing(false)
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to update report status",

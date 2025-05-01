@@ -325,6 +325,13 @@ export const useFilterSubject = ({ limit, page, filter }: { limit: number, page:
 
 // MONITORING HOOKS
 
+export const useReportSchedulesByAdvisor = ({page, limit}: {page: number, limit: number}) => {
+  return useQuery({
+    queryKey: ['reportSchedulesByAdvisor', page, limit],
+    queryFn: () => monitoringService.getReportSchedulesByAdvisor({page, limit}),
+  });
+}
+
 export const useSubmitTranscript = () => {
   const queryClient = useQueryClient();
 

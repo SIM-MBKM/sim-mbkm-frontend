@@ -2,16 +2,30 @@
 
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { TimerIcon as Timeline, CheckCircle, XCircle, Clock, Calendar } from "lucide-react"
+import { TimerIcon as Timeline, CheckCircle, XCircle, Clock, Calendar, FileText } from "lucide-react"
 import { format, parseISO } from "date-fns"
+import { ReportSchedule } from "@/lib/api/services";
 
 interface ReportTimelineProps {
-  reports: any[]
+  reports: ReportSchedule[]
 }
 
 export function ReportTimeline({ reports }: ReportTimelineProps) {
   if (reports.length === 0) {
-    return null
+    return (
+      <Card className="mb-6">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Timeline className="h-5 w-5" />
+            <span>Report Timeline</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+          <FileText className="h-12 w-12 text-muted-foreground opacity-30 mb-2" />
+          <p className="text-muted-foreground">No reports found for this activity</p>
+        </CardContent>
+      </Card>
+    )
   }
 
   // Sort reports by week number or date
@@ -25,12 +39,12 @@ export function ReportTimeline({ reports }: ReportTimelineProps) {
   const formatDate = (dateString: string) => {
     try {
       return format(parseISO(dateString), "MMM d, yyyy")
-    } catch (error) {
+    } catch {
       return dateString
     }
   }
 
-  const getStatusIcon = (report: any) => {
+  const getStatusIcon = (report: ReportSchedule) => {
     if (!report.report) {
       return <Clock className="h-5 w-5 text-amber-500" />
     }
@@ -45,21 +59,42 @@ export function ReportTimeline({ reports }: ReportTimelineProps) {
     }
   }
 
+  const getStatusColor = (report: ReportSchedule) => {
+    if (!report.report) {
+      return "bg-amber-100 dark:bg-amber-900/20 border-amber-200"
+    }
+    
+    const status = report.report.academic_advisor_status
+    if (status === "APPROVED") {
+      return "bg-green-100 dark:bg-green-900/20 border-green-200"
+    } else if (status === "REJECTED") {
+      return "bg-red-100 dark:bg-red-900/20 border-red-200"
+    } else {
+      return "bg-amber-100 dark:bg-amber-900/20 border-amber-200"
+    }
+  }
+
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-      className="h-[400px] overflow-y-scroll"
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      transition={{ delay: 0.3 }}
+      className="mb-6"
     >
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
             <Timeline className="h-5 w-5" />
             <span>Report Timeline</span>
           </CardTitle>
+          <div className="text-sm text-muted-foreground">
+            {sortedReports.length} report{sortedReports.length !== 1 ? 's' : ''}
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="max-h-[400px] overflow-y-auto pr-2 pb-4 pt-1">
           <div className="relative">
             {/* Timeline line */}
-            <div className="absolute left-3.5 bg-gray-500 shadow-lg top-0 bottom-0 w-0.5 bg-border" />
+            <div className="absolute left-3.5 top-0 bottom-0 w-0.5 bg-border/80 rounded-full" />
 
             <div className="space-y-6">
               {sortedReports.map((report, index) => (
@@ -72,15 +107,7 @@ export function ReportTimeline({ reports }: ReportTimelineProps) {
                 >
                   {/* Timeline dot */}
                   <div
-                    className={`absolute left-0 top-1.5 h-7 w-7 rounded-full flex items-center justify-center ${
-                      !report.report
-                        ? "bg-amber-100 dark:bg-amber-900/20"
-                        : report.report.academic_advisor_status === "APPROVED"
-                          ? "bg-green-100 dark:bg-green-900/20"
-                          : report.report.academic_advisor_status === "REJECTED"
-                            ? "bg-red-100 dark:bg-red-900/20"
-                            : "bg-amber-100 dark:bg-amber-900/20"
-                    }`}
+                    className={`absolute left-0 top-1.5 h-7 w-7 rounded-full border-2 flex items-center justify-center ${getStatusColor(report)}`}
                   >
                     {getStatusIcon(report)}
                   </div>
@@ -111,9 +138,17 @@ export function ReportTimeline({ reports }: ReportTimelineProps) {
                       </span>
                     </div>
                     {report.report && report.report.feedback && (
-                      <p className="mt-2 text-sm bg-muted p-2 rounded-md">
-                        <span className="font-medium">Feedback:</span> {report.report.feedback}
-                      </p>
+                      <div className="mt-2 text-sm">
+                        <div className="bg-muted p-2 rounded-md border border-border/50">
+                          <span className="font-medium">Feedback:</span> {report.report.feedback}
+                        </div>
+                      </div>
+                    )}
+                    {report.report && report.report.title && (
+                      <div className="mt-1 text-xs text-muted-foreground flex items-center gap-1">
+                        <FileText className="h-3 w-3" />
+                        <span className="truncate max-w-[250px]">{report.report.title}</span>
+                      </div>
                     )}
                   </div>
                 </motion.div>

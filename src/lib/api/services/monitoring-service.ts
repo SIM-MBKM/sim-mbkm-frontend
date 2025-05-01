@@ -160,6 +160,30 @@ export interface Report {
   academic_advisor_status: string;
 }
 
+export interface ReportAdvisorData {
+  [nrp: string]: ReportSchedule[]
+}
+
+export interface ReportScheduleAdvisorData {
+  reports: ReportAdvisorData
+}
+
+export interface ReportScheduleAdvisorResponse {
+  message: string;
+  status: string;
+  data: ReportScheduleAdvisorData
+  current_page: string;
+  first_page_url: string;
+  last_page: string
+  last_page_url: string
+  next_page_url: string
+  per_page: string
+  prev_page_url: string
+  to: string
+  total: string
+  total_pages: string
+}
+
 // Monitoring management service endpoints
 export const monitoringService = {
 
@@ -184,6 +208,11 @@ export const monitoringService = {
         'Content-Type': 'multipart/form-data',
       },
     });
+    return response.data;
+  },
+
+  getReportSchedulesByAdvisor: async({page, limit}: {page: number, limit: number}) => {
+    const response = await monitoringApi.get<ReportScheduleAdvisorResponse>(`/report-schedules/advisor?page=${page}&limit=${limit}`);
     return response.data;
   },
 
