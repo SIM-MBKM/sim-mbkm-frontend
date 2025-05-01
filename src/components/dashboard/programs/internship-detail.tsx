@@ -5,11 +5,13 @@ import { Calendar, MapPin, Building2, Tag, School, Clock, BookOpen, ExternalLink
 import { Button } from "@/components/ui/button"
 import { Activity } from "@/lib/api/services/activity-service"
 import { useRouter } from "next/navigation"
-import { useCheckEligibility } from "@/lib/api/hooks"
 import { useState } from "react"
 import { toast, ToastContainer } from "react-toastify"
 import 'react-toastify/dist/ReactToastify.css'
 import { motion } from "framer-motion"
+import { useRoleManager } from "@/lib/hooks/use-role-manager"
+import { useQuery } from "@tanstack/react-query"
+import { registrationService } from "@/lib/api/services/registration-service"
 
 interface InternshipDetailProps {
   internship: Activity;
@@ -20,14 +22,27 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
   const [isChecking, setIsChecking] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   
-  // Use the eligibility check hook without storing unused data
-  const { refetch: checkEligibility } = useCheckEligibility(internship.id);
+  // Get the user's role
+  const { role } = useRoleManager();
+  
+  // Check if the user is a student
+  const isMahasiswa = role === "MAHASISWA";
+  
+  // Use custom implementation instead of useCheckEligibility hook to conditionally enable the query
+  const { refetch: checkEligibility } = useQuery({
+    queryKey: ['checkEligibility', internship.id],
+    queryFn: () => registrationService.checkEligibility(internship.id),
+    enabled: false, // Don't run automatically on mount
+    gcTime: 0, // Don't cache the result
+  });
   
   // Check if matching data exists
   const hasMatchings = internship.matching && internship.matching.length > 0;
   
   // Navigate to registration form with eligibility check
   const handleRegisterClick = async () => {
+    if (!isMahasiswa) return;
+    
     setIsChecking(true);
     
     try {
@@ -145,36 +160,39 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
 
       {/* Action Buttons */}
       <div className="flex gap-3 p-6 border-b">
-        <motion.div 
-          whileHover={{ scale: 1.03 }} 
-          whileTap={{ scale: 0.97 }}
-          className="flex-1"
-        >
-          <Button 
-            variant="default" 
-            className="w-full"
-            onClick={handleRegisterClick}
-            disabled={isChecking}
+        {isMahasiswa && (
+          <motion.div 
+            whileHover={{ scale: 1.03 }} 
+            whileTap={{ scale: 0.97 }}
+            className="flex-1"
           >
-            {isChecking ? (
-              <span className="flex items-center">
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Memeriksa Eligibilitas...
-              </span>
-            ) : (
-              "Daftar Program"
-            )}
-          </Button>
-        </motion.div>
+            <Button 
+              variant="default" 
+              className="w-full"
+              onClick={handleRegisterClick}
+              disabled={isChecking}
+            >
+              {isChecking ? (
+                <span className="flex items-center">
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Memeriksa Eligibilitas...
+                </span>
+              ) : (
+                "Daftar Program"
+              )}
+            </Button>
+          </motion.div>
+        )}
         
         <motion.div 
           whileHover={{ scale: 1.05 }} 
           whileTap={{ scale: 0.95 }}
+          className={isMahasiswa ? "" : "flex-1"}
         >
           <Button 
             variant="outline" 
             onClick={toggleSave}
-            className={isSaved ? "text-blue-600 border-blue-200 bg-blue-50" : ""}
+            className={`${isMahasiswa ? "" : "w-full"} ${isSaved ? "text-blue-600 border-blue-200 bg-blue-50" : ""}`}
           >
             <Bookmark className={`h-4 w-4 mr-2 ${isSaved ? "fill-blue-600 text-blue-600" : ""}`} />
             {isSaved ? "Tersimpan" : "Simpan"}

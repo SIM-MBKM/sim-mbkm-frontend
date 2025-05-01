@@ -99,11 +99,11 @@ const MENU_ITEMS: Record<UserRole, {
     {
       section: "Pendaftaran",
       items: [
-        { label: "Telusuri Program", icon: <Search className="h-5 w-5" />, href: "/dashboard/dosen-pembimbing/programs" },
+        { label: "Telusuri Program", icon: <Search className="h-5 w-5" />, href: "/dashboard/dosen-pembimbing/telusuri-program" },
         { 
           label: "Ajuan Mahasiswa", 
           icon: <CheckSquare className="h-5 w-5" />, 
-          href: "/dashboard/dosen-pembimbing/ajuan",
+          href: "/dashboard/dosen-pembimbing/ajuan-mahasiswa",
           badge: 5, 
         },
       ],

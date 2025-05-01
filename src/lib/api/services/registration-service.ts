@@ -130,6 +130,10 @@ export interface RegistrationStudentMatchingResponse {
   data: RegistrationStudentMatchingData
 }
 
+export interface ApprovalInput {
+  status: 'APPROVED' | 'REJECTED';
+  id: string[];
+}
 
 // syllabuses
 export interface RegistrationSyllabus {
@@ -175,6 +179,15 @@ export interface BaseResponse<T> {
 export interface Eligibility {
   eligible: boolean;
   message: string;
+}
+
+export interface RegistrationFilter {
+  activity_name: string;
+  user_name: string;
+  user_nrp: string;
+  academic_advisor: string;
+  lo_validation: string;
+  academic_advisor_validation: string;
 }
 
 // Registration management service endpoints
@@ -235,6 +248,14 @@ export const registrationService = {
     );
     return response.data;
   },
+
+  getRegistrationAdvisor: async({page, limit, filter}: {page: number, limit: number, filter: RegistrationFilter}) => {
+    const response = await registrationApi.post<PaginatedResponse<Registration>>(
+      `/registration/advisor?page=${page}&limit=${limit}`,
+      filter,
+    );
+    return response.data;
+  },
   
   getRegistrationStudentMatching: async () => {
     const response = await registrationApi.post<RegistrationStudentMatchingResponse>(
@@ -254,6 +275,11 @@ export const registrationService = {
   // Get user's registrations
   getUserRegistrations: async () => {
     const response = await registrationApi.get<Registration[]>('/registrations/my');
+    return response.data;
+  },
+
+  approveStudentRegistrations: async (approvalInput: ApprovalInput) => {
+    const response = await registrationApi.post<BaseResponse<string>>('/registration/approval', approvalInput);
     return response.data;
   },
 

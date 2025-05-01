@@ -1,14 +1,14 @@
 "use client"
 
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
-import { Dashboard } from "@/components/dashboard/dosen-pembimbing/dashboard";
-// import { ProtectedDashboardLayout } from "@/components/dashboard/protected-dashboard-layout"
+import { RegistrationDashboard } from "@/components/dashboard/dosen-pembimbing/ajuan-mahasiswa/registration-dashboard";
+
 
 export default function MahasiswaDashboard() {
   return (
     // <ProtectedDashboardLayout allowedRole="DOSEN PEMBIMBING">
     <DashboardLayout>
-      <Dashboard />
+      <RegistrationDashboard />
     </DashboardLayout>
     // </ProtectedDashboardLayout>
   )

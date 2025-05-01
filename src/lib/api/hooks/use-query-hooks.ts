@@ -21,6 +21,8 @@ import {
   EquivalentInput,
   RegistrationUpdateRequest,
   SubjectFilterRequest,
+  ApprovalInput,
+  RegistrationFilter,
 } from '../services';
 
 // AUTH HOOKS
@@ -207,6 +209,34 @@ export const useCheckEligibility = (activity_id: string) => {
   return useQuery({
     queryKey: ['checkEligibility', activity_id],
     queryFn: () => registrationService.checkEligibility(activity_id),
+  });
+}
+
+export const useApproveStudentRegistrations = () => {
+  const queryClient = useQueryClient();
+  
+  const mutation = useMutation({
+    mutationFn: (approvalInput: ApprovalInput) => 
+      registrationService.approveStudentRegistrations(approvalInput),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userRegistrations'] });
+    },
+    onError: (error) => {
+      console.error('Error approving student registrations:', error);
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending
+  }
+  
+}
+
+export const useRegistrationAdvisor = ({page, limit, filter}: {page: number, limit: number, filter: RegistrationFilter}) => {
+  return useQuery({
+    queryKey: ['userRegistrations', page, limit, filter],
+    queryFn: () => registrationService.getRegistrationAdvisor({page, limit, filter}),
   });
 }
 
