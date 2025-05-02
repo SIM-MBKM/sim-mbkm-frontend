@@ -6,7 +6,8 @@ import { X, Download, FileText, Maximize2, Minimize2, CheckCircle, XCircle, Cloc
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { format, parseISO } from "date-fns"
-import { useToast } from "@/lib/api/hooks/use-toast"
+// import { toast } from "react-toastify"
+// import 'react-toastify/dist/ReactToastify.css'
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { ReportSchedule } from "@/lib/api/services";
@@ -24,7 +25,6 @@ export function ReportPreview({ report, onClose, onStatusChange }: ReportPreview
   const [status, setStatus] = useState<string>(report.report?.academic_advisor_status || "PENDING")
   const [feedback, setFeedback] = useState<string>(report.report?.feedback || "")
   const [isEditing, setIsEditing] = useState(false)
-  const { toast } = useToast()
 
   useEffect(() => {
     // Simulate loading
@@ -71,11 +71,7 @@ export function ReportPreview({ report, onClose, onStatusChange }: ReportPreview
 
   const handleSubmit = async () => {
     if (!report.report) {
-      toast({
-        title: "Error",
-        description: "Cannot update status for a report that hasn't been submitted yet",
-        variant: "destructive",
-      })
+      // toast.error("Cannot update status for a report that hasn't been submitted yet")
       return
     }
 
@@ -87,21 +83,18 @@ export function ReportPreview({ report, onClose, onStatusChange }: ReportPreview
 
       // Call the onStatusChange callback to update the parent component
       if (onStatusChange) {
-        onStatusChange(report.id, status, feedback)
+        onStatusChange(report.report?.id || "", status, feedback)
       }
 
-      toast({
-        title: "Success",
-        description: `Report status updated to ${status}`,
-      })
+      // toast.success(`Report status updated to ${status}`)
 
-      setIsEditing(false)
+      // Close the preview on success
+      onClose()
     } catch {
-      toast({
-        title: "Error",
-        description: "Failed to update report status",
-        variant: "destructive",
-      })
+      // toast.error("Failed to update report status")
+      
+      // Close the preview even on failure
+      onClose()
     } finally {
       setSubmitting(false)
     }
@@ -113,7 +106,7 @@ export function ReportPreview({ report, onClose, onStatusChange }: ReportPreview
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-white flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-50 bg-white flex items-center justify-center p-4 backdrop-blur-sm"
         onClick={onClose}
       >
         <motion.div

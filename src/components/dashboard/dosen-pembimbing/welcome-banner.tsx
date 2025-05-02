@@ -14,7 +14,7 @@ export function WelcomeBanner({ onClose }: WelcomeBannerProps) {
       initial={{ opacity: 0, y: -50 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -50 }}
-      className="relative mb-6 rounded-lg border bg-card p-6 pr-12"
+      className="relative mb-6 rounded-lg border mt-20 bg-card p-6 pr-12"
     >
       <Button variant="ghost" size="icon" className="absolute right-4 top-4 h-8 w-8" onClick={onClose}>
         <X className="h-4 w-4" />

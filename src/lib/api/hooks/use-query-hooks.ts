@@ -23,6 +23,7 @@ import {
   SubjectFilterRequest,
   ApprovalInput,
   RegistrationFilter,
+  ReportApprovalInput,
 } from '../services';
 
 // AUTH HOOKS
@@ -330,6 +331,26 @@ export const useReportSchedulesByAdvisor = ({page, limit}: {page: number, limit:
     queryKey: ['reportSchedulesByAdvisor', page, limit],
     queryFn: () => monitoringService.getReportSchedulesByAdvisor({page, limit}),
   });
+}
+
+export const useReportsApproval = () => {
+  const queryClient = useQueryClient();
+  
+  const mutation = useMutation({
+    mutationFn: (reportApprovalInput: ReportApprovalInput) =>
+      monitoringService.reportsApproval(reportApprovalInput),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reportSchedulesByAdvisor'] });
+    },
+    onError: (error) => {
+      console.error('Error approving reports:', error);
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending
+  }
 }
 
 export const useSubmitTranscript = () => {

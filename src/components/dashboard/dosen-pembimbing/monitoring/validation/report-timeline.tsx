@@ -94,7 +94,7 @@ export function ReportTimeline({ reports }: ReportTimelineProps) {
         <CardContent className="max-h-[400px] overflow-y-auto pr-2 pb-4 pt-1">
           <div className="relative">
             {/* Timeline line */}
-            <div className="absolute left-3.5 top-0 bottom-0 w-0.5 bg-border/80 rounded-full" />
+            <div className="absolute left-3.5 top-0 bottom-0 w-0.5 bg-border/80 bg-gray-500 rounded-full" />
 
             <div className="space-y-6">
               {sortedReports.map((report, index) => (

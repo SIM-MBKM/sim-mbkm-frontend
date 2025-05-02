@@ -1,4 +1,5 @@
 import { apiServices } from '../axios-instance';
+import { BaseResponse } from './registration-service';
 
 const monitoringApi = apiServices.monitoring;
 
@@ -184,6 +185,12 @@ export interface ReportScheduleAdvisorResponse {
   total_pages: string
 }
 
+export interface ReportApprovalInput {
+  status: string;
+  feedback: string;
+  ids: string[]
+}
+
 // Monitoring management service endpoints
 export const monitoringService = {
 
@@ -209,6 +216,12 @@ export const monitoringService = {
       },
     });
     return response.data;
+  },
+
+  reportsApproval: async (reportApprovalInput: ReportApprovalInput) => {
+    const resposne = await monitoringApi.post<BaseResponse<null>>('/reports/approval', reportApprovalInput);
+
+    return resposne.data;
   },
 
   getReportSchedulesByAdvisor: async({page, limit}: {page: number, limit: number}) => {

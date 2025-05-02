@@ -7,14 +7,16 @@ import { ReportCards } from "./report-cards"
 import { ReportStats } from "./report-stats"
 import { ReportFilter } from "./report-filter"
 import { Pagination } from "./pagination"
-import { Toaster } from "@/components/ui/toaster"
-import { useToast } from "@/lib/api/hooks/use-toast"
+import { toast } from "react-toastify"
+import 'react-toastify/dist/ReactToastify.css'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Loader2, Briefcase, Calendar, FileText, CheckCircle } from "lucide-react"
 import { ReportSchedule, ReportScheduleAdvisorResponse } from "@/lib/api/services"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { useReportSchedulesByAdvisor } from "@/lib/api/hooks/use-query-hooks"
+import { useReportSchedulesByAdvisor, useReportsApproval } from "@/lib/api/hooks/use-query-hooks"
+// import { ToastProvider } from "react-hot-toast"
+import { ToastProvider } from "@/components/toast-provider"
 
 // Interface for grouped activities
 interface ActivityGroup {
@@ -30,7 +32,6 @@ export function ReportDashboard() {
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(1)
-  const { toast } = useToast()
   const [updatedReports, setUpdatedReports] = useState<Record<string, { status: string; feedback: string }>>({})
   
   // Use the React Query hook to fetch report schedules
@@ -38,6 +39,9 @@ export function ReportDashboard() {
     page: currentPage,
     limit: pageSize
   })
+
+  // Use the hook for approving/rejecting reports
+  const { mutate: approveReports, isPending: isApproving } = useReportsApproval()
   
   // Filter NRPs based on search query
   const filteredNRPs = useMemo(() => {
@@ -109,10 +113,10 @@ export function ReportDashboard() {
     setSelectedNRP(null)
     setSelectedRegistrationId(null)
 
-    toast({
-      title: "Changing page",
-      description: `Loading page ${page}`,
-    })
+    toast.info(`Loading page ${page}`, {
+      position: "top-right",
+      autoClose: 3000,
+    });
   }
 
   const handleReportTypeChange = (type: "WEEKLY_REPORT" | "FINAL_REPORT") => {
@@ -163,7 +167,8 @@ export function ReportDashboard() {
         total++
 
         // Check if this report has been updated
-        const updatedReport = updatedReports[report.id]
+        const reportId = report.report?.id || '';
+        const updatedReport = updatedReports[reportId]
         const status = updatedReport?.status || report.report?.academic_advisor_status
 
         if (report.report) {
@@ -192,21 +197,72 @@ export function ReportDashboard() {
 
   const handleStatusChange = useCallback(
     (reportId: string, status: string, feedback: string) => {
+      // Update local state using report.report.id
       setUpdatedReports((prev) => ({
         ...prev,
         [reportId]: { status, feedback },
       }))
 
-      // In a real app, you would make an API call here
-      toast({
-        title: "Status updated",
-        description: `Report status changed to ${status}`,
-      })
-      
-      // After successful update, refetch the data
-      refetch();
+      // Use the useReportsApproval hook with the correct report ID
+      approveReports(
+        { status, feedback, ids: [reportId] },
+        {
+          onSuccess: () => {
+            toast.success(`Report status changed to ${status}`, {
+              position: "top-right",
+              autoClose: 3000,
+            });
+            
+            refetch();
+          },
+          onError: (error) => {
+            toast.error("Failed to update report status", {
+              position: "top-right",
+              autoClose: 5000,
+            });
+            console.error('Error updating report status:', error);
+          }
+        }
+      )
     },
-    [toast, refetch],
+    [refetch, approveReports],
+  )
+
+  const handleBulkStatusChange = useCallback(
+    (reportIds: string[], status: string, feedback: string) => {
+      // Update local state using report.report.id values
+      const updatedReportsNew = { ...updatedReports };
+      
+      reportIds.forEach(id => {
+        updatedReportsNew[id] = { status, feedback };
+      });
+      
+      setUpdatedReports(updatedReportsNew);
+      console.log("REPORT IDS", reportIds);
+
+      // Use the useReportsApproval hook for bulk approval/rejection
+      approveReports(
+        { status, feedback, ids: reportIds }, // These IDs are already report.report.id values
+        {
+          onSuccess: () => {
+            toast.success(`${reportIds.length} reports have been ${status.toLowerCase()}`, {
+              position: "top-right",
+              autoClose: 3000,
+            });
+            
+            refetch();
+          },
+          onError: (error) => {
+            toast.error("Failed to update report statuses", {
+              position: "top-right",
+              autoClose: 5000,
+            });
+            console.error('Error updating report statuses:', error);
+          }
+        }
+      )
+    },
+    [refetch, updatedReports, approveReports],
   )
 
   const stats = calculateStats(data || null, updatedReports)
@@ -379,6 +435,8 @@ export function ReportDashboard() {
                         reports={getFilteredReports()}
                         updatedReports={updatedReports}
                         onStatusChange={handleStatusChange}
+                        onBulkStatusChange={handleBulkStatusChange}
+                        isProcessing={isApproving}
                       />
                     </>
                   ) : (
@@ -400,6 +458,8 @@ export function ReportDashboard() {
                         reports={getFilteredReports()}
                         updatedReports={updatedReports}
                         onStatusChange={handleStatusChange}
+                        onBulkStatusChange={handleBulkStatusChange}
+                        isProcessing={isApproving}
                       />
                     </>
                   ) : (
@@ -421,7 +481,7 @@ export function ReportDashboard() {
           )}
         </AnimatePresence>
       
-      <Toaster />
+      <ToastProvider />
     </>
     
   )

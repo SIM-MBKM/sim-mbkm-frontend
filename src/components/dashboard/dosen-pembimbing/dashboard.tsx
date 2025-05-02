@@ -1,12 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion} from "framer-motion"
 import { StatCard } from "./stat-card"
 import { ActivityFeed } from "./activity-feed"
 import { ReviewSection } from "./review-section"
 import { QuickActions } from "./quick-actions"
-import { WelcomeBanner } from "./welcome-banner"
 import { Bell, Users, CheckCircle, Calendar, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
@@ -115,7 +114,7 @@ export function Dashboard() {
 
   return (
     <>
-      <AnimatePresence>{showWelcome && <WelcomeBanner onClose={() => setShowWelcome(false)} />}</AnimatePresence>
+      {/* <AnimatePresence>{showWelcome && <WelcomeBanner onClose={() => setShowWelcome(false)} />}</AnimatePresence> */}
       <div className="mb-6 mt-20">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <motion.div
