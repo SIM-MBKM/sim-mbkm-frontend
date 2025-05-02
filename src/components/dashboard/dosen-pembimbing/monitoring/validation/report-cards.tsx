@@ -293,7 +293,7 @@ export function ReportCards({
                         <Checkbox
                           checked={isSelected}
                           onCheckedChange={() => handleToggleSelect(reportId)}
-                          className="h-4 w-4 border-white data-[state=checked]:bg-white data-[state=checked]:text-primary"
+                          className="h-4 w-4 border-white data-[state=checked]:bg-white data-[state=checked]:text-blue-500"
                           onClick={(e) => e.stopPropagation()}
                         />
                       )}

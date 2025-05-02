@@ -474,9 +474,9 @@ export function ReportDashboard() {
                 </TabsContent>
               </Tabs>
 
-              <div className="mt-8">
+              {/* <div className="mt-8">
                 <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
-              </div>
+              </div> */}
             </motion.div>
           )}
         </AnimatePresence>
