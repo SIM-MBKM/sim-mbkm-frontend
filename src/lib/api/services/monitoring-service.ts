@@ -50,11 +50,12 @@ export interface ReportSchedulesResponse {
 
 export interface Transcript {
   id: string;
-  user_id: string
+  user_id: string;
   user_nrp: string;
   academic_advisor_id: string;
   academic_advisor_email: string;
   registration_id: string;
+  activity_name: string;
   title: string;
   file_storage_id: string;
 }
@@ -191,6 +192,74 @@ export interface ReportApprovalInput {
   ids: string[]
 }
 
+export interface TranscriptByAdvisor {
+  [nrp: string]: Transcript[]
+}
+
+export interface TranscriptByAdvisorData {
+  transcripts: TranscriptByAdvisor
+}
+
+export interface TranscriptByAdvisorResponse {
+  message: string;
+  status: string;
+  data: TranscriptByAdvisorData
+  current_page: string;
+  first_page_url: string;
+  last_page: string
+  last_page_url: string
+  next_page_url: string
+  per_page: string
+  prev_page_url: string
+  to: string
+  total: string
+  total_pages: string
+}
+
+export interface TranscriptByAdvisorInput {
+  user_nrp?: string;
+}
+
+export interface Syllabus {
+  id: string;
+  user_id: string;
+  user_nrp: string;
+  academic_advisor_id: string;
+  academic_advisor_email: string;
+  registration_id: string;
+  activity_name: string;
+  title: string;
+  file_storage_id: string;
+}
+
+export interface SyllabusByAdvisor {
+  [nrp: string]: Syllabus[]
+}
+
+export interface SyllabusByAdvisorData {
+  syllabuses: SyllabusByAdvisor
+}
+
+export interface SyllabusByAdvisorResponse {
+  message: string;
+  status: string;
+  data: SyllabusByAdvisorData
+  current_page: string;
+  first_page_url: string;
+  last_page: string
+  last_page_url: string
+  next_page_url: string
+  per_page: string
+  prev_page_url: string
+  to: string
+  total: string
+  total_pages: string
+}
+
+export interface SyllabusByAdvisorInput {
+  user_nrp?: string;
+}
+
 // Monitoring management service endpoints
 export const monitoringService = {
 
@@ -214,6 +283,13 @@ export const monitoringService = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+    });
+    return response.data;
+  },
+
+  getTranscriptsByAdvisor: async ({ page, limit, transcriptByAdvisorInput }: { page: number, limit: number, transcriptByAdvisorInput: TranscriptByAdvisorInput }) => {
+    const response = await monitoringApi.post<TranscriptByAdvisorResponse>(`/transcripts/advisor?page=${page}&limit=${limit}`, {
+      params: transcriptByAdvisorInput,
     });
     return response.data;
   },
@@ -350,6 +426,13 @@ export const monitoringService = {
   // Get dashboard monitoring stats
   getMonitoringStats: async (programId: string) => {
     const response = await monitoringApi.get(`/programs/${programId}/stats`);
+    return response.data;
+  },
+
+  getSyllabusesByAdvisor: async ({ page, limit, syllabusByAdvisorInput }: { page: number, limit: number, syllabusByAdvisorInput: SyllabusByAdvisorInput }) => {
+    const response = await monitoringApi.post<SyllabusByAdvisorResponse>(`/syllabuses/advisor?page=${page}&limit=${limit}`, {
+      params: syllabusByAdvisorInput,
+    });
     return response.data;
   },
 }; 

@@ -24,6 +24,8 @@ import {
   ApprovalInput,
   RegistrationFilter,
   ReportApprovalInput,
+  TranscriptByAdvisorInput,
+  SyllabusByAdvisorInput,
 } from '../services';
 
 // AUTH HOOKS
@@ -333,9 +335,23 @@ export const useReportSchedulesByAdvisor = ({page, limit}: {page: number, limit:
   });
 }
 
+export const useTranscriptsByAdvisor = ({page, limit, transcriptByAdvisorInput}: {page: number, limit: number, transcriptByAdvisorInput: TranscriptByAdvisorInput}) => {
+  return useQuery({
+    queryKey: ['transcriptsByAdvisor', page, limit, transcriptByAdvisorInput],
+    queryFn: () => monitoringService.getTranscriptsByAdvisor({page, limit, transcriptByAdvisorInput}),
+  });
+}
+
+export const useSyllabusesByAdvisor = ({page, limit, syllabusByAdvisorInput}: {page: number, limit: number, syllabusByAdvisorInput: SyllabusByAdvisorInput}) => {
+  return useQuery({
+    queryKey: ['syllabusesByAdvisor', page, limit, syllabusByAdvisorInput],
+    queryFn: () => monitoringService.getSyllabusesByAdvisor({page, limit, syllabusByAdvisorInput}),
+  });
+}
+
 export const useReportsApproval = () => {
   const queryClient = useQueryClient();
-  
+
   const mutation = useMutation({
     mutationFn: (reportApprovalInput: ReportApprovalInput) =>
       monitoringService.reportsApproval(reportApprovalInput),

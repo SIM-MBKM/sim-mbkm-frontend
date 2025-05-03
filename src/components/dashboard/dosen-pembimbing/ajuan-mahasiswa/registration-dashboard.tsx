@@ -465,6 +465,7 @@ export function RegistrationDashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   className="sticky top-20 z-10 mb-4"
+                  key="bulk-action-bar"
                 >
                   <BulkActionBar
                     selectedCount={selectedIds.length}
@@ -486,6 +487,7 @@ export function RegistrationDashboard() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="grid grid-cols-1 gap-6"
+                    key="registrations-list"
                   >
                     {/* Summary of matching and equivalents */}
                     <div className="mb-4">
@@ -530,19 +532,17 @@ export function RegistrationDashboard() {
                       </motion.div>
                     </div>
                     
-                    <AnimatePresence>
-                      {registrations.map((registration) => (
-                        <RegistrationCard
-                          key={registration.id}
-                          registration={registration}
-                          isSelected={selectedIds.includes(registration.id)}
-                          onToggleSelect={() => handleToggleSelect(registration.id)}
-                          onApprove={() => handleApprove(registration.id)}
-                          onReject={() => handleReject(registration.id)}
-                          isDisabled={isApproving}
-                        />
-                      ))}
-                    </AnimatePresence>
+                    {registrations.map((registration) => (
+                      <RegistrationCard
+                        key={registration.id}
+                        registration={registration}
+                        isSelected={selectedIds.includes(registration.id)}
+                        onToggleSelect={() => handleToggleSelect(registration.id)}
+                        onApprove={() => handleApprove(registration.id)}
+                        onReject={() => handleReject(registration.id)}
+                        isDisabled={isApproving}
+                      />
+                    ))}
                   </motion.div>
                 )}
 

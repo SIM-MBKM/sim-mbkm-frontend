@@ -104,7 +104,6 @@ const MENU_ITEMS: Record<UserRole, {
           label: "Ajuan Mahasiswa", 
           icon: <CheckSquare className="h-5 w-5" />, 
           href: "/dashboard/dosen-pembimbing/ajuan-mahasiswa",
-          badge: 5, 
         },
       ],
     },
@@ -116,7 +115,8 @@ const MENU_ITEMS: Record<UserRole, {
           icon: <ClipboardList className="h-5 w-5" />, 
           href: "/dashboard/dosen-pembimbing/monitoring",
           children: [
-            { label: "Progres Mahasiswa", href: "/dashboard/dosen-pembimbing/monitoring/progress" },
+            { label: "Transkrip Mahasiswa", href: "/dashboard/dosen-pembimbing/monitoring/transcript" },
+            { label: "Silabus Mahasiswa", href: "/dashboard/dosen-pembimbing/monitoring/silabus" },
             { label: "Validasi Dokumen", href: "/dashboard/dosen-pembimbing/monitoring/validation" },
           ]
         },
