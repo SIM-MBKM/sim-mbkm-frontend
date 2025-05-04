@@ -260,6 +260,10 @@ export interface SyllabusByAdvisorInput {
   user_nrp?: string;
 }
 
+export interface ReportScheduleByAdvisorInput {
+  user_nrp?: string;
+}
+
 // Monitoring management service endpoints
 export const monitoringService = {
 
@@ -288,9 +292,7 @@ export const monitoringService = {
   },
 
   getTranscriptsByAdvisor: async ({ page, limit, transcriptByAdvisorInput }: { page: number, limit: number, transcriptByAdvisorInput: TranscriptByAdvisorInput }) => {
-    const response = await monitoringApi.post<TranscriptByAdvisorResponse>(`/transcripts/advisor?page=${page}&limit=${limit}`, {
-      params: transcriptByAdvisorInput,
-    });
+    const response = await monitoringApi.post<TranscriptByAdvisorResponse>(`/transcripts/advisor?page=${page}&limit=${limit}`, transcriptByAdvisorInput);
     return response.data;
   },
 
@@ -300,8 +302,8 @@ export const monitoringService = {
     return resposne.data;
   },
 
-  getReportSchedulesByAdvisor: async({page, limit}: {page: number, limit: number}) => {
-    const response = await monitoringApi.get<ReportScheduleAdvisorResponse>(`/report-schedules/advisor?page=${page}&limit=${limit}`);
+  getReportSchedulesByAdvisor: async({page, limit, input}: {page: number, limit: number, input: ReportScheduleByAdvisorInput}) => {
+    const response = await monitoringApi.post<ReportScheduleAdvisorResponse>(`/report-schedules/advisor?page=${page}&limit=${limit}`, input);
     return response.data;
   },
 
@@ -430,9 +432,7 @@ export const monitoringService = {
   },
 
   getSyllabusesByAdvisor: async ({ page, limit, syllabusByAdvisorInput }: { page: number, limit: number, syllabusByAdvisorInput: SyllabusByAdvisorInput }) => {
-    const response = await monitoringApi.post<SyllabusByAdvisorResponse>(`/syllabuses/advisor?page=${page}&limit=${limit}`, {
-      params: syllabusByAdvisorInput,
-    });
+    const response = await monitoringApi.post<SyllabusByAdvisorResponse>(`/syllabuses/advisor?page=${page}&limit=${limit}`, syllabusByAdvisorInput);
     return response.data;
   },
 }; 

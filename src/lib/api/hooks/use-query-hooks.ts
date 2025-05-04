@@ -26,6 +26,7 @@ import {
   ReportApprovalInput,
   TranscriptByAdvisorInput,
   SyllabusByAdvisorInput,
+  ReportScheduleByAdvisorInput,
 } from '../services';
 
 // AUTH HOOKS
@@ -328,10 +329,10 @@ export const useFilterSubject = ({ limit, page, filter }: { limit: number, page:
 
 // MONITORING HOOKS
 
-export const useReportSchedulesByAdvisor = ({page, limit}: {page: number, limit: number}) => {
+export const useReportSchedulesByAdvisor = ({page, limit, input}: {page: number, limit: number, input: ReportScheduleByAdvisorInput}) => {
   return useQuery({
-    queryKey: ['reportSchedulesByAdvisor', page, limit],
-    queryFn: () => monitoringService.getReportSchedulesByAdvisor({page, limit}),
+    queryKey: ['reportSchedulesByAdvisor', page, limit, input],
+    queryFn: () => monitoringService.getReportSchedulesByAdvisor({page, limit, input}),
   });
 }
 

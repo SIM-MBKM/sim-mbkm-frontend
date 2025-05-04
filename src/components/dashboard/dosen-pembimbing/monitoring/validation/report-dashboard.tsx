@@ -33,12 +33,23 @@ export function ReportDashboard() {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(1)
   const [updatedReports, setUpdatedReports] = useState<Record<string, { status: string; feedback: string }>>({})
+  const [isPerformingSearch, setIsPerformingSearch] = useState(false)
   
-  // Use the React Query hook to fetch report schedules
-  const { data, isLoading, refetch } = useReportSchedulesByAdvisor({
+  // Use the React Query hook to fetch report schedules with the input parameter
+  const { data, isLoading, refetch, isFetching } = useReportSchedulesByAdvisor({
     page: currentPage,
-    limit: pageSize
+    limit: pageSize,
+    input: {
+      user_nrp: searchQuery || undefined
+    }
   })
+
+  // Set isPerformingSearch to false when data loading completes
+  useEffect(() => {
+    if (!isFetching && isPerformingSearch) {
+      setIsPerformingSearch(false);
+    }
+  }, [isFetching, isPerformingSearch]);
 
   // Use the hook for approving/rejecting reports
   const { mutate: approveReports, isPending: isApproving } = useReportsApproval()
@@ -48,10 +59,8 @@ export function ReportDashboard() {
     if (!data || !data.data || !data.data.reports) return []
 
     const allNRPs = Object.keys(data.data.reports)
-    if (!searchQuery) return allNRPs
-
-    return allNRPs.filter((nrp) => nrp.toLowerCase().includes(searchQuery.toLowerCase()))
-  }, [data, searchQuery])
+    return allNRPs
+  }, [data])
 
   // Calculate pagination for filtered NRPs
   const paginatedNRPs = useMemo(() => {
@@ -133,13 +142,28 @@ export function ReportDashboard() {
   }
 
   const handleSearchChange = (query: string) => {
+    // Just update the input field value, no API calls
     setSearchQuery(query)
-    // Reset to first page when searching
+  }
+  
+  const handleSearchSubmit = useCallback(() => {
+    // No need to update searchQuery since it's already updated in handleSearchChange
+    // Just trigger the search process
+    setIsPerformingSearch(true)
+    
+    // Reset selections when search is submitted
     setCurrentPage(1)
-    // Reset selected NRP when searching
     setSelectedNRP(null)
     setSelectedRegistrationId(null)
-  }
+    
+    // Force a refetch to search with the current query
+    refetch();
+    
+    toast.info("Searching reports...", {
+      position: "top-right",
+      autoClose: 3000,
+    });
+  }, [refetch]);
 
   // Filter reports by type and registration_id
   const getFilteredReports = () => {
@@ -267,10 +291,13 @@ export function ReportDashboard() {
 
   const stats = calculateStats(data || null, updatedReports)
 
+  // Only show loading indicator during initial load, not during search
+  const showFullLoadingScreen = isLoading && !isPerformingSearch;
+
   return (
     <>
       <AnimatePresence mode="wait">
-          {isLoading ? (
+          {showFullLoadingScreen ? (
             <motion.div
               key="loading"
               initial={{ opacity: 0 }}
@@ -301,7 +328,9 @@ export function ReportDashboard() {
                     onNRPChange={handleNRPChange}
                     searchQuery={searchQuery}
                     onSearchChange={handleSearchChange}
+                    onSearchSubmit={handleSearchSubmit}
                     currentActivity={currentActivity}
+                    isSearching={isPerformingSearch}
                   />
                 </div>
               </div>
