@@ -429,7 +429,7 @@ export function RegistrationCard({
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             className="flex items-center gap-3 p-3 rounded-lg border bg-background/50 cursor-pointer"
-                            onClick={() => setShowDocumentPreview(doc.id)}
+                            onClick={() => setShowDocumentPreview(doc.file_storage_id)}
                           >
                             <div className="p-2 rounded-md bg-primary/10">
                               <FileText className="h-5 w-5 text-primary" />
@@ -514,7 +514,7 @@ export function RegistrationCard({
                                                 variant="ghost" 
                                                 size="sm" 
                                                 className="h-8 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                                                onClick={() => item.documents?.length && setShowDocumentPreview(item.documents[0].id)}
+                                                onClick={() => item.documents?.length && setShowDocumentPreview(item.documents[0].file_storage_id)}
                                               >
                                                 <FileText className="h-4 w-4 mr-1" />
                                                 View Document
@@ -625,7 +625,7 @@ export function RegistrationCard({
                                                 variant="ghost" 
                                                 size="sm" 
                                                 className="h-8 text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
-                                                onClick={() => item.documents?.length && setShowDocumentPreview(item.documents[0].id)}
+                                                onClick={() => item.documents?.length && setShowDocumentPreview(item.documents[0].file_storage_id)}
                                               >
                                                 <FileText className="h-4 w-4 mr-1" />
                                                 View Document

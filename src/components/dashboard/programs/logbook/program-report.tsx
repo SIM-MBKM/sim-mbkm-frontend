@@ -16,6 +16,7 @@ interface Report {
   status: string
   feedback: string | null
   report_schedule_id: string
+  file_storage_id: string | null
 }
 
 interface ProgramReportsProps {

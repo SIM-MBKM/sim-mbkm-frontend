@@ -10,64 +10,71 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Document } from "@/lib/api/services";
+import { Document } from "@/lib/api/services/registration-service";
 import { useGetTemporaryLink } from "@/lib/api/hooks/use-query-hooks";
 import { toast } from "react-toastify";
 
-// Create a simple skeleton component if it doesn't exist
+// Create a simple skeleton component
 const Skeleton = ({ className }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-200 dark:bg-gray-700 rounded ${className}`}></div>
 );
 
 interface DocumentPreviewProps {
-  documentId: string | null;
+  documentId: string;
   onClose: () => void;
 }
 
-
 export function DocumentPreview({ documentId, onClose }: DocumentPreviewProps) {
   const [loading, setLoading] = useState(true);
-  const [document, setDocument] = useState<Document | null>(null);
+  const [docItem, setDocItem] = useState<Document | null>(null);
+  const [isPDF, setIsPDF] = useState(false);
 
   // Simulate fetching document details
   useEffect(() => {
     if (documentId) {
       // In a real application, you would fetch the document data from your API
+      // This is just for simulating a fetch - in a real app you'd get this from the parent 
+      // component or fetch it using the ID
       const fetchTimeout = setTimeout(() => {
-        setDocument({
-          id: documentId,
+        setDocItem({
+          id: "doc-" + documentId.substring(0, 6),
+          registration_id: "reg-123",
           subject_id: "subject-123",
-          file_storage_id: documentId, // Using a distinct file_storage_id
-          name: "Sample Document.pdf",
+          file_storage_id: documentId,
+          name: "Document " + documentId.substring(0, 6) + ".pdf",
           document_type: "application/pdf"
         });
+        setIsPDF(true);
         setLoading(false);
-      }, 1200);
+      }, 800);
 
       return () => {
         clearTimeout(fetchTimeout);
         setLoading(true);
-        setDocument(null);
+        setDocItem(null);
       };
     }
   }, [documentId]);
 
   // Use the hook to get the temporary link
-  const { data: fileData, isLoading: isFileLoading, error: fileError } = useGetTemporaryLink(
-    document?.file_storage_id || ''
-  );
+  const { 
+    data: fileData, 
+    isLoading: isFileLoading, 
+    error: fileError,
+    refetch
+  } = useGetTemporaryLink(documentId);
 
   // Determine document icon based on mime type
   const getDocumentIcon = () => {
-    if (!document) return <FileText className="h-16 w-16 text-blue-500" />;
+    if (!docItem) return <FileText className="h-16 w-16 text-blue-500" />;
     
-    if (document.document_type.includes("pdf")) {
+    if (docItem.document_type.includes("pdf")) {
       return <FileText className="h-16 w-16 text-red-500" />;
-    } else if (document.document_type.includes("image")) {
+    } else if (docItem.document_type.includes("image")) {
       return <FileText className="h-16 w-16 text-purple-500" />;
-    } else if (document.document_type.includes("word") || document.document_type.includes("document")) {
+    } else if (docItem.document_type.includes("word") || docItem.document_type.includes("document")) {
       return <FileText className="h-16 w-16 text-blue-500" />;
-    } else if (document.document_type.includes("excel") || document.document_type.includes("sheet")) {
+    } else if (docItem.document_type.includes("excel") || docItem.document_type.includes("sheet")) {
       return <FileText className="h-16 w-16 text-green-500" />;
     }
     
@@ -76,9 +83,17 @@ export function DocumentPreview({ documentId, onClose }: DocumentPreviewProps) {
 
   const handleDownload = () => {
     if (fileData?.url) {
-      window.open(fileData.url, '_blank');
+      // Create a temporary anchor element to trigger the download
+      const link = window.document.createElement('a');
+      link.href = fileData.url;
+      link.target = '_blank';
+      link.download = docItem?.name || 'document';
+      window.document.body.appendChild(link);
+      link.click();
+      window.document.body.removeChild(link);
     } else {
       toast.error("Unable to download file. Please try again later.");
+      refetch();
     }
   };
 
@@ -87,19 +102,20 @@ export function DocumentPreview({ documentId, onClose }: DocumentPreviewProps) {
       window.open(fileData.url, '_blank');
     } else {
       toast.error("Unable to open file. Please try again later.");
+      refetch();
     }
   };
 
   return (
     <Dialog open={!!documentId} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-4xl w-full bg-white">
+      <DialogContent className="max-w-4xl w-full bg-white z-[200]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-blue-500" />
             {loading ? (
               <Skeleton className="h-6 w-40" />
             ) : (
-              <span>{document?.name}</span>
+              <span>{docItem?.name}</span>
             )}
           </DialogTitle>
           <div className="mt-1 text-sm text-muted-foreground">
@@ -107,9 +123,9 @@ export function DocumentPreview({ documentId, onClose }: DocumentPreviewProps) {
               <Skeleton className="h-4 w-60 mt-2" />
             ) : (
               <div className="flex gap-3 text-sm text-muted-foreground mt-1">
-                <span>Type: {document?.document_type?.split("/")[1]?.toUpperCase() || "DOCUMENT"}</span>
+                <span>Type: {docItem?.document_type?.split("/")[1]?.toUpperCase() || "DOCUMENT"}</span>
                 <span>•</span>
-                <span>Name: {document?.name}</span>
+                <span>ID: {docItem?.id}</span>
               </div>
             )}
           </div>
@@ -130,11 +146,11 @@ export function DocumentPreview({ documentId, onClose }: DocumentPreviewProps) {
               </p>
             </div>
           ) : fileData?.url ? (
-            document?.document_type.includes("pdf") || document?.document_type.includes("image") ? (
+            isPDF ? (
               <iframe 
                 src={fileData.url} 
                 className="w-full h-[60vh]" 
-                title={document?.name || "Document Preview"} 
+                title={docItem?.name || "Document Preview"} 
               />
             ) : (
               <div className="flex flex-col items-center justify-center p-10 text-center">
@@ -148,7 +164,7 @@ export function DocumentPreview({ documentId, onClose }: DocumentPreviewProps) {
                     <ExternalLink className="h-4 w-4" />
                     Open in New Tab
                   </Button>
-                  <Button className="gap-2" onClick={handleDownload}>
+                  <Button className="gap-2 bg-blue-600 hover:bg-blue-700" onClick={handleDownload}>
                     <Download className="h-4 w-4" />
                     Download
                   </Button>
@@ -168,7 +184,7 @@ export function DocumentPreview({ documentId, onClose }: DocumentPreviewProps) {
 
         <DialogFooter className="flex justify-between items-center">
           <div className="text-xs text-muted-foreground">
-            {!loading && document && "Document ID: " + document.id?.substring(0, 8) + "..."}
+            {!loading && docItem && "Document ID: " + docItem.id}
             {fileData?.expired_at && (
               <span className="ml-4">Link expires: {new Date(fileData.expired_at).toLocaleString()}</span>
             )}
@@ -178,4 +194,4 @@ export function DocumentPreview({ documentId, onClose }: DocumentPreviewProps) {
       </DialogContent>
     </Dialog>
   );
-}
+} 

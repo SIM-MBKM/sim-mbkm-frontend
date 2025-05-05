@@ -3,9 +3,11 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Download, FileText, User, Mail, Calendar, BookOpen, School, ExternalLink } from "lucide-react"
+import { Download, FileText, User, Mail, Calendar, BookOpen, School, ExternalLink, Loader2 } from "lucide-react"
 import { Syllabus } from "@/lib/api/services";
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useGetTemporaryLink } from "@/lib/api/hooks/use-query-hooks"
+import { toast } from "react-toastify"
 
 interface SyllabusPreviewProps {
   isOpen: boolean
@@ -15,15 +17,46 @@ interface SyllabusPreviewProps {
 
 export function SyllabusPreview({ isOpen, onClose, syllabus }: SyllabusPreviewProps) {
   const [isViewerOpen, setIsViewerOpen] = useState(false)
+  
+  // Use the hook to get the temporary URL
+  const { 
+    data: fileData, 
+    isLoading: isFileLoading, 
+    refetch
+  } = useGetTemporaryLink(syllabus?.file_storage_id || '')
+
+  // Prefetch the file link when the preview opens
+  useEffect(() => {
+    if (isOpen && syllabus?.file_storage_id) {
+      refetch()
+    }
+  }, [isOpen, syllabus, refetch])
 
   if (!syllabus) return null
 
   const handleOpenDocument = () => {
-    // In a real implementation, you would open the document viewer here
-    console.log("Opening document:", syllabus.file_storage_id)
-    setIsViewerOpen(true)
-    // You could redirect to a document viewer or open an iframe/embed component
+    if (fileData?.url) {
+      if (isPDF) {
+        setIsViewerOpen(true);
+      } else {
+        window.open(fileData.url, '_blank');
+      }
+    } else {
+      toast.error("Unable to open file. Please try again later.");
+      refetch(); // Try to get the URL again
+    }
   }
+  
+  const handleDownload = () => {
+    if (fileData?.url) {
+      window.open(fileData.url, '_blank')
+    } else {
+      toast.error("Unable to download file. Please try again later.")
+      refetch() // Try to get the URL again
+    }
+  }
+
+  const isPDF = syllabus.title?.toLowerCase().endsWith('.pdf')
   
   return (
     <>
@@ -73,6 +106,12 @@ export function SyllabusPreview({ isOpen, onClose, syllabus }: SyllabusPreviewPr
                   {syllabus.file_storage_id}
                 </span>
               </div>
+              
+              {fileData?.expired_at && (
+                <div className="text-xs text-slate-500 mt-2">
+                  Link expires: {new Date(fileData.expired_at).toLocaleString()}
+                </div>
+              )}
             </div>
           </div>
 
@@ -80,19 +119,45 @@ export function SyllabusPreview({ isOpen, onClose, syllabus }: SyllabusPreviewPr
             <Button variant="outline" onClick={onClose} className="bg-white hover:bg-gray-100 border-gray-300">
               Close
             </Button>
-            <Button onClick={handleOpenDocument} className="bg-green-500 hover:bg-green-600 text-white">
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Open
+            <Button 
+              onClick={handleOpenDocument} 
+              className="bg-green-500 hover:bg-green-600 text-white"
+              disabled={isFileLoading || !fileData?.url}
+            >
+              {isFileLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Open
+                </>
+              )}
             </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-              <Download className="h-4 w-4 mr-2" />
-              Download
+            <Button 
+              onClick={handleDownload}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={isFileLoading || !fileData?.url}
+            >
+              {isFileLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {isViewerOpen && (
+      {isViewerOpen && fileData?.url && (
         <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-5xl h-[80vh] rounded-lg flex flex-col overflow-hidden">
             <div className="p-4 flex justify-between items-center border-b">
@@ -102,19 +167,27 @@ export function SyllabusPreview({ isOpen, onClose, syllabus }: SyllabusPreviewPr
               </Button>
             </div>
             <div className="flex-1 bg-gray-100 overflow-auto">
-              {/* This would typically be an iframe or document viewer component */}
-              <div className="h-full flex items-center justify-center">
-                <div className="text-center p-8">
-                  <FileText className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-                  <h4 className="text-xl font-medium mb-2">Syllabus Viewer</h4>
-                  <p className="text-gray-500 mb-4">
-                    This is where the syllabus document would be displayed in a real implementation.
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Filename: {syllabus.file_storage_id}
-                  </p>
+              {isPDF && fileData?.url ? (
+                <iframe 
+                  src={fileData.url} 
+                  className="w-full h-full border-0" 
+                  title={syllabus.title} 
+                />
+              ) : (
+                <div className="h-full flex items-center justify-center">
+                  <div className="text-center p-8">
+                    <FileText className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                    <h4 className="text-xl font-medium mb-2">Document Available</h4>
+                    <p className="text-gray-500 mb-4">
+                      This file type can&apos;t be previewed directly in the browser.
+                    </p>
+                    <Button onClick={handleDownload} className="bg-blue-600 hover:bg-blue-700 text-white">
+                      <Download className="h-4 w-4 mr-2" />
+                      Download File
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

@@ -28,6 +28,7 @@ import {
   SyllabusByAdvisorInput,
   ReportScheduleByAdvisorInput,
 } from '../services';
+import { fileService } from '../services/file-service';
 
 // AUTH HOOKS
 
@@ -548,7 +549,7 @@ export const useSubmitEquivalenceRequest = () => {
   const queryClient = useQueryClient();
   
   const mutation = useMutation({
-    mutationFn: (equivalentInput: EquivalentInput) => 
+    mutationFn: (equivalentInput: EquivalentInput) =>
       matchingService.submitEquivalents(equivalentInput),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['registrationStudentMatching'] });
@@ -562,4 +563,15 @@ export const useSubmitEquivalenceRequest = () => {
     ...mutation,
     isLoading: mutation.isPending
   };
+};
+
+// FILE HOOKS
+export const useGetTemporaryLink = (fileId: string) => {
+  return useQuery({
+    queryKey: ['temporaryLink', fileId],
+    queryFn: () => fileService.GCSGetTemporaryLink(fileId),
+    enabled: !!fileId && fileId.trim() !== '', // Only run the query if fileId is not empty
+    retry: 2, // Retry failed requests twice
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+  });
 };

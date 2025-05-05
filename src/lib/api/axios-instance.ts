@@ -12,6 +12,8 @@ const SERVICE_URLS = {
     process.env.NEXT_PUBLIC_MATCHING_SERVICE_URL || "http://localhost:3005",
   MONITORING:
     process.env.NEXT_PUBLIC_MONITORING_SERVICE_URL || "http://localhost:3006",
+  FILE:
+    process.env.NEXT_PUBLIC_FILE_SERVICE_URL || "http://localhost:3007",
 };
 
 // Create axios instances for each service
@@ -65,4 +67,5 @@ export const apiServices = {
   registration: createAxiosInstance(SERVICE_URLS.REGISTRATION),
   matching: createAxiosInstance(SERVICE_URLS.MATCHING),
   monitoring: createAxiosInstance(SERVICE_URLS.MONITORING),
+  file: createAxiosInstance(SERVICE_URLS.FILE),
 };

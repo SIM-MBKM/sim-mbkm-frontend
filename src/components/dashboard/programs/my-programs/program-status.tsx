@@ -13,6 +13,8 @@ import { Matching } from "@/lib/api/services/registration-service"
 import { useStudentRegistrations } from "@/lib/api/hooks"
 import { motion, AnimatePresence } from "framer-motion"
 import { Input } from "@/components/ui/input"
+import { toast, ToastContainer } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
 
 // Define a type alias for the Registration with Matching that matches what the components expect
 type RegistrationWithMatching = Registration & { matching: Matching[] };
@@ -92,7 +94,10 @@ export function ProgramStatus() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await refetch();
-    setTimeout(() => setIsRefreshing(false), 1000);
+    setTimeout(() => {
+      setIsRefreshing(false);
+      toast.success("Data refreshed successfully");
+    }, 1000);
   }
 
   // Filter registrations based on search term
@@ -365,7 +370,7 @@ export function ProgramStatus() {
       <AnimatePresence>
         {viewDialogOpen && (
           <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-            <DialogContent className="max-w-4xl bg-white z-100 max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl bg-white max-h-[90vh] overflow-y-auto z-[100]">
               <DialogHeader>
                 <DialogTitle className="text-xl text-[#003478]">Detail Pendaftaran</DialogTitle>
               </DialogHeader>
@@ -388,7 +393,7 @@ export function ProgramStatus() {
       <AnimatePresence>
         {editDialogOpen && (
           <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-            <DialogContent className="max-w-4xl bg-white z-100 max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl bg-white max-h-[90vh] overflow-y-auto z-[100]">
               <DialogHeader>
                 <DialogTitle className="text-xl text-[#003478]">Edit Pendaftaran</DialogTitle>
               </DialogHeader>
@@ -417,7 +422,7 @@ export function ProgramStatus() {
       <AnimatePresence>
         {deleteDialogOpen && (
           <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-            <DialogContent className="bg-white z-100 max-w-md">
+            <DialogContent className="bg-white max-w-md z-[100]">
               <DialogHeader>
                 <DialogTitle className="text-xl text-[#003478]">Konfirmasi Hapus</DialogTitle>
               </DialogHeader>
@@ -456,6 +461,9 @@ export function ProgramStatus() {
           </Dialog>
         )}
       </AnimatePresence>
+
+      {/* Add ToastContainer at the bottom */}
+      <ToastContainer position="top-right" autoClose={3000} />
     </motion.div>
   )
 }

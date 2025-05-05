@@ -3,9 +3,11 @@
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
-import { FileText, Eye, Download } from "lucide-react"
+import { FileText, Eye, Download, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Transcript } from "@/lib/api/services";
+import { useGetTemporaryLink } from "@/lib/api/hooks/use-query-hooks";
+import { toast } from "react-toastify";
 
 interface TranscriptCardProps {
   transcript: Transcript
@@ -14,6 +16,35 @@ interface TranscriptCardProps {
 
 export function TranscriptCard({ transcript, onClick }: TranscriptCardProps) {
   const [isHovered, setIsHovered] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
+  
+  // Use the temporary link hook for the file download
+  const { data: fileData, isLoading: isLinkLoading, refetch } = useGetTemporaryLink(
+    transcript.file_storage_id
+  );
+
+  const handleDownload = async () => {
+    try {
+      setIsDownloading(true);
+      
+      // If we don't have the link yet, fetch it
+      if (!fileData?.url) {
+        await refetch();
+      }
+      
+      // Now check if we have the URL
+      if (fileData?.url) {
+        window.open(fileData.url, '_blank');
+      } else {
+        toast.error("Failed to generate download link. Please try again.");
+      }
+    } catch (error) {
+      toast.error("Error downloading file. Please try again later.");
+      console.error("Download error:", error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <motion.div
@@ -70,10 +101,21 @@ export function TranscriptCard({ transcript, onClick }: TranscriptCardProps) {
             Preview
           </button>
           <button 
-            className="py-2.5 flex items-center justify-center text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800/60 transition-colors"
+            onClick={handleDownload}
+            disabled={isLinkLoading || isDownloading}
+            className="py-2.5 flex items-center justify-center text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800/60 transition-colors disabled:opacity-50 disabled:pointer-events-none"
           >
-            <Download className="h-3.5 w-3.5 mr-1.5 text-green-500" />
-            Download
+            {isLinkLoading || isDownloading ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 mr-1.5 text-green-500 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              <>
+                <Download className="h-3.5 w-3.5 mr-1.5 text-green-500" />
+                Download
+              </>
+            )}
           </button>
         </div>
       </Card>

@@ -2,10 +2,10 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { format, parseISO } from "date-fns"
 import { id } from "date-fns/locale"
-import { Clock, FileUp, Type, Upload, MessageCircle, AlertCircle, CheckCircle, Eye, ExternalLink } from "lucide-react"
+import { Clock, FileUp, Type, Upload, MessageCircle, AlertCircle, CheckCircle, Eye, ExternalLink, Download, Loader2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -20,7 +20,7 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog"
-import { useSubmitReport } from "@/lib/api/hooks"
+import { useSubmitReport, useGetTemporaryLink } from "@/lib/api/hooks"
 import { toast } from "react-toastify"
 
 interface Report {
@@ -33,6 +33,7 @@ interface Report {
   status: string
   feedback: string | null
   report_schedule_id: string // Required field for API calls
+  file_storage_id: string | null // Add this field for file access
 }
 
 interface ReportCardProps {
@@ -51,12 +52,46 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
   )
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
   const [isReportDetailOpen, setIsReportDetailOpen] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
   
   // Use the submitReport mutation
   const { 
     mutate: submitReport, 
     isPending: isSubmitting
   } = useSubmitReport()
+  
+  // Use the temporary link hook if there's a file_storage_id
+  const fileId = report.file_storage_id;
+  const { 
+    data: fileData, 
+    isLoading: isFileLoading, 
+    error: fileError,
+    refetch: refetchFileLink
+  } = useGetTemporaryLink(fileId || '')
+
+  // Enable the query only when we have a valid fileId and the dialog is open
+  const shouldFetchFile = Boolean(fileId) && isReportDetailOpen;
+
+  // Fetch file link when detail dialog opens
+  useEffect(() => {
+    if (shouldFetchFile) {
+      console.log("Fetching file link for ID:", fileId);
+      refetchFileLink();
+    }
+  }, [shouldFetchFile, fileId, refetchFileLink]);
+
+  // Debug logs to trace issue
+  useEffect(() => {
+    if (isReportDetailOpen && fileId) {
+      console.log("File detail dialog opened with ID:", fileId);
+    }
+    if (fileData) {
+      console.log("File data received:", fileData);
+    }
+    if (fileError) {
+      console.error("File fetch error:", fileError);
+    }
+  }, [isReportDetailOpen, fileId, fileData, fileError]);
 
   const formatDate = (dateStr: string) => {
     try {
@@ -153,6 +188,59 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
       setFile(e.target.files[0])
     }
   }
+  
+  const handleDownloadFile = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!report.file_storage_id) {
+      toast.error("File ID tidak ditemukan");
+      return;
+    }
+    
+    try {
+      setIsDownloading(true);
+      
+      // If we don't have the link yet, fetch it
+      if (!fileData?.url) {
+        await refetchFileLink();
+      }
+      
+      // Now check if we have the URL
+      if (fileData?.url) {
+        // Create a temporary anchor element to trigger the download
+        const link = window.document.createElement('a');
+        link.href = fileData.url;
+        link.target = '_blank';
+        link.download = `report-${report.id}.pdf`;
+        window.document.body.appendChild(link);
+        link.click();
+        window.document.body.removeChild(link);
+        toast.success("Unduhan dimulai");
+      } else {
+        toast.error("Gagal mendapatkan link unduhan. Silakan coba lagi.");
+      }
+    } catch (error) {
+      toast.error("Gagal mengunduh file. Silakan coba lagi nanti.");
+      console.error("Download error:", error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+  
+  const handleOpenFileInNewTab = () => {
+    if (!report.file_storage_id) {
+      toast.error("File ID tidak ditemukan");
+      return;
+    }
+    
+    if (fileData?.url) {
+      window.open(fileData.url, '_blank');
+    } else {
+      toast.error("Gagal mendapatkan link file. Silakan coba lagi.");
+      refetchFileLink();
+    }
+  };
 
   // Get background gradient color based on status
   const getStatusColor = () => {
@@ -265,15 +353,38 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
               <p className="text-sm text-gray-500 text-center mt-1">
                 Laporan ini telah disetujui oleh pembimbing akademik
               </p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-4 text-blue-700 border-blue-200 hover:bg-blue-50 flex items-center gap-1"
-                onClick={() => setIsReportDetailOpen(true)}
-              >
-                <Eye className="h-4 w-4" />
-                Lihat Laporan
-              </Button>
+              <div className="flex gap-2 mt-4">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="text-blue-700 border-blue-200 hover:bg-blue-50 flex items-center gap-1"
+                  onClick={() => setIsReportDetailOpen(true)}
+                >
+                  <Eye className="h-4 w-4" />
+                  Lihat Laporan
+                </Button>
+                {report.file_storage_id && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-green-700 border-green-200 hover:bg-green-50 flex items-center gap-1"
+                    onClick={handleDownloadFile}
+                    disabled={isDownloading || isFileLoading}
+                  >
+                    {isDownloading || isFileLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                        Mengunduh...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4" />
+                        Unduh Laporan
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
           )}
 
@@ -284,15 +395,38 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
               <p className="text-sm text-gray-500 text-center mt-1">
                 Laporan masih dalam pengecekan oleh pembimbing akademik
               </p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-4 text-blue-700 border-blue-200 hover:bg-blue-50 flex items-center gap-1"
-                onClick={() => setIsReportDetailOpen(true)}
-              >
-                <Eye className="h-4 w-4" />
-                Lihat Laporan
-              </Button>
+              <div className="flex gap-2 mt-4">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="text-blue-700 border-blue-200 hover:bg-blue-50 flex items-center gap-1"
+                  onClick={() => setIsReportDetailOpen(true)}
+                >
+                  <Eye className="h-4 w-4" />
+                  Lihat Laporan
+                </Button>
+                {report.file_storage_id && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-green-700 border-green-200 hover:bg-green-50 flex items-center gap-1"
+                    onClick={handleDownloadFile}
+                    disabled={isDownloading || isFileLoading}
+                  >
+                    {isDownloading || isFileLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                        Mengunduh...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4" />
+                        Unduh Laporan
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
           )}
 
@@ -413,7 +547,7 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
 
       {/* Feedback Dialog */}
       <Dialog open={isFeedbackOpen} onOpenChange={setIsFeedbackOpen}>
-        <DialogContent className="max-w-md bg-white z-100">
+        <DialogContent className="max-w-md bg-white z-[100]">
           <DialogHeader>
             <DialogTitle>Feedback Pembimbing</DialogTitle>
             <DialogDescription>
@@ -438,7 +572,7 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
 
       {/* Report Detail Dialog */}
       <Dialog open={isReportDetailOpen} onOpenChange={setIsReportDetailOpen}>
-        <DialogContent className="max-w-2xl bg-white z-100">
+        <DialogContent className="max-w-2xl bg-white z-[200]">
           <DialogHeader>
             <DialogTitle>Detail Laporan</DialogTitle>
             <DialogDescription>
@@ -467,7 +601,7 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
               </div>
             </div>
             
-            {report.report && (
+            {report.report && !report.file_storage_id && (
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Isi Laporan</h3>
                 <div className="mt-1 p-4 bg-gray-50 rounded-md border max-h-64 overflow-y-auto">
@@ -478,18 +612,104 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
               </div>
             )}
             
-            {!report.report && (
-              <div className="p-4 bg-gray-50 rounded-md border text-center">
-                <FileUp className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">Dokumen laporan telah diunggah</p>
-                <Button
-                  variant="outline"
-                  className="mt-4 flex items-center gap-2 mx-auto"
-                  onClick={() => window.open(`/api/reports/${report.id}/file`, '_blank')}
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  <span>Buka Dokumen</span>
-                </Button>
+            {report.file_storage_id && (
+              <div className="space-y-4">
+                <div className="p-4 bg-gray-50 rounded-md border text-center">
+                  {isFileLoading ? (
+                    <div className="py-8 flex flex-col items-center">
+                      <Loader2 className="h-12 w-12 text-blue-500 animate-spin mb-4" />
+                      <p className="text-gray-500">Memuat dokumen...</p>
+                    </div>
+                  ) : fileError ? (
+                    <div className="py-8 flex flex-col items-center">
+                      <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+                      <p className="text-gray-700 mb-2">Gagal memuat dokumen</p>
+                      <p className="text-gray-500 text-sm mb-4">Terjadi kesalahan saat mengambil file.</p>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => refetchFileLink()}
+                        className="bg-white hover:bg-gray-50"
+                      >
+                        Coba Lagi
+                      </Button>
+                    </div>
+                  ) : fileData?.url ? (
+                    <>
+                      {fileData.url.toLowerCase().endsWith('.pdf') ? (
+                        <div className="flex flex-col items-center">
+                          <div className="w-full h-96 border rounded mb-4">
+                            <iframe 
+                              src={fileData.url} 
+                              className="w-full h-full" 
+                              title="PDF Preview"
+                            />
+                          </div>
+                          <div className="flex gap-2 justify-center">
+                            <Button
+                              variant="outline"
+                              className="flex items-center gap-2"
+                              onClick={handleOpenFileInNewTab}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              <span>Buka di Tab Baru</span>
+                            </Button>
+                            
+                            <Button
+                              className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+                              onClick={handleDownloadFile}
+                            >
+                              <Download className="h-4 w-4" />
+                              <span>Unduh Dokumen</span>
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="py-8 flex flex-col items-center">
+                          <FileUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <p className="text-gray-700 mb-2">Dokumen tidak dapat ditampilkan</p>
+                          <p className="text-gray-500 text-sm mb-4">Tipe file ini tidak dapat ditampilkan secara langsung.</p>
+                          <div className="flex gap-2 justify-center">
+                            <Button
+                              variant="outline"
+                              className="flex items-center gap-2"
+                              onClick={handleOpenFileInNewTab}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              <span>Buka di Tab Baru</span>
+                            </Button>
+                            
+                            <Button
+                              className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+                              onClick={handleDownloadFile}
+                            >
+                              <Download className="h-4 w-4" />
+                              <span>Unduh Dokumen</span>
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {fileData.expired_at && (
+                        <p className="text-xs text-gray-500 mt-4">
+                          Link kedaluwarsa: {new Date(fileData.expired_at).toLocaleString()}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <div className="py-8 flex flex-col items-center">
+                      <FileUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-700 mb-2">Dokumen tidak tersedia</p>
+                      <p className="text-gray-500 text-sm mb-4">Tidak dapat mengambil link dokumen.</p>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => refetchFileLink()}
+                        className="bg-white hover:bg-gray-50"
+                      >
+                        Coba Lagi
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
             

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { SyllabusCard } from "./syllabus-card"
-import { Syllabus } from "@/lib/api/services";
+import { Syllabus } from "@/lib/api/services"
 
 interface NRPSectionProps {
   nrp: string

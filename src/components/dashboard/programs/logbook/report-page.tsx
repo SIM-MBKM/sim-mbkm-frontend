@@ -19,7 +19,8 @@ const convertToReportFormat = (reports: ReportSchedule[]) => {
     end_date: report.end_date,
     report: report.report ? report.report.content : null,
     status: report.report ? report.report.academic_advisor_status : "NOT_SUBMITTED",
-    feedback: report.report ? report.report.feedback : null
+    feedback: report.report ? report.report.feedback : null,
+    file_storage_id: report.report ? report.report.file_storage_id : null
   }));
 }
 
