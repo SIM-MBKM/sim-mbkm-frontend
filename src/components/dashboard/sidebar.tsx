@@ -19,12 +19,11 @@ import {
   X,
   Settings,
   Users,
-  BarChart,
   CheckSquare,
   FileCheck,
   Database,
   Briefcase,
-  Building,
+  FileEdit,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -136,7 +135,32 @@ const MENU_ITEMS: Record<UserRole, {
     },
   ],
   
-  ADMIN: [
+  "LO-MBKM": [
+    {
+      section: "Beranda",
+      items: [{ label: "Beranda", icon: <Home className="h-5 w-5" />, href: "/dashboard/admin" }],
+    },
+    {
+      section: "Manajemen Sistem",
+      items: [
+        { label: "Kelola User", icon: <Users className="h-5 w-5" />, href: "/dashboard/lo_mbkm/users" },
+        { label: "Kelola Program", icon: <Briefcase className="h-5 w-5" />, href: "/dashboard/lo_mbkm/program" },
+        { label: "Kelola Matching", icon: <FileEdit className="h-5 w-5" />, href: "/dashboard/lo_mbkm/matching" },
+        { label: "Kelola Ajuan", icon: <FileEdit className="h-5 w-5" />, href: "/dashboard/lo_mbkm/ajuan" },
+        { label: "Kelola Monev", icon: <FileEdit className="h-5 w-5" />, href: "/dashboard/lo_mbkm/monev" },
+        { label: "Kelola Statistik", icon: <FileEdit className="h-5 w-5" />, href: "/dashboard/lo_mbkm/statistik" },
+      ],
+    },
+    {
+      section: "Sistem",
+      items: [
+        { label: "Pengaturan", icon: <Settings className="h-5 w-5" />, href: "/dashboard/admin/settings" },
+        { label: "Data Master", icon: <Database className="h-5 w-5" />, href: "/dashboard/admin/master-data" },
+      ],
+    },
+  ],
+
+  ADMIN : [
     {
       section: "Beranda",
       items: [{ label: "Beranda", icon: <Home className="h-5 w-5" />, href: "/dashboard/admin" }],
@@ -154,70 +178,6 @@ const MENU_ITEMS: Record<UserRole, {
       items: [
         { label: "Pengaturan", icon: <Settings className="h-5 w-5" />, href: "/dashboard/admin/settings" },
         { label: "Data Master", icon: <Database className="h-5 w-5" />, href: "/dashboard/admin/master-data" },
-      ],
-    },
-  ],
-  
-  SUPERADMIN: [
-    {
-      section: "Beranda",
-      items: [{ label: "Beranda", icon: <Home className="h-5 w-5" />, href: "/dashboard/superadmin" }],
-    },
-    {
-      section: "Manajemen",
-      items: [
-        { label: "Pengguna", icon: <Users className="h-5 w-5" />, href: "/dashboard/superadmin/users" },
-        { label: "Program", icon: <Briefcase className="h-5 w-5" />, href: "/dashboard/superadmin/programs" },
-        { label: "Validasi Program", icon: <FileCheck className="h-5 w-5" />, href: "/dashboard/superadmin/validation" },
-      ],
-    },
-    {
-      section: "Sistem",
-      items: [
-        { label: "Pengaturan", icon: <Settings className="h-5 w-5" />, href: "/dashboard/superadmin/settings" },
-        { label: "Data Master", icon: <Database className="h-5 w-5" />, href: "/dashboard/superadmin/master-data" },
-      ],
-    },
-  ],
-  
-  PIMPINAN: [
-    {
-      section: "Beranda",
-      items: [{ label: "Beranda", icon: <Home className="h-5 w-5" />, href: "/dashboard/pimpinan" }],
-    },
-    {
-      section: "Monitoring",
-      items: [
-        { label: "Program MBKM", icon: <Briefcase className="h-5 w-5" />, href: "/dashboard/pimpinan/programs" },
-        { label: "Mahasiswa", icon: <Users className="h-5 w-5" />, href: "/dashboard/pimpinan/students" },
-      ],
-    },
-    {
-      section: "Laporan",
-      items: [
-        { label: "Statistik", icon: <BarChart className="h-5 w-5" />, href: "/dashboard/pimpinan/statistics" },
-        { label: "Laporan", icon: <FileText className="h-5 w-5" />, href: "/dashboard/pimpinan/reports" },
-      ],
-    },
-  ],
-  
-  TENDIK: [
-    {
-      section: "Beranda",
-      items: [{ label: "Beranda", icon: <Home className="h-5 w-5" />, href: "/dashboard/tendik" }],
-    },
-    {
-      section: "Pendaftaran",
-      items: [
-        { label: "Program MBKM", icon: <Briefcase className="h-5 w-5" />, href: "/dashboard/tendik/programs" },
-        { label: "Daftar Mahasiswa", icon: <Users className="h-5 w-5" />, href: "/dashboard/tendik/students" },
-      ],
-    },
-    {
-      section: "Administrasi",
-      items: [
-        { label: "Validasi Dokumen", icon: <FileCheck className="h-5 w-5" />, href: "/dashboard/tendik/documents" },
-        { label: "Data Akademik", icon: <Building className="h-5 w-5" />, href: "/dashboard/tendik/academic" },
       ],
     },
   ],
