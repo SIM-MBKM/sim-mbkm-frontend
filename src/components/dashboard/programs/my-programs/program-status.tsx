@@ -125,6 +125,14 @@ export function ProgramStatus() {
     }
   }
 
+  const getStatusIconApprovalStatus = (status: boolean) => {
+    if (status) {
+      return <CheckCircle2 className="h-4 w-4 mr-1 bg-green-200 text-green-700 rounded-full" />;
+    } else {
+      return <XCircle className="h-4 w-4 mr-1 bg-red-200 text-red-700  rounded-full" />;
+    }
+  }
+
   // Helper function to get status icon
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -276,6 +284,8 @@ export function ProgramStatus() {
                 <tr className="bg-gray-50 border-b">
                   <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Program</th>
                   <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Posisi</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Status LO</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Status Advisor</th>
                   <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Status</th>
                   <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Nama Mahasiswa</th>
                   <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">NRP Mahasiswa</th>
@@ -305,6 +315,18 @@ export function ProgramStatus() {
                             {getStatusIcon(registration.lo_validation)}
                             {registration.lo_validation}
                           </Badge>
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <Badge 
+                            variant="outline" 
+                            className={`flex items-center ${getStatusBadgeClass(registration.academic_advisor_validation)} px-2.5 py-1 rounded-full text-xs font-medium`}
+                          >
+                            {getStatusIcon(registration.academic_advisor_validation)}
+                            {registration.academic_advisor_validation}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 mx-auto text-sm">
+                          {getStatusIconApprovalStatus(registration.approval_status)}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-700">{registration.user_name}</td>
                         <td className="px-6 py-4 text-sm text-gray-700">{registration.user_nrp}</td>

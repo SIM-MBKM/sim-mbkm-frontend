@@ -359,8 +359,8 @@ export function ReportDashboard() {
               exit={{ opacity: 0 }}
               className="flex flex-col items-center justify-center min-h-[60vh]"
             >
-              <Loader2 className="h-16 w-16 text-primary animate-spin mb-4" />
-              <h3 className="text-xl font-medium">Loading report schedules...</h3>
+              <Loader2 className="h-10 w-10 animate-spin text-[#003478]" />
+              <h3 className="text-sm font-small">Loading report schedules...</h3>
             </motion.div>
           ) : (
             <motion.div
