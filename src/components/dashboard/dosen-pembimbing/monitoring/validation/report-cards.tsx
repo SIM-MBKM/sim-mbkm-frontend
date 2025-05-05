@@ -200,7 +200,11 @@ export function ReportCards({
       <div className="text-center py-12">
         <FileText className="h-12 w-12 mx-auto text-muted-foreground opacity-50" />
         <h3 className="mt-4 text-lg font-medium">No reports found</h3>
-        <p className="text-muted-foreground">There are no reports matching your current filters.</p>
+        <p className="text-muted-foreground">
+          {submittedReports.length === 0 
+            ? "There are no reports submitted for this activity yet."
+            : "There are no reports matching your current filters."}
+        </p>
       </div>
     )
   }

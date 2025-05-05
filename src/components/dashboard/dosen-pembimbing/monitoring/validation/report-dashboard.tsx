@@ -10,13 +10,14 @@ import { Pagination } from "./pagination"
 import { toast } from "react-toastify"
 import 'react-toastify/dist/ReactToastify.css'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Loader2, Briefcase, Calendar, FileText, CheckCircle } from "lucide-react"
+import { Loader2, Briefcase, Calendar, FileText, CheckCircle, Clock, XCircle, Filter } from "lucide-react"
 import { ReportSchedule, ReportScheduleAdvisorResponse } from "@/lib/api/services"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useReportSchedulesByAdvisor, useReportsApproval } from "@/lib/api/hooks/use-query-hooks"
 // import { ToastProvider } from "react-hot-toast"
 import { ToastProvider } from "@/components/toast-provider"
+import { Button } from "@/components/ui/button"
 
 // Interface for grouped activities
 interface ActivityGroup {
@@ -24,6 +25,9 @@ interface ActivityGroup {
   activityName: string;
   reports: ReportSchedule[];
 }
+
+// Define the status filter types
+type StatusFilterType = "ALL" | "PENDING" | "APPROVED" | "REJECTED";
 
 export function ReportDashboard() {
   const [reportType, setReportType] = useState<"WEEKLY_REPORT" | "FINAL_REPORT">("WEEKLY_REPORT")
@@ -34,6 +38,8 @@ export function ReportDashboard() {
   const [pageSize] = useState(1)
   const [updatedReports, setUpdatedReports] = useState<Record<string, { status: string; feedback: string }>>({})
   const [isPerformingSearch, setIsPerformingSearch] = useState(false)
+  // Add status filter state
+  const [statusFilter, setStatusFilter] = useState<StatusFilterType>("ALL")
   
   // Use the React Query hook to fetch report schedules with the input parameter
   const { data, isLoading, refetch, isFetching } = useReportSchedulesByAdvisor({
@@ -165,15 +171,46 @@ export function ReportDashboard() {
     });
   }, [refetch]);
 
-  // Filter reports by type and registration_id
+  // Handle status filter change
+  const handleStatusFilterChange = (status: StatusFilterType) => {
+    // Only update if it's actually changing
+    if (status !== statusFilter) {
+      setStatusFilter(status);
+      
+      // Log for debugging
+      console.log(`Status filter changed to: ${status}`);
+    }
+  }
+
+  // Filter reports by type, registration_id, and status
   const getFilteredReports = () => {
     if (!data || !selectedNRP || !selectedRegistrationId) return []
 
     const studentReports = data.data.reports[selectedNRP] || []
-    return studentReports.filter((report: ReportSchedule) => 
+    let filteredReports = studentReports.filter((report: ReportSchedule) => 
       report.report_type === reportType && 
       report.registration_id === selectedRegistrationId
     )
+
+    // Apply status filtering if not set to ALL
+    if (statusFilter !== "ALL") {
+      filteredReports = filteredReports.filter((report: ReportSchedule) => {
+        // Skip non-submitted reports when filtering by status
+        if (!report.report) return false;
+        
+        // Get the current status (either from updated reports or from the original report)
+        const reportId = report.report?.id || '';
+        const updatedReport = updatedReports[reportId];
+        const status = updatedReport?.status || report.report?.academic_advisor_status || "PENDING";
+        
+        // Debug log
+        console.log(`Report ${reportId} has status: ${status}, filter is: ${statusFilter}`);
+        
+        return status === statusFilter;
+      });
+    }
+
+    return filteredReports;
   }
 
   // Calculate stats
@@ -293,6 +330,23 @@ export function ReportDashboard() {
 
   // Only show loading indicator during initial load, not during search
   const showFullLoadingScreen = isLoading && !isPerformingSearch;
+
+  // Get filtered reports count for the status filter badge
+  const filteredReportsCount = getFilteredReports().length;
+
+  // Get status filter color based on selected status
+  const getStatusFilterColor = (status: StatusFilterType) => {
+    switch (status) {
+      case "APPROVED":
+        return "bg-green-500 hover:bg-green-600 text-white";
+      case "REJECTED":
+        return "bg-red-500 hover:bg-red-600 text-white";
+      case "PENDING":
+        return "bg-amber-500 hover:bg-amber-600 text-white";
+      default:
+        return "bg-blue-500 hover:bg-blue-600 text-white";
+    }
+  };
 
   return (
     <>
@@ -454,6 +508,60 @@ export function ReportDashboard() {
                       Final Reports
                     </TabsTrigger>
                   </TabsList>
+                  
+                  {/* Status filter buttons */}
+                  {selectedNRP && selectedRegistrationId && (
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="flex gap-2 items-center"
+                    >
+                      <div className="bg-background/50 backdrop-blur-sm border flex rounded-md overflow-hidden">
+                        <Button
+                          size="sm"
+                          variant={statusFilter === "ALL" ? "default" : "ghost"}
+                          className={`rounded-none border-r ${statusFilter === "ALL" ? "bg-blue-500 text-white hover:bg-blue-600" : "hover:bg-slate-100"}`}
+                          onClick={() => handleStatusFilterChange("ALL")}
+                        >
+                          <Filter className="h-4 w-4 mr-1" />
+                          <span>All</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={statusFilter === "PENDING" ? "default" : "ghost"}
+                          className={`rounded-none border-r ${statusFilter === "PENDING" ? "bg-amber-500 text-white hover:bg-amber-600" : "hover:bg-slate-100"}`}
+                          onClick={() => handleStatusFilterChange("PENDING")}
+                        >
+                          <Clock className="h-4 w-4 mr-1" />
+                          <span>Pending</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={statusFilter === "APPROVED" ? "default" : "ghost"}
+                          className={`rounded-none border-r ${statusFilter === "APPROVED" ? "bg-green-500 text-white hover:bg-green-600" : "hover:bg-slate-100"}`}
+                          onClick={() => handleStatusFilterChange("APPROVED")}
+                        >
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          <span>Approved</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={statusFilter === "REJECTED" ? "default" : "ghost"}
+                          className={`rounded-none ${statusFilter === "REJECTED" ? "bg-red-500 text-white hover:bg-red-600" : "hover:bg-slate-100"}`}
+                          onClick={() => handleStatusFilterChange("REJECTED")}
+                        >
+                          <XCircle className="h-4 w-4 mr-1" />
+                          <span>Rejected</span>
+                        </Button>
+                      </div>
+                      
+                      <Badge 
+                        className={`${getStatusFilterColor(statusFilter)} border-none`}
+                      >
+                        {filteredReportsCount} {filteredReportsCount === 1 ? "report" : "reports"}
+                      </Badge>
+                    </motion.div>
+                  )}
                 </div>
 
                 <TabsContent value="WEEKLY_REPORT" className="mt-0">
