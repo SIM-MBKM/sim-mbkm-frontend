@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { FileCheck, FileX, Upload, CheckCircle, Clock, AlertCircle } from "lucide-react"
+import { FileCheck, FileX, Upload, CheckCircle, Clock, AlertCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { TranscriptDetailModal } from "./transcript-detail-modal"
 import { toast } from "react-toastify"
+import { useGetTemporaryLink } from "@/lib/api/hooks"
 
 // Interface for transcript data
 interface TranscriptData {
@@ -60,6 +61,26 @@ interface RegistrationCardProps {
 export function RegistrationCard({ registration, onUploadClick }: RegistrationCardProps) {
   const hasTranscript = registration.transcript_data !== null
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false)
+  
+  // Get the file storage ID if a transcript exists
+  const fileId = hasTranscript && registration.transcript_data 
+    ? registration.transcript_data[0]?.file_storage_id || ''
+    : '';
+    
+  // Use the temporary link hook
+  const { 
+    data: fileData, 
+    isLoading: isFileLoading, 
+    refetch: refetchFileLink
+  } = useGetTemporaryLink(fileId);
+  
+  // Prefetch the file link when component mounts if there's a transcript
+  useEffect(() => {
+    if (hasTranscript && fileId) {
+      refetchFileLink();
+    }
+  }, [hasTranscript, fileId, refetchFileLink]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -87,8 +108,24 @@ export function RegistrationCard({ registration, onUploadClick }: RegistrationCa
     }
   }
 
-  const handleViewTranscript = () => {
-    setIsViewModalOpen(true)
+  const handleViewTranscript = async () => {
+    if (!hasTranscript) return;
+    
+    try {
+      setIsLoadingPreview(true);
+      
+      // If we don't have the link yet, fetch it
+      if (!fileData?.url) {
+        await refetchFileLink();
+      }
+      
+      setIsViewModalOpen(true);
+    } catch (error) {
+      console.error("Error fetching transcript link:", error);
+      toast.error("Gagal memuat transkrip. Silakan coba lagi.");
+    } finally {
+      setIsLoadingPreview(false);
+    }
   }
 
   const handleDeleteTranscript = async () => {
@@ -172,9 +209,19 @@ export function RegistrationCard({ registration, onUploadClick }: RegistrationCa
                     variant="outline" 
                     className="w-full flex items-center gap-2"
                     onClick={handleViewTranscript}
+                    disabled={isLoadingPreview || isFileLoading}
                   >
-                    <FileCheck className="h-4 w-4" />
-                    <span>Lihat Transkrip</span>
+                    {isLoadingPreview || isFileLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Memuat...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FileCheck className="h-4 w-4" />
+                        <span>Lihat Transkrip</span>
+                      </>
+                    )}
                   </Button>
                 </motion.div>
               )}

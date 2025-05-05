@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { FileCheck, FileX, Upload, CheckCircle, Clock, AlertCircle } from "lucide-react"
+import { FileCheck, FileX, Upload, CheckCircle, Clock, AlertCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { SyllabusDetailModal } from "./syllabus-detail-modal"
 import { toast } from "react-toastify"
+import { useGetTemporaryLink } from "@/lib/api/hooks"
 
 // Interface for syllabus data
 interface SyllabusData {
@@ -60,6 +61,26 @@ interface RegistrationCardProps {
 export function RegistrationSyllabusCard({ registration, onUploadClick }: RegistrationCardProps) {
   const hasSyllabus = registration.syllabus_data !== null
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false)
+  
+  // Get the file storage ID if a syllabus exists
+  const fileId = hasSyllabus && registration.syllabus_data 
+    ? registration.syllabus_data[0]?.file_storage_id || ''
+    : '';
+    
+  // Use the temporary link hook
+  const { 
+    data: fileData, 
+    isLoading: isFileLoading, 
+    refetch: refetchFileLink
+  } = useGetTemporaryLink(fileId);
+  
+  // Prefetch the file link when component mounts if there's a syllabus
+  useEffect(() => {
+    if (hasSyllabus && fileId) {
+      refetchFileLink();
+    }
+  }, [hasSyllabus, fileId, refetchFileLink]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -87,8 +108,24 @@ export function RegistrationSyllabusCard({ registration, onUploadClick }: Regist
     }
   }
 
-  const handleViewSyllabus = () => {
-    setIsViewModalOpen(true)
+  const handleViewSyllabus = async () => {
+    if (!hasSyllabus) return;
+    
+    try {
+      setIsLoadingPreview(true);
+      
+      // If we don't have the link yet, fetch it
+      if (!fileData?.url) {
+        await refetchFileLink();
+      }
+      
+      setIsViewModalOpen(true);
+    } catch (error) {
+      console.error("Error fetching syllabus link:", error);
+      toast.error("Gagal memuat silabus. Silakan coba lagi.");
+    } finally {
+      setIsLoadingPreview(false);
+    }
   }
 
   const handleDeleteSyllabus = async () => {
@@ -172,9 +209,19 @@ export function RegistrationSyllabusCard({ registration, onUploadClick }: Regist
                     variant="outline" 
                     className="w-full flex items-center gap-2"
                     onClick={handleViewSyllabus}
+                    disabled={isLoadingPreview || isFileLoading}
                   >
-                    <FileCheck className="h-4 w-4" />
-                    <span>Lihat Silabus</span>
+                    {isLoadingPreview || isFileLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Memuat...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FileCheck className="h-4 w-4" />
+                        <span>Lihat Silabus</span>
+                      </>
+                    )}
                   </Button>
                 </motion.div>
               )}
