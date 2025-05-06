@@ -144,7 +144,7 @@ export function RegistrationCard({
               ? "border-red-500/50 dark:border-red-700/50"
               : isSelected
                 ? "border-primary/50 dark:border-primary/50"
-                : "border-border"
+                : "border-neutral-200"
         }`}
       >
         <CardContent className="p-0">

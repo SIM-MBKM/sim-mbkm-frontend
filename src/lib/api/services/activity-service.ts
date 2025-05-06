@@ -25,12 +25,23 @@ export interface Activity {
   web_portal: string
   academic_year: string
   program_provider: string
-  approval_status: string
+  approval_status: "PENDING" | "APPROVED" | "REJECTED"
   submitted_by: string
   program_type: string
   level: string;
+  submitted_user_role: string | null;
   group: string;
-  matching: Matching[];
+  matching: Matching[] | null;
+  // total_approval_data: TotalApprovalData[] | null;
+}
+
+export interface ActivityAllResponse extends PaginatedResponse<Activity> {
+  total_approval_data: TotalApprovalData[] | null
+}
+
+export interface TotalApprovalData {
+  approval_status: string;
+  total: number;
 }
 
 export interface Matching {
@@ -38,7 +49,7 @@ export interface Matching {
   subject_id: string;
   mata_kuliah: string;
   kode: string;
-  semester: number;
+  semester: string;
   prodi_penyelenggara: string;
   sks: number;
   kelas: string;
@@ -76,16 +87,73 @@ export interface MetaDataActivity<T> {
   data: T
 }
 
+export interface ActivityFilter {
+  activity_id: string;
+  program_type_id: string;
+  level_id: string;
+  group_id: string;
+  name: string;
+  approval_status: 'PENDING' | 'APPROVED' | 'REJECTED';
+}
+
+// UpdateActivityRequest struct {
+//   ProgramTypeID   string    `json:"program_type_id"`
+//   LevelID         string    `json:"level_id"`
+//   GroupID         string    `json:"group_id"`
+//   Name            string    `json:"name"`
+//   Description     string    `json:"description"`
+//   StartPeriod     time.Time `json:"start_period"`
+//   MonthsDuration  int       `json:"months_duration"`
+//   ActivityType    string    `json:"activity_type"`
+//   Location        string    `json:"location"`
+//   WebPortal       string    `json:"web_portal"`
+//   AcademicYear    string    `json:"academic_year"`
+//   ProgramProvider string    `json:"program_provider"`
+//   ApprovalStatus  string    `json:"approval_status"`
+// }
+
+export interface ActivityUpdateInput {
+  program_type_id: string;
+  level_id: string;
+  group_id: string;
+  name: string;
+  description: string;
+  start_period: string;
+  months_duration: number;
+  activity_type: string;
+  location: string;
+  web_portal: string;
+  academic_year: string;
+  program_provider: string;
+  approval_status: 'PENDING' | 'APPROVED' | 'REJECTED';
+}
+
 // Activity management service endpoints
 export const activityService = {
   // Get all activities
-  getActivities: async (page = 1, limit = 10, filters = {}) => {
-    const response = await activityApi.post<PaginatedResponse<Activity>>(
-      `/activity/filter?page=${page}&limit=${limit}`,
-      {
-        ...filters,
-      }
+  getActivities: async (page = 1, limit = 10, filters: ActivityFilter) => {
+    const response = await activityApi.post<ActivityAllResponse>(
+      `/activity/filter?page=${page}&limit=${limit}`, filters
     );
+    return response.data;
+  },
+
+  getUnmatchedActivities: async (page = 1, limit = 10, filters: ActivityFilter) => {
+    const response = await activityApi.post<ActivityAllResponse>(
+      `/activity/unmatched?page=${page}&limit=${limit}`, filters
+    );
+    return response.data;
+  },
+
+  getMatchedActivities: async (page = 1, limit = 10, filters: ActivityFilter) => {
+    const response = await activityApi.post<ActivityAllResponse>(
+      `/activity/matched?page=${page}&limit=${limit}`, filters
+    );
+    return response.data;
+  },
+
+  updateActivityById: async(id: string, activityData: ActivityUpdateInput) => {
+    const response = await activityApi.put<Activity>(`/activity/${id}`, activityData);
     return response.data;
   },
 

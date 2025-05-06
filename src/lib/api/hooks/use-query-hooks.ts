@@ -14,8 +14,6 @@ import {
   type LogbookInput,
   type RegisterInput,
   type TranscriptInput,
-  PaginatedResponse,
-  Activity,
   SyllabusInput,
   ReportInput,
   EquivalentInput,
@@ -27,6 +25,10 @@ import {
   TranscriptByAdvisorInput,
   SyllabusByAdvisorInput,
   ReportScheduleByAdvisorInput,
+  ActivityFilter,
+  ActivityAllResponse,
+  ActivityUpdateInput,
+  SubjectFilter,
 } from '../services';
 import { fileService } from '../services/file-service';
 
@@ -135,11 +137,34 @@ export const useAllGroups = () => {
   });
 };
 
-export const useActivities = (page = 1, limit = 10, filters = {}) => {
-  return useQuery<PaginatedResponse<Activity>, Error>({
+export const useActivities = (page = 1, limit = 10, filters: ActivityFilter) => {
+  return useQuery<ActivityAllResponse, Error>({
     queryKey: ['activities', page, limit, filters],
     queryFn: () => activityService.getActivities(page, limit, filters),
     staleTime: 5000, // 5 seconds
+  });
+};
+
+export const useUnmatchedActivities = (page = 1, limit = 10, filters: ActivityFilter) => {
+  return useQuery<ActivityAllResponse, Error>({
+    queryKey: ['activities', 'unmatched', page, limit, filters],
+    queryFn: () => activityService.getUnmatchedActivities(page, limit, filters),
+    staleTime: 5000, // 5 seconds
+  });
+};
+
+export const useMatchedActivities = (page = 1, limit = 10, filters: ActivityFilter) => {
+  return useQuery<ActivityAllResponse, Error>({
+    queryKey: ['activities', 'matched', page, limit, filters],
+    queryFn: () => activityService.getMatchedActivities(page, limit, filters),
+    staleTime: 5000, // 5 seconds
+  });
+};
+
+export const useUpdateActivityById = (id: string, activityData: ActivityUpdateInput) => {
+  return useQuery({
+    queryKey: ['activities', id],
+    queryFn: () => activityService.updateActivityById(id, activityData),
   });
 };
 
@@ -334,6 +359,13 @@ export const useReportSchedulesByAdvisor = ({page, limit, input}: {page: number,
   return useQuery({
     queryKey: ['reportSchedulesByAdvisor', page, limit, input],
     queryFn: () => monitoringService.getReportSchedulesByAdvisor({page, limit, input}),
+  });
+}
+
+export const useSubjects = ({page, limit, subjectFilter}: {page: number, limit: number, subjectFilter: SubjectFilter}) => {
+  return useQuery({
+    queryKey: ['subjects','activities', page, limit, subjectFilter],
+    queryFn: () => matchingService.getSubjects({page, limit, subjectFilter}),
   });
 }
 

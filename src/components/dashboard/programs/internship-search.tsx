@@ -5,7 +5,7 @@ import { SearchFilters } from "./search-filter";
 import { InternshipList } from "./internship-list";
 import { InternshipDetail } from "./internship-detail";
 import { useActivities } from "@/lib/api/hooks";
-import { Activity } from "@/lib/api/services/activity-service";
+import { Activity, ActivityFilter } from "@/lib/api/services/activity-service";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, FileSearch } from "lucide-react";
 
@@ -32,7 +32,7 @@ export function InternshipSearch() {
     data: activitiesData,
     isLoading: activitiesLoading,
     error: activitiesError
-  } = useActivities(currentPage, itemsPerPage, filters);
+  } = useActivities(currentPage, itemsPerPage, filters as unknown as ActivityFilter);
 
   console.log('Current search term in InternshipSearch:', searchTerm);
   console.log('Current page:', currentPage);

@@ -11,9 +11,7 @@ const ROLE_ROUTES: Record<UserRole, string> = {
   MAHASISWA: '/dashboard/mahasiswa',
   "DOSEN PEMBIMBING": '/dashboard/dosen-pembimbing',
   ADMIN: '/dashboard/admin',
-  SUPERADMIN: '/dashboard/superadmin',
-  PIMPINAN: '/dashboard/pimpinan',
-  TENDIK: '/dashboard/tendik'
+  "LO-MBKM": '/dashboard/lo-mbkm'
 };
 
 export const useRoleManager = () => {

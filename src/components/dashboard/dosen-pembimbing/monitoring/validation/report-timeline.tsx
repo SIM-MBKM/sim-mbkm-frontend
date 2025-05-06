@@ -139,7 +139,7 @@ export function ReportTimeline({ reports }: ReportTimelineProps) {
                     </div>
                     {report.report && report.report.feedback && (
                       <div className="mt-2 text-sm">
-                        <div className="bg-muted p-2 rounded-md border border-border/50">
+                        <div className="bg-muted p-2 rounded-md border border-neutral-200/50">
                           <span className="font-medium">Feedback:</span> {report.report.feedback}
                         </div>
                       </div>

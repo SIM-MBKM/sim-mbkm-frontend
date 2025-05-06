@@ -443,7 +443,7 @@ export function ReportDashboard() {
                                 className={`border ${
                                   selectedRegistrationId === activity.registrationId 
                                     ? "border-blue-500 shadow-sm" 
-                                    : "border-border hover:border-blue-300"
+                                    : "border-neutral-200 hover:border-blue-300"
                                 } cursor-pointer transition-all duration-200`}
                                 onClick={() => handleActivityChange(activity.registrationId)}
                               >
