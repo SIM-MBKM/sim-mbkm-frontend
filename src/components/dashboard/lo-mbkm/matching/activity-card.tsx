@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Activity } from "@/lib/api/services"
+import { useSubmitMatchingRequest } from "@/lib/api/hooks/use-query-hooks"
+import { toast } from "react-toastify"
 
 interface ActivityCardProps {
   activity: Activity
@@ -19,6 +21,7 @@ interface ActivityCardProps {
 
 export function ActivityCard({ activity, index, onMatchClick }: ActivityCardProps) {
   const [expanded, setExpanded] = useState(false)
+  const submitMatchingMutation = useSubmitMatchingRequest()
 
   const toggleExpand = () => {
     setExpanded(!expanded)
@@ -34,6 +37,28 @@ export function ActivityCard({ activity, index, onMatchClick }: ActivityCardProp
       return "border-green-500 dark:border-green-700"
     }
     return "border-slate-200 dark:border-slate-700"
+  }
+
+  const handleMatchingClick = async () => {
+    try {
+      if (activity.matching && Array.isArray(activity.matching) && activity.matching.length > 0) {
+        // If there are existing matchings, we'll handle the edit in the dialog
+        onMatchClick()
+      } else {
+        // For new matchings, we'll handle it in the dialog
+        onMatchClick()
+      }
+    } catch (error) {
+      console.error('Error handling matching:', error)
+      toast.error("Failed to process matching request. Please try again.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      })
+    }
   }
 
   return (
@@ -158,8 +183,19 @@ export function ActivityCard({ activity, index, onMatchClick }: ActivityCardProp
               </>
             )}
           </Button>
-          <Button size="sm" onClick={onMatchClick} className="bg-purple-600 hover:bg-purple-700 text-white">
-            {activity.matching ? "Edit Matching" : "Add Matching"}
+          <Button 
+            size="sm" 
+            onClick={handleMatchingClick} 
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+            disabled={submitMatchingMutation.isPending}
+          >
+            {submitMatchingMutation.isPending ? (
+              "Processing..."
+            ) : activity.matching ? (
+              "Edit Matching"
+            ) : (
+              "Add Matching"
+            )}
           </Button>
         </CardFooter>
       </Card>

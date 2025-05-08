@@ -50,11 +50,22 @@ export interface SubjectFilter {
   tipe_mata_kuliah: string;
 }
 
+export interface MatchingInput {
+  activity_id: string;
+  subject_id_add?: string[];
+  subject_id_remove?: string[];
+}
+
 
 // Matching management service endpoints
 export const matchingService = {
   submitEquivalents: async (equivalentInput: EquivalentInput) => {
     const response = await matchingApi.post<EquivalentResponse<EquivalentInput>>('/equivalent', equivalentInput);
+    return response.data;
+  },
+
+  submitMatchings: async (matchingInput: MatchingInput) => {
+    const response = await matchingApi.post<EquivalentResponse<MatchingInput>>('/matching', matchingInput);
     return response.data;
   },
 

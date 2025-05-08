@@ -146,7 +146,7 @@ const MENU_ITEMS: Record<UserRole, {
         { label: "Kelola User", icon: <Users className="h-5 w-5" />, href: "/dashboard/lo-mbkm/users" },
         { label: "Kelola Program", icon: <Briefcase className="h-5 w-5" />, href: "/dashboard/lo-mbkm/program" },
         { label: "Kelola Matching", icon: <FileEdit className="h-5 w-5" />, href: "/dashboard/lo-mbkm/matching" },
-        { label: "Kelola Ajuan", icon: <FileEdit className="h-5 w-5" />, href: "/dashboard/lo-mbkm/ajuan" },
+        { label: "Kelola Ajuan", icon: <FileEdit className="h-5 w-5" />, href: "/dashboard/lo-mbkm/ajuan-mahasiswa" },
         { label: "Kelola Monev", icon: <FileEdit className="h-5 w-5" />, href: "/dashboard/lo-mbkm/monev" },
         { label: "Kelola Statistik", icon: <FileEdit className="h-5 w-5" />, href: "/dashboard/lo-mbkm/statistik" },
       ],

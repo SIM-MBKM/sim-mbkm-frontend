@@ -10,7 +10,6 @@ export interface ProgramTypeResponse {
 }
 
 
-
 export interface Activity {
   id: string;
   program_type_id: string
@@ -93,7 +92,8 @@ export interface ActivityFilter {
   level_id: string;
   group_id: string;
   name: string;
-  approval_status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  approval_status: string;
+  academic_year: string;
 }
 
 // UpdateActivityRequest struct {
@@ -128,6 +128,10 @@ export interface ActivityUpdateInput {
   approval_status: 'PENDING' | 'APPROVED' | 'REJECTED';
 }
 
+export interface TotalMatchedStatusActivities  {
+  status: 'ALL' | 'MATCHED' | 'UNMATCHED';
+  total: number;
+}
 // Activity management service endpoints
 export const activityService = {
   // Get all activities
@@ -135,6 +139,12 @@ export const activityService = {
     const response = await activityApi.post<ActivityAllResponse>(
       `/activity/filter?page=${page}&limit=${limit}`, filters
     );
+    return response.data;
+  },
+
+  getTotalMatchedStatusActivities: async () => {
+    const response = await activityApi.get<MetaDataActivity<TotalMatchedStatusActivities[]>>("/activity/total-matching");
+    
     return response.data;
   },
 
@@ -149,6 +159,11 @@ export const activityService = {
     const response = await activityApi.post<ActivityAllResponse>(
       `/activity/matched?page=${page}&limit=${limit}`, filters
     );
+    return response.data;
+  },
+
+  getAcademicYears: async () => {
+    const response = await activityApi.get<MetaDataActivity<string[]>>("/activity/academic-year");
     return response.data;
   },
 

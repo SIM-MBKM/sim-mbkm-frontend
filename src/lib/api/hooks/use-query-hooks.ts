@@ -29,6 +29,7 @@ import {
   ActivityAllResponse,
   ActivityUpdateInput,
   SubjectFilter,
+  MatchingInput,
 } from '../services';
 import { fileService } from '../services/file-service';
 
@@ -115,6 +116,20 @@ export const useUpdateUser = () => {
 };
 
 // ACTIVITY HOOKS
+
+export const useGetTotalMatchedStatusActivities = () => {
+  return useQuery({
+    queryKey: ['totalMatchedStatusActivities', 'activities'],
+    queryFn: () => activityService.getTotalMatchedStatusActivities(),
+  });
+}
+
+export const useGetAcademicYears = () => {
+  return useQuery({
+    queryKey: ['academicYears'],
+    queryFn: () => activityService.getAcademicYears(),
+  });
+}
 
 export const useAllProgramTypes = () => {
   return useQuery({
@@ -267,6 +282,13 @@ export const useRegistrationAdvisor = ({page, limit, filter}: {page: number, lim
   return useQuery({
     queryKey: ['userRegistrations', page, limit, filter],
     queryFn: () => registrationService.getRegistrationAdvisor({page, limit, filter}),
+  });
+}
+
+export const useRegistrationLOMBKM = ({page, limit, filter}: {page: number, limit: number, filter: RegistrationFilter}) => {
+  return useQuery({
+    queryKey: ['userRegistrations', page, limit, filter],
+    queryFn: () => registrationService.getRegistrationLOMBKM({page, limit, filter}),
   });
 }
 
@@ -588,6 +610,32 @@ export const useSubmitEquivalenceRequest = () => {
     },
     onError: (error) => {
       console.error('Error submitting equivalent ', error);
+    }
+  });
+  
+  return {
+    ...mutation,
+    isLoading: mutation.isPending
+  };
+};
+
+export const useSubmitMatchingRequest = () => {
+  const queryClient = useQueryClient();
+  
+  const mutation = useMutation({
+    mutationFn: async (matchingInput: MatchingInput) => {
+      console.log('Submitting matching request with input:', matchingInput);
+      const response = await matchingService.submitMatchings(matchingInput);
+      console.log('Matching request response:', response);
+      return response;
+    },
+    onSuccess: (data) => {
+      console.log('Matching request successful:', data);
+      queryClient.invalidateQueries({ queryKey: ['activities'] });
+      queryClient.invalidateQueries({ queryKey: ['totalMatchedStatusActivities'] });
+    },
+    onError: (error) => {
+      console.error('Error submitting matching:', error);
     }
   });
   

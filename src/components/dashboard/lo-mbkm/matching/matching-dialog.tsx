@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/lib/api/hooks/use-toast"
-import { useSubjects, useSubmitEquivalenceRequest } from "@/lib/api/hooks/use-query-hooks"
+import { useSubjects, useSubmitMatchingRequest } from "@/lib/api/hooks/use-query-hooks"
 import { Activity, Matching } from "@/lib/api/services"
 import { Subject } from '@/lib/api/services/matching-service';
 
@@ -22,8 +22,6 @@ interface MatchingDialogProps {
 }
 
 export function MatchingDialog({ open, onOpenChange, activity }: MatchingDialogProps) {
-  // Track if component is mounted to prevent state updates after unmount
-  const isMounted = useRef(true);
   const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([])
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -56,18 +54,11 @@ export function MatchingDialog({ open, onOpenChange, activity }: MatchingDialogP
     subjectFilter: subjectFilter
   })
 
-  // Get mutation function for submitting equivalence request
-  const submitEquivalenceMutation = useSubmitEquivalenceRequest()
+  // Get mutation function for submitting matching request
+  const submitMatchingMutation = useSubmitMatchingRequest()
   
   // Extract subjects from data
   const subjects = subjectsData?.data || [] as Subject[]
-
-  // Handle component unmount
-  useEffect(() => {
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
 
   // Initialize selected subjects once when dialog opens and data is loaded
   useEffect(() => {
@@ -180,7 +171,8 @@ export function MatchingDialog({ open, onOpenChange, activity }: MatchingDialogP
 
   // Submit matching
   const handleSubmit = async () => {
-    if (!isMounted.current) return;
+    console.log("Selected subjects:", selectedSubjects);
+    
     if (selectedSubjects.length === 0) {
       toast({
         title: "No subjects selected",
@@ -192,44 +184,62 @@ export function MatchingDialog({ open, onOpenChange, activity }: MatchingDialogP
 
     try {
       setIsSubmitting(true);
-      console.log("Creating matching with:", {
-        registration_id: activity.id,
-        subject_id_add: selectedSubjects,
-      });
       
-      await submitEquivalenceMutation.mutateAsync({
-        registration_id: activity.id,
-        subject_id_add: selectedSubjects,
-      });
+      // Get existing matched subjects
+      const existingMatchedIds = activity.matching 
+        ? Array.isArray(activity.matching)
+          ? activity.matching.map(match => String(match.subject_id)).filter(Boolean)
+          : [String((activity.matching as { subject_id: number }).subject_id)].filter(Boolean)
+        : [];
 
-      toast({
-        title: "Success",
-        description: "Subject matching has been created successfully.",
-      });
+      // Calculate added and removed subjects
+      const subjectsToAdd = selectedSubjects.map(String).filter(id => !existingMatchedIds.includes(id));
+      const subjectsToRemove = existingMatchedIds.filter(id => !selectedSubjects.map(String).includes(id));
       
-      // Close dialog
-      handleCloseDialog();
+      // Prepare the request payload
+      const matchingPayload = {
+        activity_id: String(activity.id),
+        subject_id_add: subjectsToAdd.length > 0 ? subjectsToAdd.map(String) : undefined,
+        subject_id_remove: subjectsToRemove.length > 0 ? subjectsToRemove : undefined
+      };
+      console.log("Preparing to send matching request with payload:", matchingPayload);
+      
+      // Call the mutation
+      const result = await submitMatchingMutation.mutateAsync(matchingPayload);
+      console.log("Matching request completed with result:", result);
+
+      if (result) {
+        // Show success toast
+        toast({
+          title: "Success",
+          description: "Subject matching has been updated successfully.",
+        });
+        
+        // Close dialog and refresh data
+        handleCloseDialog(true);
+      } else {
+        throw new Error("No response received from server");
+      }
     } catch (error) {
       console.error("Failed to create matching:", error);
-      if (isMounted.current) {
-        toast({
-          title: "Error",
-          description: "Failed to create matching. Please try again.",
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-      }
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update matching. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   // Handle dialog close properly
-  const handleCloseDialog = () => {
+  const handleCloseDialog = (shouldRefresh: boolean = false) => {
     // Reset all state when closing
     setSearchTerm("");
     setPage(1);
     setFilteredSubjects([]);
-    setIsSubmitting(false);
-    onOpenChange(false);
+    setSelectedSubjects([]);
+    onOpenChange(shouldRefresh);
   };
 
   // Get already matched subjects from activity
@@ -411,7 +421,7 @@ export function MatchingDialog({ open, onOpenChange, activity }: MatchingDialogP
         <DialogFooter className="mt-4">
           <Button 
             variant="outline" 
-            onClick={handleCloseDialog}
+            onClick={() => handleCloseDialog()}
             type="button"
           >
             Cancel
@@ -420,9 +430,16 @@ export function MatchingDialog({ open, onOpenChange, activity }: MatchingDialogP
             onClick={handleSubmit} 
             disabled={isSubmitting || selectedSubjects.length === 0}
             type="button"
+            className="bg-purple-600 hover:bg-purple-700 text-white"
           >
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save Matching
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Matching"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

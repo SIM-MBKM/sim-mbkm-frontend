@@ -13,8 +13,8 @@ import { ActivityCard } from "./activity-card"
 import { SubjectForm } from "./subject-form"
 import { MatchingDialog } from "./matching-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useToast } from "@/lib/api/hooks/use-toast"
 import { Pagination } from "./pagination"
+import { toast } from "react-toastify"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,7 +29,10 @@ import {
   useMatchedActivities,
   useAllProgramTypes,
   useAllLevels,
-  useAllGroups
+  useGetAcademicYears,
+  useAllGroups,
+  useGetTotalMatchedStatusActivities,
+  useSubmitMatchingRequest
 } from "@/lib/api/hooks/use-query-hooks"
 
 export function ActivityDashboard() {
@@ -39,11 +42,11 @@ export function ActivityDashboard() {
   const [showMatchingDialog, setShowMatchingDialog] = useState(false)
   const [activeTab, setActiveTab] = useState("all")
   const [programTypeFilter, setProgramTypeFilter] = useState<string>("all")
+  const [academicYearFilter, setAcademicYearFilter] = useState<string>("all")
   const [levelFilter, setLevelFilter] = useState<string>("all")
   const [groupFilter, setGroupFilter] = useState<string>("all")
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
-  const { toast } = useToast()
 
   // Create filter object for API calls
   const filters = {
@@ -52,18 +55,22 @@ export function ActivityDashboard() {
     level_id: levelFilter !== "all" ? levelFilter : "",
     group_id: groupFilter !== "all" ? groupFilter : "",
     name: searchTerm,
-    approval_status: "APPROVED" as const // Type assertion to fix the error
+    approval_status: "", // Type assertion to fix the error
+    academic_year: academicYearFilter !== "all" ? academicYearFilter : "",
   }
 
   // Fetch data based on active tab
   const allActivitiesQuery = useActivities(currentPage, itemsPerPage, filters)
   const matchedActivitiesQuery = useMatchedActivities(currentPage, itemsPerPage, filters)
   const unmatchedActivitiesQuery = useUnmatchedActivities(currentPage, itemsPerPage, filters)
+  const totalMatchedStatusQuery = useGetTotalMatchedStatusActivities()
+  const submitMatchingMutation = useSubmitMatchingRequest()
 
   // Get program types, levels, and groups for filters
   const programTypesQuery = useAllProgramTypes()
   const levelsQuery = useAllLevels()
   const groupsQuery = useAllGroups()
+  const academicYearsQuery = useGetAcademicYears()
 
   // Determine which data to display based on active tab
   const activeQuery = activeTab === "all" 
@@ -72,7 +79,7 @@ export function ActivityDashboard() {
       ? matchedActivitiesQuery 
       : unmatchedActivitiesQuery
 
-  const isLoading = activeQuery.isLoading || programTypesQuery.isLoading || levelsQuery.isLoading || groupsQuery.isLoading
+  const isLoading = activeQuery.isLoading || programTypesQuery.isLoading || levelsQuery.isLoading || groupsQuery.isLoading || academicYearsQuery.isLoading || totalMatchedStatusQuery.isLoading || submitMatchingMutation.isPending
   const activities = activeQuery.data?.data || []
   const totalPages = activeQuery.data?.total_pages || 1
 
@@ -82,18 +89,22 @@ export function ActivityDashboard() {
     allActivitiesQuery.refetch()
     matchedActivitiesQuery.refetch()
     unmatchedActivitiesQuery.refetch()
-  }, [allActivitiesQuery, matchedActivitiesQuery, unmatchedActivitiesQuery])
+    totalMatchedStatusQuery.refetch()
+  }, [allActivitiesQuery, matchedActivitiesQuery, unmatchedActivitiesQuery, totalMatchedStatusQuery])
 
   // Handle error states
   useEffect(() => {
     if (activeQuery.error) {
-      toast({
-        title: "Error loading activities",
-        description: "There was a problem loading the activities. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("There was a problem loading the activities. Please try again.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      })
     }
-  }, [activeQuery.error, toast]);
+  }, [activeQuery.error])
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)
@@ -113,6 +124,14 @@ export function ActivityDashboard() {
       setSelectedActivity(null)
       if (shouldRefresh) {
         refetchData()
+        toast.success("Matching has been successfully updated!", {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        })
       }
     }, 300)
   }
@@ -157,6 +176,13 @@ export function ActivityDashboard() {
     return ["all", ...groupsQuery.data.data.map(g => g.id)]
   }
 
+  const getAcademicYears = () => {
+    if (academicYearsQuery.isLoading || !academicYearsQuery.data) {
+      return ["all"]
+    }
+    
+    return ["all", ...academicYearsQuery.data.data]
+  }
   // Get names for display instead of IDs
   const getProgramTypeName = (id: string) => {
     if (id === "all") return "All Program Types"
@@ -185,29 +211,30 @@ export function ActivityDashboard() {
     setProgramTypeFilter("all")
     setLevelFilter("all")
     setGroupFilter("all")
+    setAcademicYearFilter("all")
     setCurrentPage(1)
   }
 
   const programTypes = getProgramTypes()
   const levels = getLevels()
   const groups = getGroups()
-
+  const academicYears = getAcademicYears()
   const statsData = [
     {
       title: "Total Activities",
-      value: allActivitiesQuery.data?.total || 0,
+      value: totalMatchedStatusQuery.data?.data.find(item => item.status === 'ALL')?.total || 0,
       icon: <Users className="h-4 w-4 text-blue-500" />,
       color: "bg-blue-50 dark:bg-blue-900/20",
     },
     {
       title: "Matched Activities",
-      value: matchedActivitiesQuery.data?.total || 0,
+      value: totalMatchedStatusQuery.data?.data.find(item => item.status === 'MATCHED')?.total || 0,
       icon: <Award className="h-4 w-4 text-green-500" />,
       color: "bg-green-50 dark:bg-green-900/20",
     },
     {
       title: "Unmatched Activities",
-      value: unmatchedActivitiesQuery.data?.total || 0,
+      value: totalMatchedStatusQuery.data?.data.find(item => item.status === 'UNMATCHED')?.total || 0,
       icon: <Clock className="h-4 w-4 text-amber-500" />,
       color: "bg-amber-50 dark:bg-amber-900/20",
     },
@@ -310,6 +337,24 @@ export function ActivityDashboard() {
             </DropdownMenuContent>
           </DropdownMenu>
 
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <span>Academic Year</span>
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-white">
+              <DropdownMenuRadioGroup value={academicYearFilter} onValueChange={setAcademicYearFilter}>
+                {academicYears.map((academicYear) => (
+                  <DropdownMenuRadioItem key={academicYear} value={academicYear}>
+                    {academicYear}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
           <Button onClick={handleAddSubject} className="flex text-white items-center gap-2 bg-purple-600 hover:bg-purple-700">
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Add Subject</span>

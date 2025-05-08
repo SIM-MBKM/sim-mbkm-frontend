@@ -256,6 +256,14 @@ export const registrationService = {
     );
     return response.data;
   },
+ 
+  getRegistrationLOMBKM: async({page, limit, filter}: {page: number, limit: number, filter: RegistrationFilter}) => {
+    const response = await registrationApi.post<PaginatedResponse<Registration>>(
+      `/registration/lo-mbkm?page=${page}&limit=${limit}`,
+      filter,
+    );
+    return response.data;
+  },
   
   getRegistrationStudentMatching: async () => {
     const response = await registrationApi.post<RegistrationStudentMatchingResponse>(

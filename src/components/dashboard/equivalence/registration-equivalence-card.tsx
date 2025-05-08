@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { MatchingCard } from "@/components/dashboard/equivalence/matching-card"
 import { Registration } from "@/lib/api/services/registration-service"
 import { useSubmitEquivalenceRequest, useFilterSubject } from "@/lib/api/hooks"
-import { toast } from "@/lib/api/hooks/use-toast"
+import { toast } from "react-toastify"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { SubjectFilterRequest } from "@/lib/api/services"
@@ -228,10 +228,13 @@ export function RegistrationCard({
       setInitialSubjects([...selectedSubjects])
       setHasChanges(false)
       
-      toast({
-        title: "Berhasil!",
-        description: "Ekivalensi mata kuliah berhasil disimpan.",
-        variant: "default",
+      toast.success("Ekivalensi mata kuliah berhasil disimpan.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
       })
       
       // If external handler is provided, call it too
@@ -240,10 +243,13 @@ export function RegistrationCard({
       }
     } catch (error) {
       console.error("Error saving equivalents:", error)
-      toast({
-        title: "Gagal!",
-        description: "Terjadi kesalahan saat menyimpan ekivalensi.",
-        variant: "destructive",
+      toast.error("Terjadi kesalahan saat menyimpan ekivalensi.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
       })
     }
   }
