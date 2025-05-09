@@ -2,25 +2,25 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react"
+import { ArrowLeft, ArrowRight, Check } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { FileUpload } from "./file-upload"
-import { useToast } from '@/lib/api/hooks/use-toast'
-import { createSubject } from "@/lib/api"
+import { useSubmitSubject } from "@/lib/api/hooks/use-query-hooks"
+import { toast } from "react-toastify"
 
 interface SubjectFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSuccess?: () => void
 }
 
-export function SubjectForm({ open, onOpenChange }: SubjectFormProps) {
+export function SubjectForm({ open, onOpenChange, onSuccess }: SubjectFormProps) {
   const [step, setStep] = useState(1)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const { toast } = useToast()
+  const submitSubjectMutation = useSubmitSubject()
 
   // Form state
   const [formData, setFormData] = useState({
@@ -28,7 +28,7 @@ export function SubjectForm({ open, onOpenChange }: SubjectFormProps) {
     mata_kuliah: "",
     semester: "GANJIL",
     prodi_penyelenggara: "",
-    sks: 0,
+    sks: "",
     kelas: "mbkm",
     departemen: "",
     tipe_mata_kuliah: "pilihan prodi",
@@ -45,20 +45,12 @@ export function SubjectForm({ open, onOpenChange }: SubjectFormProps) {
   const validateStep = () => {
     if (step === 1) {
       if (!formData.kode || !formData.mata_kuliah || !formData.prodi_penyelenggara) {
-        toast({
-          title: "Missing fields",
-          description: "Please fill in all required fields.",
-          variant: "destructive",
-        })
+        toast.error("Please fill in all required fields.")
         return false
       }
     } else if (step === 2) {
       if (!formData.departemen || !formData.sks) {
-        toast({
-          title: "Missing fields",
-          description: "Please fill in all required fields.",
-          variant: "destructive",
-        })
+        toast.error("Please fill in all required fields.")
         return false
       }
     }
@@ -79,32 +71,25 @@ export function SubjectForm({ open, onOpenChange }: SubjectFormProps) {
     if (!validateStep()) return
 
     try {
-      setIsSubmitting(true)
-      // Since we don't have useSubmitSubject, we'll use the createSubject function
-      await createSubject({
+      await submitSubjectMutation.mutateAsync({
         ...formData,
-        sks: formData.sks,
-        // Add required properties for the Subject type
-        id: "", // This will be generated on the server
-        subject_id: "", // This will be generated on the server
-        documents: [] // Empty documents array
+        sks: Number(formData.sks),
       })
 
-      toast({
-        title: "Success",
-        description: "Subject has been created successfully.",
-      })
-      
-      // Close dialog
+      toast.success("Subject has been created successfully.")
+
+      if (onSuccess) {
+        onSuccess()
+      }
+
       onOpenChange(false)
-      
       // Reset form
       setFormData({
         kode: "",
         mata_kuliah: "",
         semester: "GANJIL",
         prodi_penyelenggara: "",
-        sks: 0,
+        sks: "",
         kelas: "mbkm",
         departemen: "",
         tipe_mata_kuliah: "pilihan prodi",
@@ -113,13 +98,7 @@ export function SubjectForm({ open, onOpenChange }: SubjectFormProps) {
       setStep(1)
     } catch (error) {
       console.error("Failed to create subject:", error)
-      toast({
-        title: "Error",
-        description: "Failed to create subject. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsSubmitting(false)
+      toast.error("Failed to create subject. Please try again.")
     }
   }
 
@@ -346,13 +325,12 @@ export function SubjectForm({ open, onOpenChange }: SubjectFormProps) {
             <div></div>
           )}
           {step < 3 ? (
-            <Button onClick={nextStep} className="flex items-center gap-1 bg-blue-500 text-white">
+            <Button onClick={nextStep} className="flex items-center gap-1">
               Next
               <ArrowRight className="h-4 w-4" />
             </Button>
           ) : (
-            <Button onClick={handleSubmit} disabled={isSubmitting} className="flex items-center gap-1">
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+            <Button onClick={handleSubmit} className="flex items-center gap-1">
               Submit
             </Button>
           )}

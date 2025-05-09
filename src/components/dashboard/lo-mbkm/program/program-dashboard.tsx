@@ -57,6 +57,7 @@ function ProgramAPIProvider({ children }: { children: React.ReactNode }) {
   // Initialize with default ActivityFilter values
   const [activityFilters, setActivityFilters] = useState<ActivityFilter>({
     activity_id: "",
+    academic_year: "",
     program_type_id: "",
     level_id: "",
     group_id: "",

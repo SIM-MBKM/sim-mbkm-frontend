@@ -1,5 +1,5 @@
 import type { Subject, MatchingRequest } from "./types"
-import { Activity } from '@/lib/api/services';
+import { Activity, PaginatedResponse } from '@/lib/api/services';
 
 // Mock data based on the provided JSON
 const mockActivities: Activity[] = [
@@ -447,6 +447,155 @@ const mockSubjects: Subject[] = [
   },
 ]
 
+// Sample data based on the provided JSON
+const sampleSubjects: Subject[] = [
+  {
+    id: "f92b580f-d9df-4211-817f-f97c5b20887f",
+    subject_id: "f92b580f-d9df-4211-817f-f97c5b20887f",
+    mata_kuliah: "Sistem Basis Data",
+    kode: "EF234723",
+    semester: "GANJIL",
+    prodi_penyelenggara: "S-1 Teknik Informatika",
+    sks: 6,
+    kelas: "mbkm",
+    departemen: "Teknik Informatika",
+    tipe_mata_kuliah: "pilihan prodi",
+    documents: [
+      {
+        id: "4d70adaa-10f9-41da-a0a0-4ec861554025",
+        subject_id: "f92b580f-d9df-4211-817f-f97c5b20887f",
+        file_storage_id: "sim_mbkm/b9906f30-cd62-4291-9b3e-41ede64cadfe.docx",
+        name: "DOKUMEN TESTING.docx",
+        document_type: "Acceptence Letter",
+      },
+    ],
+  },
+  {
+    id: "ebdbff93-2f95-403f-ad91-57b1ed6bbea9",
+    subject_id: "ebdbff93-2f95-403f-ad91-57b1ed6bbea9",
+    mata_kuliah: "Magang 2",
+    kode: "EF234722",
+    semester: "GANJIL",
+    prodi_penyelenggara: "S-1 Teknik Informatika",
+    sks: 6,
+    kelas: "mbkm",
+    departemen: "Teknik Informatika",
+    tipe_mata_kuliah: "pilihan prodi",
+    documents: [
+      {
+        id: "c158b786-0757-4e0e-b28f-0ef83a519dc3",
+        subject_id: "ebdbff93-2f95-403f-ad91-57b1ed6bbea9",
+        file_storage_id: "sim_mbkm/7e315e0f-af28-4cbc-b05f-e5450914df72.docx",
+        name: "DOKUMEN TESTING.docx",
+        document_type: "Acceptence Letter",
+      },
+    ],
+  },
+  // Additional sample data for testing
+  {
+    id: "a1b2c3d4-e5f6-4a5b-8c7d-9e0f1a2b3c4d",
+    mata_kuliah: "Algoritma dan Pemrograman",
+    subject_id: "a1b2c3d4-e5f6-7890-a1b2-c3d4e5f67890",
+    kode: "EF234724",
+    semester: "GENAP",
+    prodi_penyelenggara: "S-1 Teknik Informatika",
+    sks: 4,
+    kelas: "regular",
+    departemen: "Teknik Informatika",
+    tipe_mata_kuliah: "wajib",
+    documents: [],
+  },
+  {
+    id: "b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e",
+    subject_id: "b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e",
+    mata_kuliah: "Jaringan Komputer",
+    kode: "EF234725",
+    semester: "GANJIL",
+    prodi_penyelenggara: "S-1 Teknik Informatika",
+    sks: 3,
+    kelas: "regular",
+    departemen: "Teknik Informatika",
+    tipe_mata_kuliah: "wajib",
+    documents: [
+      {
+        id: "d4e5f6a7-b8c9-5d6e-7f8g-9h0i1j2k3l4m",
+        subject_id: "b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e",
+        file_storage_id: "sim_mbkm/c4d5e6f7-g8h9-i0j1-k2l3-m4n5o6p7q8r9.pdf",
+        name: "Syllabus Jaringan Komputer.pdf",
+        document_type: "Syllabus",
+      },
+    ],
+  },
+  {
+    id: "c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f",
+    subject_id: "c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f",
+    mata_kuliah: "Kalkulus",
+    kode: "MA234701",
+    semester: "GANJIL",
+    prodi_penyelenggara: "S-1 Matematika",
+    sks: 4,
+    kelas: "regular",
+    departemen: "Matematika",
+    tipe_mata_kuliah: "wajib",
+    documents: [],
+  },
+  {
+    id: "d4e5f6a7-b8c9-7d8e-1f2a-3b4c5d6e7f8g",
+    subject_id: "d4e5f6a7-b8c9-7d8e-1f2a-3b4c5d6e7f8g",
+    mata_kuliah: "Fisika Dasar",
+    kode: "FI234701",
+    semester: "GENAP",
+    prodi_penyelenggara: "S-1 Fisika",
+    sks: 3,
+    kelas: "regular",
+    departemen: "Fisika",
+    tipe_mata_kuliah: "wajib",
+    documents: [
+      {
+        id: "e5f6a7b8-c9d0-8e9f-2a3b-4c5d6e7f8g9h",
+        subject_id: "d4e5f6a7-b8c9-7d8e-1f2a-3b4c5d6e7f8g",
+        file_storage_id: "sim_mbkm/d5e6f7g8-h9i0-j1k2-l3m4-n5o6p7q8r9s0.docx",
+        name: "Modul Praktikum Fisika.docx",
+        document_type: "Report",
+      },
+    ],
+  },
+  {
+    id: "e5f6a7b8-c9d0-8e9f-2a3b-4c5d6e7f8g9h",
+    subject_id: "e5f6a7b8-c9d0-8e9f-2a3b-4c5d6e7f8g9h",
+    mata_kuliah: "Kimia Dasar",
+    kode: "KI234701",
+    semester: "GANJIL",
+    prodi_penyelenggara: "S-1 Kimia",
+    sks: 3,
+    kelas: "regular",
+    departemen: "Kimia",
+    tipe_mata_kuliah: "wajib",
+    documents: [],
+  },
+  {
+    id: "f6a7b8c9-d0e1-9f0a-3b4c-5d6e7f8g9h0i",
+    subject_id: "f6a7b8c9-d0e1-9f0a-3b4c-5d6e7f8g9h0i",
+    mata_kuliah: "Statistika",
+    kode: "ST234701",
+    semester: "GENAP",
+    prodi_penyelenggara: "S-1 Statistika",
+    sks: 3,
+    kelas: "regular",
+    departemen: "Statistika",
+    tipe_mata_kuliah: "wajib",
+    documents: [
+      {
+        id: "g7h8i9j0-k1l2-0a1b-4c5d-6e7f8g9h0i1j",
+        subject_id: "f6a7b8c9-d0e1-9f0a-3b4c-5d6e7f8g9h0i",
+        file_storage_id: "sim_mbkm/e6f7g8h9-i0j1-k2l3-m4n5-o6p7q8r9s0t1.pdf",
+        name: "Modul Statistika.pdf",
+        document_type: "Syllabus",
+      },
+    ],
+  },
+]
+
 // Fetch activities
 export async function fetchActivities(): Promise<Activity[]> {
   // Simulate API call delay
@@ -456,51 +605,66 @@ export async function fetchActivities(): Promise<Activity[]> {
     }, 1000)
   })
 }
-
-// Fetch subjects
-export async function fetchSubjects(): Promise<Subject[]> {
-  console.log("fetchSubjects called");
-  
+export async function fetchSubjects(): Promise<PaginatedResponse<Subject>> {
   // Simulate API call delay
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      try {
-        console.log("Mock subjects data:", mockSubjects);
-        if (!mockSubjects || mockSubjects.length === 0) {
-          console.warn("No subjects available in mock data");
-        }
-        
-        // Make a deep copy to avoid reference issues
-        const subjectsCopy = JSON.parse(JSON.stringify(mockSubjects));
-        console.log("Returning subjects:", subjectsCopy);
-        resolve(subjectsCopy);
-      } catch (error) {
-        console.error("Error in fetchSubjects:", error);
-        reject(error);
-      }
-    }, 800)
-  })
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+
+  return {
+    message: "Get all subjects success",
+    status: "success",
+    data: sampleSubjects,
+    current_page: 1,
+    first_page_url: "/matching-management/api/subject/filter?page=1&limit=10",
+    last_page: 1,
+    last_page_url: "/matching-management/api/subject/filter?page=1&limit=10",
+    next_page_url: "/matching-management/api/subject/filter?page=2&limit=10",
+    per_page: 10,
+    prev_page_url: "",
+    to: sampleSubjects.length,
+    total: sampleSubjects.length,
+    total_pages: 1,
+  }
 }
 
-// Create a new subject
-export async function createSubject(subject: Subject): Promise<Subject> {
+export async function createSubject(subjectData: Subject): Promise<Subject> {
   // Simulate API call delay
   return new Promise((resolve) => {
     setTimeout(() => {
       const newSubject: Subject = {
-        ...subject,
         id: `subject_${Date.now()}`,
         subject_id: `subject_${Date.now()}`,
+        mata_kuliah: subjectData.mata_kuliah,
+        kode: subjectData.kode,
+        semester: subjectData.semester,
+        prodi_penyelenggara: subjectData.prodi_penyelenggara,
+        sks: subjectData.sks,
+        kelas: subjectData.kelas,
+        departemen: subjectData.departemen,
+        tipe_mata_kuliah: subjectData.tipe_mata_kuliah,
+        documents: subjectData.documents
+          ? [
+              {
+                id: `doc_${Date.now()}`,
+                subject_id: `subject_${Date.now()}`,
+                file_storage_id: `sim_mbkm/${Date.now()}.${subjectData.documents[0].name.split(".").pop()}`,
+                name: subjectData.documents[0].name,
+                document_type: "Acceptence Letter",
+              },
+            ]
+          : [],
       }
 
       // In a real app, you would add this to your database
-      mockSubjects.push(newSubject)
+      // mockSubjectsResponse.data.unshift(newSubject)
 
       resolve(newSubject)
     }, 1000)
   })
 }
 
+
+
+// 
 // Create matching between activity and subjects
 export async function createMatching(matchingRequest: MatchingRequest): Promise<{success: boolean, message: string}> {
   // Simulate API call delay
@@ -536,4 +700,53 @@ export async function createMatching(matchingRequest: MatchingRequest): Promise<
       }
     }, 1200)
   })
+}
+
+
+// Delete a subject
+export async function deleteSubject(subjectId: string): Promise<{ success: boolean }> {
+  // Simulate API call delay
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+
+  // In a real app, you would make an API call to delete the subject
+  // For now, we'll just return a success response
+  return {
+    success: true,
+  }
+}
+
+// Update a subject
+export async function updateSubject(subjectData: any): Promise<Subject> {
+  // Simulate API call delay
+  await new Promise((resolve) => setTimeout(resolve, 1500))
+
+  // In a real app, you would make an API call to update the subject
+  // For now, we'll just return the updated subject
+  const updatedSubject: Subject = {
+    id: subjectData.id,
+    mata_kuliah: subjectData.mata_kuliah,
+    kode: subjectData.kode,
+    semester: subjectData.semester,
+    prodi_penyelenggara: subjectData.prodi_penyelenggara,
+    sks: subjectData.sks,
+    kelas: subjectData.kelas,
+    departemen: subjectData.departemen,
+    tipe_mata_kuliah: subjectData.tipe_mata_kuliah,
+    documents: subjectData.documents,
+  }
+
+  // If a new file was uploaded, add it to the documents
+  if (subjectData.file) {
+    const newDocument = {
+      id: `doc_${Date.now()}`,
+      subject_id: subjectData.id,
+      file_storage_id: `sim_mbkm/${Date.now()}.${subjectData.file.name.split(".").pop()}`,
+      name: subjectData.file.name,
+      document_type: "Acceptence Letter",
+    }
+
+    updatedSubject.documents = [...updatedSubject.documents, newDocument]
+  }
+
+  return updatedSubject
 }

@@ -1,38 +1,40 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react"
+import { ArrowLeft, ArrowRight, Check } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { FileUpload } from "./file-upload"
-import { useToast } from '@/lib/api/hooks/use-toast'
-import { createSubject } from "@/lib/api"
+import { useUpdateSubject } from "@/lib/api/hooks/use-query-hooks"
+import { toast } from "react-toastify"
+import type { Subject } from "@/lib/api/services/matching-service"
 
-interface SubjectFormProps {
+interface EditSubjectFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  subject: Subject
+  onSuccess?: () => void
 }
 
-export function SubjectForm({ open, onOpenChange }: SubjectFormProps) {
+export function EditSubjectForm({ open, onOpenChange, subject, onSuccess }: EditSubjectFormProps) {
   const [step, setStep] = useState(1)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const { toast } = useToast()
+  const updateSubjectMutation = useUpdateSubject()
 
   // Form state
   const [formData, setFormData] = useState({
-    kode: "",
-    mata_kuliah: "",
-    semester: "GANJIL",
-    prodi_penyelenggara: "",
-    sks: 0,
-    kelas: "mbkm",
-    departemen: "",
-    tipe_mata_kuliah: "pilihan prodi",
-    file: null as File | null,
+    kode: subject.kode,
+    mata_kuliah: subject.mata_kuliah,
+    semester: subject.semester,
+    prodi_penyelenggara: subject.prodi_penyelenggara,
+    sks: Number(subject.sks.toString()),
+    kelas: subject.kelas,
+    departemen: subject.departemen,
+    tipe_mata_kuliah: subject.tipe_mata_kuliah,
   })
 
   const updateFormData = (field: string, value: string | File | null) => {
@@ -45,20 +47,12 @@ export function SubjectForm({ open, onOpenChange }: SubjectFormProps) {
   const validateStep = () => {
     if (step === 1) {
       if (!formData.kode || !formData.mata_kuliah || !formData.prodi_penyelenggara) {
-        toast({
-          title: "Missing fields",
-          description: "Please fill in all required fields.",
-          variant: "destructive",
-        })
+        toast.error("Please fill in all required fields.")
         return false
       }
     } else if (step === 2) {
       if (!formData.departemen || !formData.sks) {
-        toast({
-          title: "Missing fields",
-          description: "Please fill in all required fields.",
-          variant: "destructive",
-        })
+        toast.error("Please fill in all required fields.")
         return false
       }
     }
@@ -79,54 +73,66 @@ export function SubjectForm({ open, onOpenChange }: SubjectFormProps) {
     if (!validateStep()) return
 
     try {
-      setIsSubmitting(true)
-      // Since we don't have useSubmitSubject, we'll use the createSubject function
-      await createSubject({
-        ...formData,
-        sks: formData.sks,
-        // Add required properties for the Subject type
-        id: "", // This will be generated on the server
-        subject_id: "", // This will be generated on the server
-        documents: [] // Empty documents array
+      await updateSubjectMutation.mutateAsync({
+        id: subject.id,
+        subjectInput: {
+          ...formData,
+          sks: Number(formData.sks),
+        }
       })
 
-      toast({
-        title: "Success",
-        description: "Subject has been created successfully.",
-      })
-      
-      // Close dialog
+      toast.success("Subject has been updated successfully.")
+
+      if (onSuccess) {
+        onSuccess()
+      }
+
       onOpenChange(false)
-      
-      // Reset form
-      setFormData({
-        kode: "",
-        mata_kuliah: "",
-        semester: "GANJIL",
-        prodi_penyelenggara: "",
-        sks: 0,
-        kelas: "mbkm",
-        departemen: "",
-        tipe_mata_kuliah: "pilihan prodi",
-        file: null,
-      })
-      setStep(1)
     } catch (error) {
-      console.error("Failed to create subject:", error)
-      toast({
-        title: "Error",
-        description: "Failed to create subject. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsSubmitting(false)
+      console.error("Failed to update subject:", error)
+      toast.error("Failed to update subject. Please try again.")
     }
   }
 
-  const renderStepContent = () => {
-    switch (step) {
-      case 1:
-        return (
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px] bg-white">
+        <DialogHeader>
+          <DialogTitle>Edit Subject</DialogTitle>
+        </DialogHeader>
+
+        <div className="mb-6">
+          <div className="flex justify-between mb-2">
+            {[1, 2, 3].map((stepNumber) => (
+              <div key={stepNumber} className="flex flex-col items-center">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    step === stepNumber
+                      ? "bg-purple-600 text-white"
+                      : step > stepNumber
+                        ? "bg-green-500 text-white"
+                        : "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
+                  }`}
+                >
+                  {step > stepNumber ? <Check className="h-4 w-4" /> : stepNumber}
+                </div>
+                <span className="text-xs mt-1">
+                  {stepNumber === 1 ? "Basic Info" : stepNumber === 2 ? "Details" : "Document"}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="relative h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+            <motion.div
+              className="absolute top-0 left-0 h-full bg-purple-600"
+              initial={{ width: `${((step - 1) / 2) * 100}%` }}
+              animate={{ width: `${((step - 1) / 2) * 100}%` }}
+              transition={{ duration: 0.3 }}
+            />
+          </div>
+        </div>
+
+        {step === 1 && (
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="kode">Code</Label>
@@ -173,9 +179,9 @@ export function SubjectForm({ open, onOpenChange }: SubjectFormProps) {
               />
             </div>
           </div>
-        )
-      case 2:
-        return (
+        )}
+
+        {step === 2 && (
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="sks">Credits (SKS)</Label>
@@ -235,19 +241,10 @@ export function SubjectForm({ open, onOpenChange }: SubjectFormProps) {
               </RadioGroup>
             </div>
           </div>
-        )
-      case 3:
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Document Upload</Label>
-              <FileUpload
-                onFileSelect={(file) => updateFormData("file", file)}
-                selectedFile={formData.file}
-                acceptedFileTypes=".pdf,.doc,.docx"
-              />
-            </div>
+        )}
 
+        {step === 3 && (
+          <div className="space-y-4">
             <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800 rounded-md">
               <h4 className="font-medium mb-3">Subject Summary</h4>
               <div className="space-y-2 text-sm">
@@ -283,58 +280,10 @@ export function SubjectForm({ open, onOpenChange }: SubjectFormProps) {
                   <div className="text-muted-foreground">Course Type:</div>
                   <div>{formData.tipe_mata_kuliah}</div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="text-muted-foreground">Document:</div>
-                  <div>{formData.file ? formData.file.name : "No document uploaded"}</div>
-                </div>
               </div>
             </div>
           </div>
-        )
-      default:
-        return null
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] bg-white">
-        <DialogHeader>
-          <DialogTitle>Add New Subject</DialogTitle>
-        </DialogHeader>
-
-        <div className="mb-6">
-          <div className="flex justify-between mb-2">
-            {[1, 2, 3].map((stepNumber) => (
-              <div key={stepNumber} className="flex flex-col items-center">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    step === stepNumber
-                      ? "bg-purple-600 text-white"
-                      : step > stepNumber
-                        ? "bg-green-500 text-white"
-                        : "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
-                  }`}
-                >
-                  {step > stepNumber ? <Check className="h-4 w-4" /> : stepNumber}
-                </div>
-                <span className="text-xs mt-1">
-                  {stepNumber === 1 ? "Basic Info" : stepNumber === 2 ? "Details" : "Document"}
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className="relative h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-            <motion.div
-              className="absolute top-0 left-0 h-full bg-purple-600"
-              initial={{ width: `${((step - 1) / 2) * 100}%` }}
-              animate={{ width: `${((step - 1) / 2) * 100}%` }}
-              transition={{ duration: 0.3 }}
-            />
-          </div>
-        </div>
-
-        {renderStepContent()}
+        )}
 
         <DialogFooter className="mt-6 flex justify-between">
           {step > 1 ? (
@@ -346,14 +295,13 @@ export function SubjectForm({ open, onOpenChange }: SubjectFormProps) {
             <div></div>
           )}
           {step < 3 ? (
-            <Button onClick={nextStep} className="flex items-center gap-1 bg-blue-500 text-white">
+            <Button onClick={nextStep} className="flex items-center gap-1">
               Next
               <ArrowRight className="h-4 w-4" />
             </Button>
           ) : (
-            <Button onClick={handleSubmit} disabled={isSubmitting} className="flex items-center gap-1">
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Submit
+            <Button onClick={handleSubmit} disabled={updateSubjectMutation.isLoading} className="flex items-center gap-1">
+              {updateSubjectMutation.isLoading ? "Saving..." : "Submit"}
             </Button>
           )}
         </DialogFooter>

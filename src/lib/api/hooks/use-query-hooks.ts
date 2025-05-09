@@ -30,6 +30,7 @@ import {
   ActivityUpdateInput,
   SubjectFilter,
   MatchingInput,
+  SubjectInput,
 } from '../services';
 import { fileService } from '../services/file-service';
 
@@ -384,12 +385,7 @@ export const useReportSchedulesByAdvisor = ({page, limit, input}: {page: number,
   });
 }
 
-export const useSubjects = ({page, limit, subjectFilter}: {page: number, limit: number, subjectFilter: SubjectFilter}) => {
-  return useQuery({
-    queryKey: ['subjects','activities', page, limit, subjectFilter],
-    queryFn: () => matchingService.getSubjects({page, limit, subjectFilter}),
-  });
-}
+
 
 export const useTranscriptsByAdvisor = ({page, limit, transcriptByAdvisorInput}: {page: number, limit: number, transcriptByAdvisorInput: TranscriptByAdvisorInput}) => {
   return useQuery({
@@ -619,6 +615,66 @@ export const useSubmitEquivalenceRequest = () => {
   };
 };
 
+export const useSubmitSubject = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (subjectInput: SubjectInput) =>
+      matchingService.submitSubjects(subjectInput),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subjects' ,'activities'] });
+    },
+    onError: (error) => {
+      console.error('Error submitting subject:', error);
+    }
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending
+  };
+}
+
+export const useUpdateSubject = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: ({ id, subjectInput }: { id: string; subjectInput: SubjectInput }) =>
+      matchingService.updateSubjects(id, subjectInput),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subjects' ,'activities'] });
+    },
+    onError: (error) => {
+      console.error('Error updating subject:', error);
+    }
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending
+  };
+}
+
+export const useDeleteSubject = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (subjectId: string) =>
+      matchingService.deleteSubject(subjectId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subjects' ,'activities'] });
+    },
+    onError: (error) => {
+      console.error('Error deleting subject:', error);
+    }
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending
+  };
+}
+
 export const useSubmitMatchingRequest = () => {
   const queryClient = useQueryClient();
   
@@ -644,6 +700,34 @@ export const useSubmitMatchingRequest = () => {
     isLoading: mutation.isPending
   };
 };
+
+export const useSubjects = ({page, limit, subjectFilter}: {page: number, limit: number, subjectFilter: SubjectFilter}) => {
+  return useQuery({
+    queryKey: ['subjects','activities', page, limit, subjectFilter],
+    queryFn: () => matchingService.getSubjects({page, limit, subjectFilter}),
+  });
+}
+
+export const useSubjectsGeofisika = ({page, limit, subjectFilter}: {page: number, limit: number, subjectFilter: SubjectFilter}) => {
+  return useQuery({
+    queryKey: ['subjects','activities', page, limit, subjectFilter],
+    queryFn: () => matchingService.getSubjectsGeofisika({page, limit, subjectFilter}),
+  });
+}
+
+export const useSubjectsNonGeofisika = ({page, limit, subjectFilter}: {page: number, limit: number, subjectFilter: SubjectFilter}) => {
+  return useQuery({
+    queryKey: ['subjects','activities', page, limit, subjectFilter],
+    queryFn: () => matchingService.getSubjectsNonGeofisika({page, limit, subjectFilter}),
+  });
+}
+
+export const useTotalSubjects = () => {
+  return useQuery({
+    queryKey: ['totalSubjects', 'activities', 'subjects'],
+    queryFn: () => matchingService.getTotalSubjects(),
+  });
+}
 
 // FILE HOOKS
 export const useGetTemporaryLink = (fileId: string) => {
