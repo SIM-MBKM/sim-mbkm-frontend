@@ -10,7 +10,7 @@ import { DialogFooter } from "@/components/ui/dialog"
 import { Registration } from "@/lib/api/services/registration-service"
 import { Matching } from "@/lib/api/services/registration-service"
 import { useUpdateRegistrationStudentById } from "@/lib/api/hooks"
-import { toast, ToastContainer } from "react-toastify"
+import { toast } from "react-toastify"
 import 'react-toastify/dist/ReactToastify.css'
 
 interface RegistrationFormProps {
@@ -26,6 +26,10 @@ export function RegistrationForm({ registration, onClose }: RegistrationFormProp
     mentor_email: registration.mentor_email,
     semester: registration.semester,
     total_sks: registration.total_sks,
+    academic_advisor_validation: registration.academic_advisor_validation,
+    lo_validation: registration.lo_validation,
+    approval_status: registration.approval_status,
+    academic_advisor_id: registration.academic_advisor_id,
     advising_confirmation: registration.advising_confirmation || true,
   })
 
@@ -51,6 +55,10 @@ export function RegistrationForm({ registration, onClose }: RegistrationFormProp
       mentor_email: formData.mentor_email,
       semester: Number(formData.semester),
       total_sks: Number(formData.total_sks),
+      academic_advisor_validation: registration.academic_advisor_validation,
+      lo_validation: registration.lo_validation,
+      approval_status: registration.approval_status,
+      academic_advisor_id: registration.academic_advisor_id,
       advising_confirmation: formData.advising_confirmation,
     }
     
@@ -78,7 +86,7 @@ export function RegistrationForm({ registration, onClose }: RegistrationFormProp
 
   return (
     <>
-      <ToastContainer position="top-right" autoClose={3000} />
+      {/* <ToastContainer position="top-right" autoClose={3000} /> */}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
           <div>

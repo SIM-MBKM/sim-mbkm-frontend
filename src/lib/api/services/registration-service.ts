@@ -21,6 +21,7 @@ export interface Registration {
   advising_confirmation: boolean;
   academic_advisor: string;
   academic_advisor_email: string;
+  academic_advisor_id: string;
   mentor_name: string;
   mentor_email: string;
   lo_validation: 'PENDING' | 'APPROVED' | 'REJECTED';

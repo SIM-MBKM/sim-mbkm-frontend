@@ -52,7 +52,8 @@ export function ProgramStatus() {
         kelas: equiv.kelas,
         departemen: equiv.departemen,
         tipe_mata_kuliah: equiv.tipe_mata_kuliah,
-        documents: equiv.documents.map(doc => ({
+        documents: equiv.documents &&
+          equiv.documents.map(doc => ({
           id: doc.id,
           registration_id: doc.registration_id,
           subject_id: doc.registration_id, // Using registration_id as subject_id

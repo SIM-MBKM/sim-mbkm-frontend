@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Download, FileText, Maximize2, Minimize2, CheckCircle, XCircle, Clock, Save } from "lucide-react"
+import { X, Download, FileText, Maximize2, Minimize2, CheckCircle, XCircle, Clock, Save, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { format, parseISO } from "date-fns"
@@ -11,6 +11,7 @@ import { format, parseISO } from "date-fns"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { ReportSchedule } from "@/lib/api/services";
+import { useGetTemporaryLink } from "@/lib/api/hooks/use-query-hooks"
 
 interface ReportPreviewProps {
   report: ReportSchedule
@@ -25,6 +26,9 @@ export function ReportPreview({ report, onClose, onStatusChange }: ReportPreview
   const [status, setStatus] = useState<string>(report.report?.academic_advisor_status || "PENDING")
   const [feedback, setFeedback] = useState<string>(report.report?.feedback || "")
   const [isEditing, setIsEditing] = useState(false)
+
+  // Add useGetTemporaryLink hook
+  const { data: fileData, isLoading: isLoadingFile } = useGetTemporaryLink(report.report?.file_storage_id || "")
 
   useEffect(() => {
     // Simulate loading
@@ -97,6 +101,19 @@ export function ReportPreview({ report, onClose, onStatusChange }: ReportPreview
       onClose()
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleDownload = () => {
+    if (fileData?.url) {
+      window.open(fileData.url, '_blank')
+    }
+  }
+
+  const handlePreview = () => {
+    if (fileData?.url) {
+      // Open in new tab for preview
+      window.open(fileData.url, '_blank')
     }
   }
 
@@ -316,12 +333,64 @@ export function ReportPreview({ report, onClose, onStatusChange }: ReportPreview
                       )}
                     </div>
                   )}
-                </div>
 
-                <Button className="mt-6 bg-blue-500 text-white" onClick={() => console.log("Download report")}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Report
-                </Button>
+                  {report.report?.file_storage_id && (
+                    <div className="mt-6 pt-4 border-t">
+                      <h3 className="font-medium mb-4">Document</h3>
+                      <div className="flex gap-3">
+                        <Button 
+                          variant="outline" 
+                          className="flex items-center gap-2"
+                          onClick={handlePreview}
+                          disabled={isLoadingFile}
+                        >
+                          {isLoadingFile ? (
+                            <>
+                              <motion.div
+                                className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                              />
+                              Loading...
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="h-4 w-4" />
+                              Preview Document
+                            </>
+                          )}
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="flex items-center gap-2"
+                          onClick={handleDownload}
+                          disabled={isLoadingFile}
+                        >
+                          {isLoadingFile ? (
+                            <>
+                              <motion.div
+                                className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                              />
+                              Loading...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="h-4 w-4" />
+                              Download Document
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      {fileData?.expired_at && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Link expires at: {format(parseISO(fileData.expired_at), "MMMM d, yyyy 'at' h:mm a")}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

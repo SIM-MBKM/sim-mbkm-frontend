@@ -5,6 +5,7 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { ToastContainer } from "react-toastify";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
@@ -20,6 +21,18 @@ export default function Home() {
 
   return (
     <DashboardLayout>
+      <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="light"
+          />
       {isLoading ? (
         <div className="min-h-screen flex items-center justify-center">
           <motion.div

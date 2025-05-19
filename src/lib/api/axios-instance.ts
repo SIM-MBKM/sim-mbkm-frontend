@@ -1,4 +1,11 @@
-import axios from "axios";
+import axios, { AxiosInstance } from "axios";
+import { createLaravelSecurity } from "../utils/security";
+// import { newSecurity } from "@/lib/utils/security";
+
+// Konfigurasi untuk Security
+// const HASH_METHOD = 'sha256';
+const APP_KEY = process.env.NEXT_PUBLIC_APP_KEY || 'secret';
+// const CIPHER_MODE = 'aes';
 
 // Base URL for each service
 const SERVICE_URLS = {
@@ -16,10 +23,22 @@ const SERVICE_URLS = {
     process.env.NEXT_PUBLIC_FILE_SERVICE_URL || "http://localhost:3007",
 };
 
+
+export function getAccessKey(): string {
+  // security
+  const security = createLaravelSecurity(APP_KEY);
+  // get access key
+  const accessKey = security.generateAccessKey();
+  console.log("ACCESS KEY: ", accessKey);
+  return accessKey;
+}
+
+
+
 // Create axios instances for each service
-const createAxiosInstance = (baseURL: string) => {
+const createAxiosInstance = (baseURL: string): AxiosInstance => {
   console.log(`Creating axios instance for ${baseURL}`);
-  // const isActivityService = baseURL.includes('ACTIVITY') || baseURL === SERVICE_URLS.ACTIVITY;
+  
   const instance = axios.create({
     baseURL,
     timeout: 15000,
@@ -28,15 +47,27 @@ const createAxiosInstance = (baseURL: string) => {
     },
   });
 
-  // Request interceptor - adds auth token
+  // Request interceptor - adds auth token and security headers
   instance.interceptors.request.use(
     (config) => {
+      // Tambahkan Authorization header jika token tersedia
       const token = localStorage.getItem("auth_token");
       console.log("LOCAL STORAGE TOKEN: ", token);
       if (token) {
         console.log("TOKEN EXISTS: ", token);
         config.headers.Authorization = `Bearer ${token}`;
       }
+      
+      // Tambahkan security headers
+      try {
+        // Generate Access-Key header dengan timestamp
+        const accessKey = getAccessKey();
+        
+        config.headers['Access-Key'] = accessKey;
+      } catch (error) {
+        console.error('Error adding security headers:', error);
+      }
+      
       return config;
     },
     (error) => Promise.reject(error)

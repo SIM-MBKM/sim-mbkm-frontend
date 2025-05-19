@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { RegistrationFilter } from "@/lib/api/services/registration-service"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 
 export function RegistrationDashboard() {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -27,6 +28,15 @@ export function RegistrationDashboard() {
   const [showConfetti, setShowConfetti] = useState(false)
   const [page, setPage] = useState(1)
   const [showFilters, setShowFilters] = useState(false)
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    type: 'approve' | 'reject' | null;
+    id: string | null;
+  }>({
+    open: false,
+    type: null,
+    id: null
+  })
   const limit = 10
   const { toast } = useToast()
 
@@ -140,13 +150,37 @@ export function RegistrationDashboard() {
   }
 
   const handleApprove = (id: string) => {
+    setConfirmDialog({
+      open: true,
+      type: 'approve',
+      id
+    })
+  }
+
+  const handleReject = (id: string) => {
+    setConfirmDialog({
+      open: true,
+      type: 'reject',
+      id
+    })
+  }
+
+  const handleConfirmAction = () => {
+    if (!confirmDialog.id) return
+
     approveRegistrations(
-      { status: "APPROVED", id: [id] },
+      { 
+        status: confirmDialog.type === 'approve' ? "APPROVED" : "REJECTED", 
+        id: [confirmDialog.id] 
+      },
       {
         onSuccess: () => {
           toast({
-            title: "Registration Approved",
-            description: "The registration has been successfully approved.",
+            title: confirmDialog.type === 'approve' ? "Registration Approved" : "Registration Rejected",
+            description: confirmDialog.type === 'approve' 
+              ? "The registration has been successfully approved."
+              : "The registration has been rejected.",
+            variant: confirmDialog.type === 'approve' ? "default" : "destructive",
           })
           refetch()
           refetchAll()
@@ -154,77 +188,53 @@ export function RegistrationDashboard() {
         onError: () => {
           toast({
             title: "Error",
-            description: "Failed to approve registration. Please try again.",
+            description: `Failed to ${confirmDialog.type} registration. Please try again.`,
             variant: "destructive",
           })
         }
       }
     )
-  }
-
-  const handleReject = (id: string) => {
-    approveRegistrations(
-      { status: "REJECTED", id: [id] },
-      {
-        onSuccess: () => {
-          toast({
-            title: "Registration Rejected",
-            description: "The registration has been rejected.",
-            variant: "destructive",
-          })
-          refetch()
-          refetchAll()
-        },
-        onError: () => {
-          toast({
-            title: "Error", 
-            description: "Failed to reject registration. Please try again.",
-            variant: "destructive",
-          })
-        }
-      }
-    )
+    setConfirmDialog({ open: false, type: null, id: null })
   }
 
   const handleBulkApprove = () => {
     if (selectedIds.length === 0) return
 
-    approveRegistrations(
-      { status: "APPROVED", id: selectedIds },
-      {
-        onSuccess: () => {
-          toast({
-            title: "Bulk Approval Successful",
-            description: `${selectedIds.length} registrations have been approved.`,
-          })
-          setShowConfetti(true)
-          setSelectedIds([])
-          refetch()
-          refetchAll()
-        },
-        onError: () => {
-          toast({
-            title: "Error",
-            description: "Failed to approve registrations. Please try again.",
-            variant: "destructive",
-          })
-        }
-      }
-    )
+    setConfirmDialog({
+      open: true,
+      type: 'approve',
+      id: 'bulk'
+    })
   }
 
   const handleBulkReject = () => {
     if (selectedIds.length === 0) return
 
+    setConfirmDialog({
+      open: true,
+      type: 'reject',
+      id: 'bulk'
+    })
+  }
+
+  const handleConfirmBulkAction = () => {
+    if (selectedIds.length === 0) return
+
     approveRegistrations(
-      { status: "REJECTED", id: selectedIds },
+      { 
+        status: confirmDialog.type === 'approve' ? "APPROVED" : "REJECTED", 
+        id: selectedIds 
+      },
       {
         onSuccess: () => {
           toast({
-            title: "Bulk Rejection Completed",
-            description: `${selectedIds.length} registrations have been rejected.`,
-            variant: "destructive",
+            title: confirmDialog.type === 'approve' ? "Bulk Approval Successful" : "Bulk Rejection Completed",
+            description: `${selectedIds.length} registrations have been ${confirmDialog.type === 'approve' ? 'approved' : 'rejected'}.`,
+            variant: confirmDialog.type === 'approve' ? "default" : "destructive",
           })
+          if (confirmDialog.type === 'approve') {
+            setShowConfetti(true)
+          }
           setSelectedIds([])
           refetch()
           refetchAll()
@@ -232,12 +242,13 @@ export function RegistrationDashboard() {
         onError: () => {
           toast({
             title: "Error",
-            description: "Failed to reject registrations. Please try again.",
+            description: `Failed to ${confirmDialog.type} registrations. Please try again.`,
             variant: "destructive",
           })
         }
       }
     )
+    setConfirmDialog({ open: false, type: null, id: null })
   }
 
   useEffect(() => {
@@ -291,6 +302,35 @@ export function RegistrationDashboard() {
   return (
     <div className="min-h-screen mt-20 bg-gradient-to-br from-background to-background/80 p-4 md:p-8 relative">
       {showConfetti && <ConfettiExplosion />}
+
+      <AlertDialog 
+        open={confirmDialog.open} 
+        onOpenChange={(open) => !open && setConfirmDialog({ open: false, type: null, id: null })}
+      >
+        <AlertDialogContent className="bg-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmDialog.type === 'approve' ? 'Approve Registration' : 'Reject Registration'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDialog.id === 'bulk' 
+                ? `Are you sure you want to ${confirmDialog.type} ${selectedIds.length} registration${selectedIds.length > 1 ? 's' : ''}?`
+                : `Are you sure you want to ${confirmDialog.type} this registration?`
+              }
+              {confirmDialog.type === 'reject' && ' This action cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDialog.id === 'bulk' ? handleConfirmBulkAction : handleConfirmAction}
+              className={confirmDialog.type === 'reject' ? 'bg-red-500 hover:bg-red-500/90 text-white' : 'bg-green-500 hover:bg-green-500/90 text-white'}
+            >
+              {confirmDialog.type === 'approve' ? 'Approve' : 'Reject'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="absolute inset-0 -z-10 h-full w-full bg-white dark:bg-gray-950 bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#303030_1px,transparent_1px),linear-gradient(to_bottom,#303030_1px,transparent_1px)] bg-size-[6rem_4rem]">
         <div className="absolute bottom-0 left-0 right-0 top-0 bg-[radial-gradient(circle_800px_at_100%_200px,rgba(120,119,198,0.1),transparent)]"></div>

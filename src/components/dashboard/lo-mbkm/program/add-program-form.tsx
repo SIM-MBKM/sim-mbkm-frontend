@@ -7,9 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { CalendarIcon, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import { usePrograms } from "./program-provider"
-import { useToast } from "@/lib/api/hooks/use-toast"
+// import { useToast } from "@/lib/api/hooks/use-toast"
 import { useProgramAPI } from "./program-dashboard"
-import { useCreateActivity } from "@/lib/api/hooks/use-query-hooks"
 
 import {
   Dialog,
@@ -54,10 +53,9 @@ interface AddProgramFormProps {
 
 export function AddProgramForm({ isOpen, onOpenChange }: AddProgramFormProps) {
   const { addProgram } = usePrograms()
-  const { toast } = useToast()
+  // const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { programTypes, levels, groups, isLoading } = useProgramAPI()
-  const createActivity = useCreateActivity()
+  const { programTypes, levels, groups, isLoading, createActivity, isCreating } = useProgramAPI()
 
   // Initialize form
   const form = useForm<FormValues>({
@@ -108,10 +106,8 @@ export function AddProgramForm({ isOpen, onOpenChange }: AddProgramFormProps) {
         program_provider: values.program_provider,
       };
       
-      console.log("Submitting with formatted date:", formattedStartPeriod);
-      
-      // Call API to create activity
-      await createActivity.mutateAsync(activityData);
+      // Call API to create activity using context function
+      await createActivity(activityData);
 
       // For UI mockup compatibility
       // Convert date to string format for UI display
@@ -145,23 +141,11 @@ export function AddProgramForm({ isOpen, onOpenChange }: AddProgramFormProps) {
       // Add program to context (for UI display purposes)
       addProgram(formattedValues)
 
-      // Show success message
-      toast({
-        title: "Program created",
-        description: "Your program has been successfully created.",
-        variant: "default",
-      })
-
       // Reset form and close dialog
       form.reset()
       onOpenChange(false)
     } catch (error) {
       console.error("Error creating program:", error)
-      toast({
-        title: "Error",
-        description: "There was an error creating your program. Please try again.",
-        variant: "destructive",
-      })
     } finally {
       setIsSubmitting(false)
     }
@@ -477,8 +461,8 @@ export function AddProgramForm({ isOpen, onOpenChange }: AddProgramFormProps) {
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="bg-blue-500 text-white">
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin text-white" />}
+              <Button type="submit" disabled={isSubmitting || isCreating} className="bg-blue-500 text-white">
+                {(isSubmitting || isCreating) && <Loader2 className="mr-2 h-4 w-4 animate-spin text-white" />}
                 Create Program
               </Button>
             </DialogFooter>

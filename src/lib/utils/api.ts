@@ -1,4 +1,5 @@
-import type { Subject, MatchingRequest } from "./types"
+// import type { Subject, MatchingRequest } from "../types"
+import type { Subject, MatchingRequest } from "@/lib/utils/types";
 import { Activity, PaginatedResponse } from '@/lib/api/services';
 
 // Mock data based on the provided JSON
@@ -193,7 +194,7 @@ const mockActivities: Activity[] = [
     program_provider: "ITS",
     approval_status: "APPROVED",
     submitted_by: "58beb504-1b33-430d-8563-eba349abd584",
-    submitted_user_role: "MAHASISWA",
+    submitted_user_role: "MAHASISWA", 
     program_type: "Magang",
     level: "Regional",
     group: "ITS",
@@ -680,7 +681,7 @@ export async function createMatching(matchingRequest: MatchingRequest): Promise<
         }
 
         // Find the subjects
-        const matchedSubjects = subject_id.map((id) => {
+        const matchedSubjects = subject_id.map((id: string) => {
           const subject = mockSubjects.find((s) => s.subject_id === id)
           if (!subject) {
             throw new Error(`Subject with ID ${id} not found`)
@@ -704,7 +705,7 @@ export async function createMatching(matchingRequest: MatchingRequest): Promise<
 
 
 // Delete a subject
-export async function deleteSubject(subjectId: string): Promise<{ success: boolean }> {
+export async function deleteSubject(): Promise<{ success: boolean }> {
   // Simulate API call delay
   await new Promise((resolve) => setTimeout(resolve, 1000))
 
@@ -716,7 +717,7 @@ export async function deleteSubject(subjectId: string): Promise<{ success: boole
 }
 
 // Update a subject
-export async function updateSubject(subjectData: any): Promise<Subject> {
+export async function updateSubject(subjectData: Subject): Promise<Subject> {
   // Simulate API call delay
   await new Promise((resolve) => setTimeout(resolve, 1500))
 
@@ -726,6 +727,7 @@ export async function updateSubject(subjectData: any): Promise<Subject> {
     id: subjectData.id,
     mata_kuliah: subjectData.mata_kuliah,
     kode: subjectData.kode,
+    subject_id: subjectData.subject_id, 
     semester: subjectData.semester,
     prodi_penyelenggara: subjectData.prodi_penyelenggara,
     sks: subjectData.sks,
@@ -736,12 +738,12 @@ export async function updateSubject(subjectData: any): Promise<Subject> {
   }
 
   // If a new file was uploaded, add it to the documents
-  if (subjectData.file) {
+  if (subjectData.documents) {
     const newDocument = {
       id: `doc_${Date.now()}`,
       subject_id: subjectData.id,
-      file_storage_id: `sim_mbkm/${Date.now()}.${subjectData.file.name.split(".").pop()}`,
-      name: subjectData.file.name,
+      file_storage_id: `sim_mbkm/${Date.now()}.${subjectData.documents[0].name.split(".").pop()}`,
+      name: subjectData.documents[0].name,
       document_type: "Acceptence Letter",
     }
 

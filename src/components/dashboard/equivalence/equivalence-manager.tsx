@@ -102,7 +102,7 @@ export function EquivalenceManager() {
       // Simulate API delay
       await new Promise((resolve) => setTimeout(resolve, 1000))
       
-      toast.success("Ekivalensi mata kuliah berhasil disimpan.");
+      // toast.success("Ekivalensi mata kuliah berhasil disimpan.");
     } catch (error) {
       console.error("Error saving equivalents:", error)
       toast.error("Terjadi kesalahan saat menyimpan ekivalensi.");

@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { FileUpload } from "./file-upload"
 import { useToast } from '@/lib/api/hooks/use-toast'
-import { createSubject } from "@/lib/api"
+import { createSubject } from "@/lib/utils/api"
 
 interface SubjectFormProps {
   open: boolean

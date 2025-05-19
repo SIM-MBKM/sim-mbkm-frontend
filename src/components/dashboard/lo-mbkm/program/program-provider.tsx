@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { sampleData } from "@/lib/sample-data"
+import { sampleData } from "@/lib/utils/sample-data"
 import { Activity } from "@/lib/api/services";
 
 // Define the Program type

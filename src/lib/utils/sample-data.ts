@@ -1,4 +1,4 @@
-import { Activity, PaginatedResponse } from "./api/services";
+import { Activity, PaginatedResponse } from "../api/services";
 
 export const sampleData: PaginatedResponse<Activity> = {
   message: "Get all activities success",

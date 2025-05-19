@@ -60,15 +60,15 @@ const MENU_ITEMS: Record<UserRole, {
     {
       section: "Dokumentasi dan Monitoring",
       items: [
-        {
-          label: "Monitoring Status",
-          icon: <ClipboardList className="h-5 w-5" />,
-          href: "/dashboard/mahasiswa/monitoring",
-          children: [
-            { label: "Status Dokumen", href: "/dashboard/mahasiswa/monitoring/documents" },
-            { label: "Status Validasi", href: "/dashboard/mahasiswa/monitoring/validation" },
-          ]
-        },
+        // {
+        //   label: "Monitoring Status",
+        //   icon: <ClipboardList className="h-5 w-5" />,
+        //   href: "/dashboard/mahasiswa/monitoring",
+        //   children: [
+        //     { label: "Status Dokumen", href: "/dashboard/mahasiswa/monitoring/documents" },
+        //     { label: "Status Validasi", href: "/dashboard/mahasiswa/monitoring/validation" },
+        //   ]
+        // },
         { label: "Input Logbook", icon: <FileText className="h-5 w-5" />, href: "/dashboard/mahasiswa/logbook" },
         { label: "Input Transkrip", icon: <FileText className="h-5 w-5" />, href: "/dashboard/mahasiswa/transcript" },
         { label: "Input Silabus", icon: <FileText className="h-5 w-5" />, href: "/dashboard/mahasiswa/syllabus" },

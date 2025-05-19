@@ -18,6 +18,7 @@ import { useReportSchedulesByAdvisor, useReportsApproval } from "@/lib/api/hooks
 // import { ToastProvider } from "react-hot-toast"
 import { ToastProvider } from "@/components/toast-provider"
 import { Button } from "@/components/ui/button"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 
 // Interface for grouped activities
 interface ActivityGroup {
@@ -40,6 +41,17 @@ export function ReportDashboard() {
   const [isPerformingSearch, setIsPerformingSearch] = useState(false)
   // Add status filter state
   const [statusFilter, setStatusFilter] = useState<StatusFilterType>("ALL")
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    type: 'approve' | 'reject' | null;
+    reportId: string | string[] | null;
+    feedback: string;
+  }>({
+    open: false,
+    type: null,
+    reportId: null,
+    feedback: ""
+  })
   
   // Use the React Query hook to fetch report schedules with the input parameter
   const { data, isLoading, refetch, isFetching } = useReportSchedulesByAdvisor({
@@ -258,73 +270,83 @@ export function ReportDashboard() {
 
   const handleStatusChange = useCallback(
     (reportId: string, status: string, feedback: string) => {
-      // Update local state using report.report.id
-      setUpdatedReports((prev) => ({
-        ...prev,
-        [reportId]: { status, feedback },
-      }))
-
-      // Use the useReportsApproval hook with the correct report ID
-      approveReports(
-        { status, feedback, ids: [reportId] },
-        {
-          onSuccess: () => {
-            toast.success(`Report status changed to ${status}`, {
-              position: "top-right",
-              autoClose: 3000,
-            });
-            
-            refetch();
-          },
-          onError: (error) => {
-            toast.error("Failed to update report status", {
-              position: "top-right",
-              autoClose: 5000,
-            });
-            console.error('Error updating report status:', error);
-          }
-        }
-      )
+      setConfirmDialog({
+        open: true,
+        type: status === "APPROVED" ? "approve" : "reject",
+        reportId,
+        feedback
+      })
     },
-    [refetch, approveReports],
+    [setConfirmDialog]
   )
 
   const handleBulkStatusChange = useCallback(
     (reportIds: string[], status: string, feedback: string) => {
-      // Update local state using report.report.id values
-      const updatedReportsNew = { ...updatedReports };
-      
-      reportIds.forEach(id => {
-        updatedReportsNew[id] = { status, feedback };
-      });
-      
-      setUpdatedReports(updatedReportsNew);
-      console.log("REPORT IDS", reportIds);
+      setConfirmDialog({
+        open: true,
+        type: status === "APPROVED" ? "approve" : "reject",
+        reportId: reportIds,
+        feedback
+      })
+    },
+    [setConfirmDialog]
+  )
 
-      // Use the useReportsApproval hook for bulk approval/rejection
-      approveReports(
-        { status, feedback, ids: reportIds }, // These IDs are already report.report.id values
-        {
-          onSuccess: () => {
-            toast.success(`${reportIds.length} reports have been ${status.toLowerCase()}`, {
+  const handleConfirmAction = useCallback(() => {
+    if (!confirmDialog.reportId) return
+
+    const isBulk = Array.isArray(confirmDialog.reportId)
+    const reportIds: string[] = isBulk ? confirmDialog.reportId as string[] : [confirmDialog.reportId as string]
+
+    // Update local state
+    const updatedReportsNew = { ...updatedReports }
+    if (isBulk) {
+      reportIds.forEach((id: string) => {
+        updatedReportsNew[id] = { 
+          status: confirmDialog.type === 'approve' ? "APPROVED" : "REJECTED", 
+          feedback: confirmDialog.feedback 
+        }
+      })
+    } else {
+      updatedReportsNew[reportIds[0]] = {
+        status: confirmDialog.type === 'approve' ? "APPROVED" : "REJECTED",
+        feedback: confirmDialog.feedback
+      }
+    }
+    setUpdatedReports(updatedReportsNew)
+
+    // Use the useReportsApproval hook
+    approveReports(
+      { 
+        status: confirmDialog.type === 'approve' ? "APPROVED" : "REJECTED", 
+        feedback: confirmDialog.feedback, 
+        ids: reportIds 
+      },
+      {
+        onSuccess: () => {
+          toast.success(
+            isBulk 
+              ? `${reportIds.length} reports have been ${confirmDialog.type === 'approve' ? 'approved' : 'rejected'}`
+              : `Report has been ${confirmDialog.type === 'approve' ? 'approved' : 'rejected'}`,
+            {
               position: "top-right",
               autoClose: 3000,
-            });
-            
-            refetch();
-          },
-          onError: (error) => {
-            toast.error("Failed to update report statuses", {
-              position: "top-right",
-              autoClose: 5000,
-            });
-            console.error('Error updating report statuses:', error);
-          }
+            }
+          )
+          refetch()
+        },
+        onError: (error) => {
+          toast.error("Failed to update report status", {
+            position: "top-right",
+            autoClose: 5000,
+          })
+          console.error('Error updating report status:', error)
         }
-      )
-    },
-    [refetch, updatedReports, approveReports],
-  )
+      }
+    )
+
+    setConfirmDialog({ open: false, type: null, reportId: null, feedback: "" })
+  }, [confirmDialog, updatedReports, approveReports, refetch, setUpdatedReports, setConfirmDialog])
 
   const stats = calculateStats(data || null, updatedReports)
 
@@ -618,6 +640,35 @@ export function ReportDashboard() {
           )}
         </AnimatePresence>
       
+      <AlertDialog 
+        open={confirmDialog.open} 
+        onOpenChange={(open) => !open && setConfirmDialog({ open: false, type: null, reportId: null, feedback: "" })}
+      >
+        <AlertDialogContent className="bg-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmDialog.type === 'approve' ? 'Approve Report' : 'Reject Report'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {Array.isArray(confirmDialog.reportId)
+                ? `Are you sure you want to ${confirmDialog.type} ${confirmDialog.reportId.length} report${confirmDialog.reportId.length > 1 ? 's' : ''}?`
+                : `Are you sure you want to ${confirmDialog.type} this report?`
+              }
+              {confirmDialog.type === 'reject' && ' This action cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmAction}
+              className={confirmDialog.type === 'reject' ? 'bg-red-500 hover:bg-red-500/90 text-white' : 'bg-green-500 hover:bg-green-500/90 text-white'}
+            >
+              {confirmDialog.type === 'approve' ? 'Approve' : 'Reject'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <ToastProvider />
     </>
     

@@ -14,8 +14,9 @@ import { Button } from "@/components/ui/button"
 import { AddProgramForm } from "./add-program-form"
 import { useMediaQuery } from "@/lib/hooks/use-media-query"
 import { MobileMenu } from "./mobile-menu"
-import { useAllProgramTypes, useAllLevels, useAllGroups, useActivities } from "@/lib/api/hooks/use-query-hooks"
-import { Activity, ProgramTypeResponse, ActivityFilter, ActivityAllResponse } from "@/lib/api/services/activity-service"
+import { useAllProgramTypes, useAllLevels, useAllGroups, useActivities, useCreateActivity } from "@/lib/api/hooks/use-query-hooks"
+import { Activity, ProgramTypeResponse, ActivityFilter, ActivityAllResponse, ActivityCreateInput } from "@/lib/api/services/activity-service"
+import { toast } from "react-toastify"
 
 // Create a context to hold API data
 type ProgramAPIContextType = {
@@ -37,6 +38,8 @@ type ProgramAPIContextType = {
   activitiesData: ActivityAllResponse | undefined;
   setFilters: (filters: Partial<ActivityFilter>) => void;
   currentFilters: ActivityFilter;
+  createActivity: (activityData: ActivityCreateInput) => Promise<void>;
+  isCreating: boolean;
 }
 
 const ProgramAPIContext = createContext<ProgramAPIContextType | undefined>(undefined);
@@ -76,6 +79,8 @@ function ProgramAPIProvider({ children }: { children: React.ReactNode }) {
     isLoading: isActivitiesLoading,
     refetch: refetchActivities
   } = useActivities(activitiesPage, activitiesLimit, activityFilters);
+
+  const { mutate: createActivity, isPending: isCreating } = useCreateActivity()
 
   // Function to change page
   const changePage = (newPage: number) => {
@@ -123,6 +128,30 @@ function ProgramAPIProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activitiesPage, activitiesLimit]);
 
+  // Add function to handle activity creation
+  const handleCreateActivity = async (activityData: ActivityCreateInput) => {
+    try {
+      await createActivity(activityData, {
+        onSuccess: () => {
+          toast.success("Program created successfully!", {
+            position: "top-right",
+            autoClose: 3000,
+          })
+          refetchActivities()
+        },
+        onError: (error) => {
+          toast.error("Failed to create program. Please try again.", {
+            position: "top-right",
+            autoClose: 5000,
+          })
+          console.error("Error creating program:", error)
+        }
+      })
+    } catch (error) {
+      console.error("Error in handleCreateActivity:", error)
+    }
+  }
+
   const value = {
     programTypes,
     levels,
@@ -135,7 +164,9 @@ function ProgramAPIProvider({ children }: { children: React.ReactNode }) {
     currentLimit: activitiesLimit,
     activitiesData,
     setFilters,
-    currentFilters: activityFilters
+    currentFilters: activityFilters,
+    createActivity: handleCreateActivity,
+    isCreating
   };
 
   return <ProgramAPIContext.Provider value={value}>{children}</ProgramAPIContext.Provider>;
