@@ -21,6 +21,8 @@ const SERVICE_URLS = {
     process.env.NEXT_PUBLIC_MONITORING_SERVICE_URL || "http://localhost:3006",
   FILE:
     process.env.NEXT_PUBLIC_FILE_SERVICE_URL || "http://localhost:3007",
+  NOTIFICATION:
+    process.env.NEXT_PUBLIC_NOTIFICATION_SERVICE_URL || "http://localhost:3008",
 };
 
 
@@ -29,7 +31,6 @@ export function getAccessKey(): string {
   const security = createLaravelSecurity(APP_KEY);
   // get access key
   const accessKey = security.generateAccessKey();
-  console.log("ACCESS KEY: ", accessKey);
   return accessKey;
 }
 
@@ -37,7 +38,6 @@ export function getAccessKey(): string {
 
 // Create axios instances for each service
 const createAxiosInstance = (baseURL: string): AxiosInstance => {
-  console.log(`Creating axios instance for ${baseURL}`);
   
   const instance = axios.create({
     baseURL,
@@ -52,9 +52,7 @@ const createAxiosInstance = (baseURL: string): AxiosInstance => {
     (config) => {
       // Tambahkan Authorization header jika token tersedia
       const token = localStorage.getItem("auth_token");
-      console.log("LOCAL STORAGE TOKEN: ", token);
       if (token) {
-        console.log("TOKEN EXISTS: ", token);
         config.headers.Authorization = `Bearer ${token}`;
       }
       
@@ -99,4 +97,5 @@ export const apiServices = {
   matching: createAxiosInstance(SERVICE_URLS.MATCHING),
   monitoring: createAxiosInstance(SERVICE_URLS.MONITORING),
   file: createAxiosInstance(SERVICE_URLS.FILE),
+  notification: createAxiosInstance(SERVICE_URLS.NOTIFICATION),
 };

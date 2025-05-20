@@ -4,66 +4,23 @@ import { Bell, Info, ListCheck, Calendar, Award, FileText, ExternalLink } from "
 import { Card, CardContent } from "../ui/card";
 import { motion } from "framer-motion";
 import { useState } from "react";
-
-// Sample activity data
-const activities = [
-  {
-    id: 1,
-    type: "notification",
-    icon: <Bell className="h-5 w-5" />,
-    date: "12 Sep 2024",
-    message: "Mitra MBKM Magang PT Astra Indonesia telah ditambahkan.",
-    link: "#",
-    linkText: "disini"
-  },
-  {
-    id: 2,
-    type: "info",
-    icon: <Info className="h-5 w-5" />,
-    date: "10 Sep 2024",
-    message: "Laporan mingguan anda telah diperiksa oleh pembimbing.",
-    link: "/dashboard/mahasiswa/logbook",
-    linkText: "Lihat feedback"
-  },
-  {
-    id: 3,
-    type: "task",
-    icon: <ListCheck className="h-5 w-5" />,
-    date: "8 Sep 2024",
-    message: "Anda memiliki 3 tugas yang perlu diselesaikan minggu ini.",
-    link: "/dashboard/mahasiswa/tasks",
-    linkText: "Lihat tugas"
-  },
-  {
-    id: 4,
-    type: "event",
-    icon: <Calendar className="h-5 w-5" />,
-    date: "5 Sep 2024",
-    message: "Monitoring dan evaluasi akan dilaksanakan pada 20 September 2024.",
-    link: "/dashboard/mahasiswa/calendar",
-    linkText: "Tambah ke kalender"
-  },
-  {
-    id: 5,
-    type: "achievement",
-    icon: <Award className="h-5 w-5" />,
-    date: "1 Sep 2024",
-    message: "Anda telah menyelesaikan 75% dari program MBKM.",
-    link: "/dashboard/mahasiswa/progress",
-    linkText: "Lihat progress"
-  }
-];
+import { useGetNotificationByReceiverEmail } from "@/lib/api/hooks/use-query-hooks";
+import { useAppSelector } from "@/lib/redux/hooks";
+import Link from "next/link";
+import { Notification } from "@/lib/api/services/notification-service";
+import { RootState } from "@/lib/redux/store";
 
 // Activity item type
 type ActivityItemProps = {
   activity: {
-    id: number;
+    id: string;
     type: string;
     icon: React.ReactNode;
     date: string;
     message: string;
     link?: string;
     linkText?: string;
+    sender_name?: string;
   };
   isNew?: boolean;
 }
@@ -75,11 +32,11 @@ const ActivityItem = ({ activity, isNew = false }: ActivityItemProps) => {
   // Get color based on activity type
   const getTypeColor = () => {
     switch (activity.type) {
-      case "notification":
+      case "registration":
         return "text-blue-500 bg-blue-50";
-      case "info":
+      case "activity":
         return "text-indigo-500 bg-indigo-50";
-      case "task":
+      case "approval":
         return "text-amber-500 bg-amber-50";
       case "event":
         return "text-green-500 bg-green-50";
@@ -100,9 +57,9 @@ const ActivityItem = ({ activity, isNew = false }: ActivityItemProps) => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <Card className={`border-l-4 ${
-        activity.type === "notification" ? "border-l-blue-500" :
-        activity.type === "info" ? "border-l-indigo-500" :
-        activity.type === "task" ? "border-l-amber-500" :
+        activity.type === "registration" ? "border-l-blue-500" :
+        activity.type === "approval" ? "border-l-indigo-500" :
+        activity.type === "activity" ? "border-l-amber-500" :
         activity.type === "event" ? "border-l-green-500" :
         "border-l-purple-500"
       } hover:shadow-md transition-all duration-200`}>
@@ -113,14 +70,25 @@ const ActivityItem = ({ activity, isNew = false }: ActivityItemProps) => {
             </div>
             
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="text-sm font-medium text-gray-500">{activity.date}</div>
-                {isNew && (
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                    Baru
-                  </span>
-                )}
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <div className="text-sm font-medium text-gray-500">{activity.date}</div>
+                  {isNew && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      Baru
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs capitalize text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                  {activity.type}
+                </div>
               </div>
+              
+              {activity.sender_name && (
+                <div className="text-xs font-medium text-gray-500 mb-1">
+                  Dari: {activity.sender_name}
+                </div>
+              )}
               
               <p className="text-gray-700">
                 {activity.message}{" "}
@@ -153,6 +121,13 @@ const ActivityItem = ({ activity, isNew = false }: ActivityItemProps) => {
 };
 
 export function ActivityFeed() {
+  const user = useAppSelector((state: RootState) => state.userData.user);
+  const { data: notificationsData, isLoading } = useGetNotificationByReceiverEmail(
+    user?.email || "", 
+    1, 
+    5
+  );
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -164,6 +139,60 @@ export function ActivityFeed() {
     }
   };
 
+  // Map notifications to activities format
+  const mapNotificationToActivity = (notification: Notification) => {
+    // Format date to more readable format
+    const date = new Date(notification.created_at);
+    const formattedDate = date.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+
+    // Determine icon based on notification type
+    let icon = <Bell className="h-5 w-5" />;
+    let type = "REGISTRATION";
+    
+    if (notification.type) {
+      switch (notification.type.toLowerCase()) {
+        case "registration":
+          icon = <Info className="h-5 w-5" />;
+          type = "registration";
+          break;
+        case "create activity":
+          icon = <ListCheck className="h-5 w-5" />;
+          type = "activity";
+          break;
+        case "approval":
+          icon = <Calendar className="h-5 w-5" />;
+          type = "approval";
+          break;
+        case "achievement":
+          icon = <Award className="h-5 w-5" />;
+          type = "achievement";
+          break;
+        default:
+          icon = <Bell className="h-5 w-5" />;
+          type = "notification";
+      }
+    }
+
+    return {
+      id: notification.id,
+      type: type,
+      icon: icon,
+      date: formattedDate,
+      message: notification.message,
+      link: "/dashboard/mahasiswa/notifications",
+      linkText: "Lihat detail",
+      sender_name: notification.sender_name
+    };
+  };
+
+  const activities = notificationsData?.data 
+    ? notificationsData.data.map(mapNotificationToActivity)
+    : [];
+
   return (
     <div>
       <motion.div 
@@ -174,15 +203,17 @@ export function ActivityFeed() {
       >
         <h2 className="text-xl md:text-2xl font-bold text-[#003478]">Aktivitas Terbaru</h2>
         
-        <motion.div 
-          className="flex items-center text-blue-600 text-sm cursor-pointer"
-          whileHover={{ x: 3 }}
-        >
-          Lihat semua
-          <motion.span whileHover={{ x: 2 }}>
-            <FileText className="ml-1 h-4 w-4" />
-          </motion.span>
-        </motion.div>
+        <Link href="/dashboard/mahasiswa/notifications">
+          <motion.div 
+            className="flex items-center text-blue-600 text-sm cursor-pointer"
+            whileHover={{ x: 3 }}
+          >
+            Lihat semua
+            <motion.span whileHover={{ x: 2 }}>
+              <FileText className="ml-1 h-4 w-4" />
+            </motion.span>
+          </motion.div>
+        </Link>
       </motion.div>
 
       <motion.div 
@@ -191,13 +222,23 @@ export function ActivityFeed() {
         initial="hidden"
         animate="visible"
       >
-        {activities.map((activity, index) => (
-          <ActivityItem 
-            key={activity.id} 
-            activity={activity} 
-            isNew={index === 0}
-          />
-        ))}
+        {isLoading ? (
+          Array(3).fill(0).map((_, index) => (
+            <div key={index} className="h-20 bg-gray-100 animate-pulse rounded-lg"></div>
+          ))
+        ) : activities.length > 0 ? (
+          activities.map((activity, index) => (
+            <ActivityItem 
+              key={activity.id} 
+              activity={activity} 
+              isNew={index === 0}
+            />
+          ))
+        ) : (
+          <div className="text-center py-6 text-gray-500">
+            Tidak ada notifikasi terbaru
+          </div>
+        )}
       </motion.div>
     </div>
   );

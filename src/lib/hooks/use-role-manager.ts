@@ -2,9 +2,11 @@
 
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useUserRole } from '@/lib/api/hooks';
+import { useGetUserDatas, useUserRole } from '@/lib/api/hooks';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { setRole, setLoading, setError, UserRole } from '@/lib/redux/roleSlice';
+import { User } from '../api/services';
+import { setUser } from '../redux/userDataSlice';
 
 // Define role-based route prefixes
 const ROLE_ROUTES: Record<UserRole, string> = {
@@ -21,22 +23,25 @@ export const useRoleManager = () => {
   const { role, loading, error } = useAppSelector(state => state.role);
   
   const { data: roleData, isLoading, error: roleError } = useUserRole();
+  const { data: userDatas, isLoading: userDatasLoading, error: userDatasError } = useGetUserDatas();
   
   // Effect to fetch and set role from API
   useEffect(() => {
-    if (isLoading) {
+    if (isLoading || userDatasLoading) {
       dispatch(setLoading(true));
     }
     
-    if (roleError) {
+    if (roleError || userDatasError) {
       dispatch(setError((roleError as Error).message));
     }
     
-    if (roleData && roleData.data) {
+    if (roleData && roleData.data && userDatas && userDatas.data) {
       const userRole = roleData.data.role as UserRole;
+      const userData = userDatas.data as User;
+      dispatch(setUser(userData));
       dispatch(setRole(userRole));
     }
-  }, [roleData, isLoading, roleError, dispatch]);
+  }, [roleData, isLoading, roleError, dispatch, userDatas, userDatasLoading]);
   
   // Effect to handle route protection
   useEffect(() => {

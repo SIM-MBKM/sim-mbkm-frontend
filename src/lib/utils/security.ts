@@ -1,15 +1,6 @@
 import * as crypto from 'crypto';
 
-/**
- * NOTE: This implementation uses Node.js Buffer.
- * If using in a browser or non-Node environment, you'll need to:
- * 1. Install @types/node with: npm i --save-dev @types/node
- * 2. Or use a polyfill like buffer from npm
- */
 
-/**
- * LaravelCompatibleSecurity - TypeScript implementation that is 100% compatible with Laravel's encryption
- */
 export class LaravelCompatibleSecurity {
   private readonly key: string;
   
@@ -154,15 +145,11 @@ export class LaravelCompatibleSecurity {
     try {
       // 1. Generate key hash in hex (same as Laravel)
       const keyHex = this.hashKey();
-      console.log(`KEY ${keyHex}`);
-
       // 2. Generate IV from first 16 chars of key hash (same as Laravel)
       const ivHex = keyHex.substring(0, 16);
-      console.log(`IV ${ivHex}`);
 
       // 3. Serialize the value using PHP format (same as Laravel)
       const serialized = this.phpSerialize(value);
-      console.log(`SERIALIZED VALUE ${serialized}`);
 
       // 4. Convert hex strings to ASCII bytes (exactly as PHP does)
       // Take first 32 ASCII bytes of keyHex for the key
@@ -180,12 +167,10 @@ export class LaravelCompatibleSecurity {
       
       // 7. Base64 encode the encrypted value (same as Laravel)
       const base64Value = encrypted.toString('base64');
-      console.log(`ENCRYPTED VALUE ${base64Value}`);
       
       // 8. Base64 encode again (Laravel does this too)
       const doubleEncodedValue = Buffer.from(base64Value, 'utf8').toString('base64');
-      console.log(`ENCODED VALUE ${doubleEncodedValue}`);
-      
+
       return doubleEncodedValue;
     } catch (error) {
       throw new Error(`Encryption error: ${error instanceof Error ? error.message : String(error)}`);
@@ -201,18 +186,15 @@ export class LaravelCompatibleSecurity {
     try {
       // 1. Generate key hash in hex (same as Laravel)
       const keyHex = this.hashKey();
-      console.log(`KEY ${keyHex}`);
 
       // 2. Generate IV from first 16 chars of key hash (same as Laravel)
       const ivHex = keyHex.substring(0, 16);
-      console.log(`IV ${ivHex}`);
 
       // 3. First base64 decode
       const decoded = Buffer.from(encryptedValue, 'base64').toString('utf8');
       
       // 4. Second base64 decode
       const ciphertext = Buffer.from(decoded, 'base64');
-      console.log(`VALUE ${ciphertext.toString('base64')}`);
 
       // 5. Convert hex strings to ASCII bytes (exactly as PHP does)
       // Take first 32 ASCII bytes of keyHex for the key
@@ -230,16 +212,13 @@ export class LaravelCompatibleSecurity {
       
       // 8. Convert to string
       const decryptedString = decrypted.toString('utf8');
-      console.log(`DECRYPTED VALUE ${decryptedString}`);
-      
       // 9. Unserialize
       try {
         const unserialized = this.phpUnserialize(decryptedString);
-        console.log(`UNSERIALIZED VALUE ${unserialized}`);
         return unserialized;
-      } catch (error) {
+      } catch  {
         // If unserialization fails, return the raw decrypted string
-        console.log(`Unserialization error: ${error instanceof Error ? error.message : String(error)}`);
+        
         return decryptedString;
       }
     } catch (error) {

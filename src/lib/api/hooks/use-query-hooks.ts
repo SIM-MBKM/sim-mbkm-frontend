@@ -33,6 +33,7 @@ import {
   SubjectInput,
 } from '../services';
 import { fileService } from '../services/file-service';
+import { notificationService } from '../services/notification-service';
 
 // AUTH HOOKS
 
@@ -98,6 +99,13 @@ export const useUserRole = () => {
     retry: 1,
   });
 };
+
+export const useGetUserDatas = () => {
+  return useQuery({
+    queryKey: ['userDatas'],
+    queryFn: () => userService.getUserDatas(),
+  });
+}
 
 export const useUpdateUser = () => {
   const queryClient = useQueryClient();
@@ -739,3 +747,32 @@ export const useGetTemporaryLink = (fileId: string) => {
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
   });
 };
+
+// NOTIFICATION HOOKS
+export const useGetAllNotifications = (page: number, limit: number) => {
+  return useQuery({
+    queryKey: ['notifications', page, limit],
+    queryFn: () => notificationService.getAllNotifications(page, limit),
+  });
+}
+
+export const useGetNotificationByID = (id: string) => {
+  return useQuery({
+    queryKey: ['notification', id],
+    queryFn: () => notificationService.getNotificationByID(id),
+  });
+}
+
+export const useGetNotificationBySenderEmail = (senderEmail: string, page: number, limit: number) => {
+  return useQuery({
+    queryKey: ['notifications', 'sender', senderEmail, page, limit],
+    queryFn: () => notificationService.getNotificationBySenderEmail(senderEmail, page, limit),
+  });
+}
+
+export const useGetNotificationByReceiverEmail = (receiverEmail: string, page: number, limit: number) => {
+  return useQuery({
+    queryKey: ['notifications', 'receiver', receiverEmail, page, limit],
+    queryFn: () => notificationService.getNotificationByReceiverEmail(receiverEmail, page, limit),
+  });
+}

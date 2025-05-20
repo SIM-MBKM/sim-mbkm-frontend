@@ -1,4 +1,5 @@
 import { apiServices } from '../axios-instance';
+import { BaseResponse } from './registration-service';
 
 const userApi = apiServices.user;
 
@@ -8,9 +9,7 @@ export interface User {
   email: string;
   role: string;
   department?: string;
-  studentId?: string;
-  enrollmentYear?: string;
-  profilePicture?: string;
+  nrp: string;
 }
 
 export interface UserRole {
@@ -47,6 +46,11 @@ export const userService = {
   // Get user by ID
   getUserById: async (id: string) => {
     const response = await userApi.get<User>(`/users/${id}`);
+    return response.data;
+  },
+
+  getUserDatas: async () => {
+    const response = await userApi.get<BaseResponse<User>>(`/user`);
     return response.data;
   },
 

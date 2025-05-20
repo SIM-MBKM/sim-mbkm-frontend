@@ -5,10 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { FileText, Edit, ArrowRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import Link from "next/link"
+
 
 interface ReviewItem {
   id: string
   title: string
+  link: string
   description: string
   count: number
   icon: "document" | "edit"
@@ -58,8 +61,10 @@ export function ReviewSection({ items }: ReviewSectionProps) {
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
                 <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-primary">
-                  {item.action}
-                  <ArrowRight className="h-3 w-3 ml-1" />
+                  <Link href={item.link}>
+                    {item.action}
+                    <ArrowRight className="h-3 w-3 ml-1" />
+                  </Link>
                 </Button>
               </div>
             </motion.div>

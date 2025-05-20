@@ -8,7 +8,7 @@ import { ReviewSection } from "./review-section";
 // import { ReactQueryProvider } from "@/lib/api/providers/query-provider";
 import { Suspense, ReactNode } from "react";
 import { motion } from "framer-motion";
-import { FileCheck, TrendingUp, Award } from "lucide-react";
+// import { FileCheck, TrendingUp, Award } from "lucide-react";
 
 interface MotionWrapperProps {
   children: ReactNode;
@@ -25,13 +25,13 @@ const MotionWrapper = ({ children, delay = 0 }: MotionWrapperProps) => (
   </motion.div>
 );
 
-interface QuickStatProps {
-  icon: ReactNode;
-  label: string;
-  value: string;
-  bgColor: string;
-  delay?: number;
-}
+// interface QuickStatProps {
+//   icon: ReactNode;
+//   label: string;
+//   value: string;
+//   bgColor: string;
+//   delay?: number;
+// }
 
 export function DashboardContent() {
 
@@ -65,7 +65,7 @@ export function DashboardContent() {
         </motion.div>
         
       </motion.div>
-      <motion.div 
+      {/* <motion.div 
         className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -92,7 +92,7 @@ export function DashboardContent() {
           bgColor="bg-gradient-to-br from-purple-600 to-purple-800"
           delay={0.3}
         />
-      </motion.div>
+      </motion.div> */}
 
       {/* Status Cards */}
       <Suspense fallback={
@@ -140,22 +140,22 @@ export function DashboardContent() {
   );
 }
 
-function QuickStat({ icon, label, value, bgColor, delay = 0 }: QuickStatProps) {
-  return (
-    <motion.div 
-      className={`${bgColor} text-white rounded-xl p-4 shadow-lg flex items-center justify-between`}
-      whileHover={{ scale: 1.03, y: -5 }}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2, delay }}
-    >
-      <div>
-        <p className="text-xs font-medium text-white/80">{label}</p>
-        <p className="text-xl font-bold">{value}</p>
-      </div>
-      <div className="bg-white/20 p-3 rounded-full">
-        {icon}
-      </div>
-    </motion.div>
-  );
-}
+// function QuickStat({ icon, label, value, bgColor, delay = 0 }: QuickStatProps) {
+//   return (
+//     <motion.div 
+//       className={`${bgColor} text-white rounded-xl p-4 shadow-lg flex items-center justify-between`}
+//       whileHover={{ scale: 1.03, y: -5 }}
+//       initial={{ opacity: 0, y: 20 }}
+//       animate={{ opacity: 1, y: 0 }}
+//       transition={{ duration: 0.2, delay }}
+//     >
+//       <div>
+//         <p className="text-xs font-medium text-white/80">{label}</p>
+//         <p className="text-xl font-bold">{value}</p>
+//       </div>
+//       <div className="bg-white/20 p-3 rounded-full">
+//         {icon}
+//       </div>
+//     </motion.div>
+//   );
+// }

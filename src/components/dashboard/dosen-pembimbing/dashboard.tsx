@@ -5,7 +5,7 @@ import { motion} from "framer-motion"
 import { StatCard } from "./stat-card"
 import { ActivityFeed } from "./activity-feed"
 import { ReviewSection } from "./review-section"
-import { QuickActions } from "./quick-actions"
+// import { QuickActions } from "./quick-actions"
 import { Bell, Users, CheckCircle, Calendar, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
@@ -101,6 +101,7 @@ export function Dashboard() {
       count: 5,
       icon: "document" as const,
       action: "Tinjau Sekarang",
+      link: "/dashboard/dosen-pembimbing/ajuan-mahasiswa"
     },
     {
       id: "2",
@@ -109,6 +110,7 @@ export function Dashboard() {
       count: 3,
       icon: "edit" as const,
       action: "Lihat Dokumen",
+      link: "/dashboard/dosen-pembimbing/monitoring/validation"
     },
   ]
 
@@ -181,7 +183,7 @@ export function Dashboard() {
         >
           <ReviewSection items={reviewItems} />
         </motion.div>
-          <QuickActions />
+          {/* <QuickActions /> */}
       </div>
     </>
   )
