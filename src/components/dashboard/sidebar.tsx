@@ -156,7 +156,6 @@ const MENU_ITEMS: Record<UserRole, {
       section: "Sistem",
       items: [
         { label: "Pengaturan", icon: <Settings className="h-5 w-5" />, href: "/dashboard/admin/settings" },
-        { label: "Data Master", icon: <Database className="h-5 w-5" />, href: "/dashboard/admin/master-data" },
       ],
     },
   ],

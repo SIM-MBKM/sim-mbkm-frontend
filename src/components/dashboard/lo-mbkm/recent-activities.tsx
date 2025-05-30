@@ -7,93 +7,100 @@ import { Button } from "@/components/ui/button"
 import { ChevronUp, ChevronDown, RefreshCw, Clock, User, Mail, Star, Bell, Calendar, MessageCircle } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { useGetAllNotifications } from "@/lib/api/hooks/use-query-hooks"
+// import { useAppSelector } from "@/lib/redux/hooks"
+// import { RootState } from "@/lib/redux/store"
+import { Notification } from "@/lib/api/services/notification-service"
+import Link from "next/link"
 
 // Enhanced random activity types with custom colors
 const activityTypes = [
-  { name: "mendaftar magang", icon: <Star className="h-3.5 w-3.5" />, color: "bg-gradient-to-r from-amber-400 to-yellow-500 text-white" },
-  { name: "mengirim laporan", icon: <MessageCircle className="h-3.5 w-3.5" />, color: "bg-gradient-to-r from-blue-400 to-cyan-500 text-white" },
-  { name: "memperbarui profil", icon: <User className="h-3.5 w-3.5" />, color: "bg-gradient-to-r from-purple-400 to-pink-500 text-white" },
-  { name: "melihat dokumen", icon: <Calendar className="h-3.5 w-3.5" />, color: "bg-gradient-to-r from-green-400 to-emerald-500 text-white" },
-  { name: "mendaftar program", icon: <Bell className="h-3.5 w-3.5" />, color: "bg-gradient-to-r from-rose-400 to-red-500 text-white" },
-]
-
-// Enhanced activities with more variety
-const activities = [
-  {
-    id: 1,
-    name: "Olivia Martin",
-    email: "olivia.martin@example.com",
-    activity: activityTypes[0].name,
-    icon: activityTypes[0].icon,
-    badgeColor: activityTypes[0].color,
-    time: "5 menit yang lalu",
-    avatar: "/placeholder.svg?height=32&width=32",
-    initials: "OM",
-    color: "bg-gradient-to-r from-pink-500 to-rose-500",
-  },
-  {
-    id: 2,
-    name: "Jackson Lee",
-    email: "jackson.lee@example.com",
-    activity: activityTypes[1].name,
-    icon: activityTypes[1].icon,
-    badgeColor: activityTypes[1].color,
-    time: "15 menit yang lalu",
-    avatar: "/placeholder.svg?height=32&width=32",
-    initials: "JL",
-    color: "bg-gradient-to-r from-blue-500 to-indigo-500",
-  },
-  {
-    id: 3,
-    name: "Isabella Chen",
-    email: "isabella.chen@example.com",
-    activity: activityTypes[2].name,
-    icon: activityTypes[2].icon,
-    badgeColor: activityTypes[2].color,
-    time: "27 menit yang lalu",
-    avatar: "/placeholder.svg?height=32&width=32",
-    initials: "IC",
-    color: "bg-gradient-to-r from-purple-500 to-violet-500",
-  },
-  {
-    id: 4,
-    name: "Ethan Rodriguez",
-    email: "ethan.rodriguez@example.com",
-    activity: activityTypes[3].name,
-    icon: activityTypes[3].icon,
-    badgeColor: activityTypes[3].color,
-    time: "1 jam yang lalu",
-    avatar: "/placeholder.svg?height=32&width=32",
-    initials: "ER",
-    color: "bg-gradient-to-r from-green-500 to-teal-500",
-  },
-  {
-    id: 5,
-    name: "Sophia Patel",
-    email: "sophia.patel@example.com",
-    activity: activityTypes[4].name,
-    icon: activityTypes[4].icon,
-    badgeColor: activityTypes[4].color,
-    time: "2 jam yang lalu",
-    avatar: "/placeholder.svg?height=32&width=32",
-    initials: "SP",
-    color: "bg-gradient-to-r from-amber-500 to-orange-500",
-  },
+  { name: "register", icon: <Star className="h-3.5 w-3.5" />, color: "bg-gradient-to-r from-amber-400 to-yellow-500 text-white" },
+  { name: "new activity", icon: <MessageCircle className="h-3.5 w-3.5" />, color: "bg-gradient-to-r from-blue-400 to-cyan-500 text-white" },
+  { name: "approval registration", icon: <User className="h-3.5 w-3.5" />, color: "bg-gradient-to-r from-purple-400 to-pink-500 text-white" },
+  { name: "approval report", icon: <Calendar className="h-3.5 w-3.5" />, color: "bg-gradient-to-r from-green-400 to-emerald-500 text-white" },
 ]
 
 export function RecentActivities() {
   const [expanded, setExpanded] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [hoveredItem, setHoveredItem] = useState<number | null>(null)
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("all")
+  
+  // const user = useAppSelector((state: RootState) => state.userData.user)
+  const { data: notificationsData, isLoading, refetch } = useGetAllNotifications(1, 5)
 
   const refresh = () => {
     setRefreshing(true)
-    setTimeout(() => setRefreshing(false), 1000)
+    refetch().then(() => {
+      setTimeout(() => setRefreshing(false), 1000)
+    })
   }
 
+  // Map notification to activity format
+  const mapNotificationToActivity = (notification: Notification) => {
+    // Format date to relative time
+    const date = new Date(notification.created_at)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.round(diffMs / 60000)
+    const diffHours = Math.round(diffMs / 3600000)
+    
+    let timeAgo = ""
+    if (diffMins < 60) {
+      timeAgo = `${diffMins} menit yang lalu`
+    } else {
+      timeAgo = `${diffHours} jam yang lalu`
+    }
+
+    // Determine activity type and color
+    const activityType = notification.type?.toLowerCase() || "notification"
+    const typeInfo = activityTypes.find(t => t.name === activityType) || {
+      name: "notification",
+      icon: <Bell className="h-3.5 w-3.5" />,
+      color: "bg-gradient-to-r from-gray-400 to-gray-500 text-white"
+    }
+
+    // Get initials from sender name
+    const nameParts = notification.sender_name.split(' ')
+    const initials = nameParts.length > 1 
+      ? `${nameParts[0][0]}${nameParts[1][0]}`
+      : notification.sender_name.substring(0, 2).toUpperCase()
+
+    // Generate a consistent color based on the sender name
+    const colors = [
+      "bg-gradient-to-r from-pink-500 to-rose-500",
+      "bg-gradient-to-r from-blue-500 to-indigo-500",
+      "bg-gradient-to-r from-purple-500 to-violet-500",
+      "bg-gradient-to-r from-green-500 to-teal-500",
+      "bg-gradient-to-r from-amber-500 to-orange-500"
+    ]
+    const colorIndex = notification.sender_name.charCodeAt(0) % colors.length
+    
+    return {
+      id: notification.id,
+      name: notification.sender_name,
+      email: notification.sender_email,
+      activity: notification.type || "notification",
+      message: notification.message,
+      icon: typeInfo.icon,
+      badgeColor: typeInfo.color,
+      time: timeAgo,
+      avatar: "/placeholder.svg?height=32&width=32",
+      initials: initials,
+      color: colors[colorIndex]
+    }
+  }
+
+  // Map notifications to activities
+  const activities = notificationsData?.data 
+    ? notificationsData.data.map(mapNotificationToActivity)
+    : []
+
   // Filter activities based on selected tab
-  const filteredActivities = activities
+  const filteredActivities = activeTab === "all" 
+    ? activities 
+    : activities.filter(activity => activity.activity.toLowerCase() === activeTab.toLowerCase())
 
   return (
     <Card className="h-full overflow-hidden border-2 border-neutral-200 transition-all duration-300 hover:border-blue-400 shadow-sm hover:shadow-lg rounded-xl">
@@ -173,107 +180,124 @@ export function RecentActivities() {
               transition={{ duration: 0.3 }}
               className="max-h-[400px] overflow-y-auto custom-scrollbar bg-white"
             >
-              <div className="p-3 space-y-3">
-                {filteredActivities.map((activity, index) => (
-                  <motion.div
-                    key={activity.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
-                    className="relative rounded-lg transition-all duration-300 overflow-hidden"
-                    style={{
-                      background: hoveredItem === activity.id 
-                        ? "linear-gradient(to right, rgba(239, 246, 255, 0.6), rgba(219, 234, 254, 0.4))" 
-                        : "white",
-                      boxShadow: hoveredItem === activity.id ? "0 4px 12px rgba(59, 130, 246, 0.1)" : "0 1px 3px rgba(0, 0, 0, 0.05)",
-                    }}
-                    onMouseEnter={() => setHoveredItem(activity.id)}
-                    onMouseLeave={() => setHoveredItem(null)}
-                  >
-                    {/* Animated sidebar accent */}
-                    {hoveredItem === activity.id && (
-                      <motion.div
-                        initial={{ height: 0 }}
-                        animate={{ height: "100%" }}
-                        className="absolute left-0 top-0 w-1 rounded-l-lg"
-                        style={{ background: activity.color }}
-                      />
-                    )}
-                    
-                    <div className="flex items-center gap-4 p-3">
-                      <motion.div
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                        className="relative"
-                      >
-                        <Avatar className={`h-12 w-12 border-2 flex-shrink-0 shadow-sm ${hoveredItem === activity.id ? "border-blue-300" : "border-gray-200"}`}>
-                          <AvatarImage src={activity.avatar || "/placeholder.svg"} alt={activity.name} />
-                          <AvatarFallback className={activity.color}>
-                            {activity.initials}
-                          </AvatarFallback>
-                        </Avatar>
-                        
-                        {/* Status indicator */}
-                        <motion.div 
-                          className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white bg-green-500" 
-                          initial={{ scale: 0 }}
-                          animate={{ scale: hoveredItem === activity.id ? 1 : 0 }}
-                          transition={{ duration: 0.2 }}
+              {isLoading ? (
+                <div className="p-3 space-y-3">
+                  {Array(5).fill(0).map((_, index) => (
+                    <div key={index} className="h-24 bg-gray-100 animate-pulse rounded-lg"></div>
+                  ))}
+                </div>
+              ) : filteredActivities.length > 0 ? (
+                <div className="p-3 space-y-3">
+                  {filteredActivities.map((activity, index) => (
+                    <motion.div
+                      key={activity.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                      className="relative rounded-lg transition-all duration-300 overflow-hidden"
+                      style={{
+                        background: hoveredItem === activity.id 
+                          ? "linear-gradient(to right, rgba(239, 246, 255, 0.6), rgba(219, 234, 254, 0.4))" 
+                          : "white",
+                        boxShadow: hoveredItem === activity.id ? "0 4px 12px rgba(59, 130, 246, 0.1)" : "0 1px 3px rgba(0, 0, 0, 0.05)",
+                      }}
+                      onMouseEnter={() => setHoveredItem(activity.id)}
+                      onMouseLeave={() => setHoveredItem(null)}
+                    >
+                      {/* Animated sidebar accent */}
+                      {hoveredItem === activity.id && (
+                        <motion.div
+                          initial={{ height: 0 }}
+                          animate={{ height: "100%" }}
+                          className="absolute left-0 top-0 w-1 rounded-l-lg"
+                          style={{ background: activity.color }}
                         />
-                      </motion.div>
+                      )}
                       
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium flex items-center gap-1">
-                            <User
+                      <div className="flex items-center gap-4 p-3">
+                        <motion.div
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.95 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                          className="relative"
+                        >
+                          <Avatar className={`h-12 w-12 border-2 flex-shrink-0 shadow-sm ${hoveredItem === activity.id ? "border-blue-300" : "border-gray-200"}`}>
+                            <AvatarImage src={activity.avatar || "/placeholder.svg"} alt={activity.name} />
+                            <AvatarFallback className={activity.color}>
+                              {activity.initials}
+                            </AvatarFallback>
+                          </Avatar>
+                          
+                          {/* Status indicator */}
+                          <motion.div 
+                            className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white bg-green-500" 
+                            initial={{ scale: 0 }}
+                            animate={{ scale: hoveredItem === activity.id ? 1 : 0 }}
+                            transition={{ duration: 0.2 }}
+                          />
+                        </motion.div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium flex items-center gap-1">
+                              <User
+                                className={`h-3.5 w-3.5 ${hoveredItem === activity.id ? "text-blue-600" : "text-gray-400"}`}
+                              />
+                              {activity.name}
+                            </p>
+                          </div>
+                          <p className="text-xs text-gray-500 truncate flex items-center gap-1 mt-0.5">
+                            <Mail
                               className={`h-3.5 w-3.5 ${hoveredItem === activity.id ? "text-blue-600" : "text-gray-400"}`}
                             />
-                            {activity.name}
+                            {activity.email}
                           </p>
-                        </div>
-                        <p className="text-xs text-gray-500 truncate flex items-center gap-1 mt-0.5">
-                          <Mail
-                            className={`h-3.5 w-3.5 ${hoveredItem === activity.id ? "text-blue-600" : "text-gray-400"}`}
-                          />
-                          {activity.email}
-                        </p>
-                        <div className="flex items-center gap-2 flex-wrap mt-2">
-                          <Badge
-                            className={`text-xs h-6 max-w-[140px] whitespace-normal transition-colors px-3 py-0.5 flex items-center gap-1 ${activity.badgeColor}`}
-                          >
-                            {activity.icon}
-                            <span className="truncate">{activity.activity}</span>
-                          </Badge>
-                          <span className="text-xs text-gray-500 flex items-center gap-1 bg-gray-100 px-2 py-0.5 rounded-full ml-auto">
-                            <Clock
-                              className={`h-3 w-3 ${hoveredItem === activity.id ? "text-blue-600" : "text-gray-400"}`}
-                            />
-                            {activity.time}
-                          </span>
+                          <div className="flex items-center gap-2 flex-wrap mt-2">
+                            <Badge
+                              className={`text-xs h-6 max-w-[140px] whitespace-normal transition-colors px-3 py-0.5 flex items-center gap-1 ${activity.badgeColor}`}
+                            >
+                              {activity.icon}
+                              <span className="truncate">{activity.activity}</span>
+                            </Badge>
+                            <span className="text-xs text-gray-500 flex items-center gap-1 bg-gray-100 px-2 py-0.5 rounded-full ml-auto">
+                              <Clock
+                                className={`h-3 w-3 ${hoveredItem === activity.id ? "text-blue-600" : "text-gray-400"}`}
+                              />
+                              {activity.time}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    {/* View details action that appears on hover */}
-                    {hoveredItem === activity.id && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="border-t border-neutral-100 bg-white bg-opacity-80 backdrop-blur-sm p-2 flex justify-end"
-                      >
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-full px-3"
+                      
+                      {/* View details action that appears on hover */}
+                      {hoveredItem === activity.id && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="border-t border-neutral-100 bg-white bg-opacity-80 backdrop-blur-sm p-2 flex justify-end"
                         >
-                          Lihat Detail
-                        </Button>
-                      </motion.div>
-                    )}
-                  </motion.div>
-                ))}
-              </div>
+                          <p className="text-sm text-gray-600 flex-1 px-2 line-clamp-1">{activity.message}</p>
+                          <Link href="/dashboard/lo-mbkm/notifications">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-full px-3"
+                            >
+                              Lihat Detail
+                            </Button>
+                          </Link>
+                        </motion.div>
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-10 text-center">
+                  <Bell className="h-10 w-10 text-gray-300 mb-2" />
+                  <h3 className="text-lg font-medium text-gray-700">Tidak ada notifikasi</h3>
+                  <p className="text-sm text-gray-500">Belum ada aktivitas terbaru saat ini</p>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -281,15 +305,17 @@ export function RecentActivities() {
         {/* Footer with stats */}
         <div className="border-t border-neutral-200 p-3 bg-gray-50 flex justify-between items-center">
           <div className="text-xs text-gray-500">
-            {activities.length} aktivitas dalam 24 jam terakhir
+            {filteredActivities.length} aktivitas terlihat
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-full px-3"
-          >
-            Lihat Semua
-          </Button>
+          <Link href="/dashboard/lo-mbkm/notifications">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-full px-3"
+            >
+              Lihat Semua
+            </Button>
+          </Link>
         </div>
       </CardContent>
     </Card>

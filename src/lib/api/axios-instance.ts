@@ -23,6 +23,8 @@ const SERVICE_URLS = {
     process.env.NEXT_PUBLIC_FILE_SERVICE_URL || "http://localhost:3007",
   NOTIFICATION:
     process.env.NEXT_PUBLIC_NOTIFICATION_SERVICE_URL || "http://localhost:3008",
+  BROKER:
+    process.env.NEXT_PUBLIC_BROKER_SERVICE_URL || "http://localhost:3009",
 };
 
 
@@ -98,4 +100,5 @@ export const apiServices = {
   monitoring: createAxiosInstance(SERVICE_URLS.MONITORING),
   file: createAxiosInstance(SERVICE_URLS.FILE),
   notification: createAxiosInstance(SERVICE_URLS.NOTIFICATION),
+  broker: createAxiosInstance(SERVICE_URLS.BROKER),
 };

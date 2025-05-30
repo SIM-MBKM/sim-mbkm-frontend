@@ -32,16 +32,14 @@ const ActivityItem = ({ activity, isNew = false }: ActivityItemProps) => {
   // Get color based on activity type
   const getTypeColor = () => {
     switch (activity.type) {
-      case "registration":
+      case "register":
         return "text-blue-500 bg-blue-50";
-      case "activity":
+      case "approval report":
         return "text-indigo-500 bg-indigo-50";
-      case "approval":
+      case "approval registration":
         return "text-amber-500 bg-amber-50";
-      case "event":
+      case "new activity":
         return "text-green-500 bg-green-50";
-      case "achievement":
-        return "text-purple-500 bg-purple-50";
       default:
         return "text-gray-500 bg-gray-50";
     }
@@ -57,10 +55,10 @@ const ActivityItem = ({ activity, isNew = false }: ActivityItemProps) => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <Card className={`border-l-4 ${
-        activity.type === "registration" ? "border-l-blue-500" :
-        activity.type === "approval" ? "border-l-indigo-500" :
-        activity.type === "activity" ? "border-l-amber-500" :
-        activity.type === "event" ? "border-l-green-500" :
+        activity.type === "register" ? "border-l-blue-500" :
+        activity.type === "approval report" ? "border-l-indigo-500" :
+        activity.type === "approval registration" ? "border-l-amber-500" :
+        activity.type === "new activity" ? "border-l-green-500" :
         "border-l-purple-500"
       } hover:shadow-md transition-all duration-200`}>
         <CardContent className="p-4">
@@ -151,29 +149,29 @@ export function ActivityFeed() {
 
     // Determine icon based on notification type
     let icon = <Bell className="h-5 w-5" />;
-    let type = "REGISTRATION";
+    let type = "REGISTER";
     
     if (notification.type) {
       switch (notification.type.toLowerCase()) {
-        case "registration":
+        case "register":
           icon = <Info className="h-5 w-5" />;
-          type = "registration";
+          type = "register";
           break;
-        case "create activity":
+        case "approval report":
           icon = <ListCheck className="h-5 w-5" />;
-          type = "activity";
+          type = "approval report";
           break;
-        case "approval":
+        case "approval registration":
           icon = <Calendar className="h-5 w-5" />;
-          type = "approval";
+          type = "approval registration";
           break;
-        case "achievement":
+        case "new activity":
           icon = <Award className="h-5 w-5" />;
-          type = "achievement";
+          type = "new activity";
           break;
         default:
           icon = <Bell className="h-5 w-5" />;
-          type = "notification";
+          type = "register";
       }
     }
 

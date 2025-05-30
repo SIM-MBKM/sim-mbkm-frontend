@@ -70,20 +70,14 @@ export function ActivityFeed({ activities: propActivities }: ActivityFeedProps) 
     
     if (notification.type) {
       switch (notification.type.toLowerCase()) {
-        case "registration":
+        case "register":
           iconType = "info"
           break
-        case "activity":
-        case "create activity":
+        case "approval registration":
+        case "approval report":
           iconType = "task"
           break
-        case "approval":
-          iconType = "calendar"
-          break
-        case "achievement":
-          iconType = "achievement"
-          break
-        case "company":
+        case "new activity":
           iconType = "company"
           break
         default:

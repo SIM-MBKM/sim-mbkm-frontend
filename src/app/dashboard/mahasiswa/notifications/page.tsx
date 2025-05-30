@@ -39,28 +39,28 @@ const NotificationItem = ({ notification }: { notification: Notification }) => {
   
   if (notification.type) {
     switch (notification.type.toLowerCase()) {
-      case "info":
+      case "register":
         icon = <Info className="h-5 w-5" />;
         typeColor = "text-indigo-500 bg-indigo-50";
         borderColor = "border-l-indigo-500";
         typeTextColor = "text-indigo-700";
         typeBgColor = "bg-indigo-50";
         break;
-      case "task":
+      case "approval registration":
         icon = <ListCheck className="h-5 w-5" />;
         typeColor = "text-amber-500 bg-amber-50";
         borderColor = "border-l-amber-500";
         typeTextColor = "text-amber-700";
         typeBgColor = "bg-amber-50";
         break;
-      case "event":
+      case "approval report":
         icon = <Calendar className="h-5 w-5" />;
         typeColor = "text-green-500 bg-green-50";
         borderColor = "border-l-green-500";
         typeTextColor = "text-green-700";
         typeBgColor = "bg-green-50";
         break;
-      case "achievement":
+      case "new activity":
         icon = <Award className="h-5 w-5" />;
         typeColor = "text-purple-500 bg-purple-50";
         borderColor = "border-l-purple-500";

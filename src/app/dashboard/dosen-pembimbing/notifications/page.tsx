@@ -14,7 +14,7 @@ import {
   Award, 
   ChevronLeft, 
   ChevronRight,
-  Building
+  // Building
 } from "lucide-react"
 import { 
   Card, 
@@ -46,14 +46,14 @@ const NotificationItem = ({ notification }: { notification: Notification }) => {
   
   if (notification.type) {
     switch (notification.type.toLowerCase()) {
-      case "registration":
+      case "register":
         icon = <Info className="h-5 w-5" />
         typeColor = "text-blue-500 bg-blue-50"
         borderColor = "border-l-blue-500"
         typeTextColor = "text-blue-700"
         typeBgColor = "bg-blue-50"
         break
-      case "activity":
+      case "new activity":
       case "create activity":
         icon = <ListCheck className="h-5 w-5" />
         typeColor = "text-amber-500 bg-amber-50"
@@ -61,26 +61,19 @@ const NotificationItem = ({ notification }: { notification: Notification }) => {
         typeTextColor = "text-amber-700"
         typeBgColor = "bg-amber-50"
         break
-      case "approval":
+      case "approval registration":
         icon = <Calendar className="h-5 w-5" />
         typeColor = "text-indigo-500 bg-indigo-50"
         borderColor = "border-l-indigo-500"
         typeTextColor = "text-indigo-700"
         typeBgColor = "bg-indigo-50"
         break
-      case "achievement":
+      case "approval report":
         icon = <Award className="h-5 w-5" />
         typeColor = "text-purple-500 bg-purple-50"
         borderColor = "border-l-purple-500"
         typeTextColor = "text-purple-700"
         typeBgColor = "bg-purple-50"
-        break
-      case "company":
-        icon = <Building className="h-5 w-5" />
-        typeColor = "text-green-500 bg-green-50"
-        borderColor = "border-l-green-500"
-        typeTextColor = "text-green-700"
-        typeBgColor = "bg-green-50"
         break
       default:
         icon = <Bell className="h-5 w-5" />

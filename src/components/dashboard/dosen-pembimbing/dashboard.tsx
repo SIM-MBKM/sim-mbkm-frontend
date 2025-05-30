@@ -8,11 +8,15 @@ import { ReviewSection } from "./review-section"
 // import { QuickActions } from "./quick-actions"
 import { Bell, Users, CheckCircle, Calendar, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { useGetStatisticDashboardDosenPembimbing } from "@/lib/api/hooks/use-query-hooks"
 
 export function Dashboard() {
   const [mounted, setMounted] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [showWelcome, setShowWelcome] = useState(true)
+
+  // Get dashboard statistics
+  const { data: statsData, isLoading: statsLoading } = useGetStatisticDashboardDosenPembimbing()
 
   // Fix hydration issues with theme
   useEffect(() => {
@@ -36,19 +40,23 @@ export function Dashboard() {
   const stats = [
     {
       title: "Ajuan Mahasiswa",
-      value: "100",
+      value: statsLoading ? "..." : statsData?.data?.total?.toString() || "0",
       subtitle: "Jumlah Ajuan",
       icon: <Users className="h-5 w-5" />,
       color: "from-blue-600 to-blue-800",
-      increase: "+5% dari minggu lalu",
+      increase: statsLoading 
+        ? "Loading..." 
+        : `${(statsData?.data?.total_percentage_from_last_month || 0) > 0 ? "+" : ""}${statsData?.data?.total_percentage_from_last_month || 0}% dari bulan lalu`,
     },
     {
       title: "Ajuan Disetujui",
-      value: "30",
+      value: statsLoading ? "..." : statsData?.data?.total_approved?.toString() || "0",
       subtitle: "Jumlah Ajuan",
       icon: <CheckCircle className="h-5 w-5" />,
       color: "from-green-600 to-green-800",
-      increase: "+12% dari minggu lalu",
+      increase: statsLoading 
+        ? "Loading..." 
+        : `${(statsData?.data?.total_approved_percentage_from_last_month || 0) > 0 ? "+" : ""}${statsData?.data?.total_approved_percentage_from_last_month || 0}% dari bulan lalu`,
     },
     {
       title: "Jadwal Mendatang",
@@ -60,11 +68,13 @@ export function Dashboard() {
     },
     {
       title: "Notifikasi",
-      value: "5",
+      value: statsLoading ? "..." : statsData?.data?.total_notification?.toString() || "0",
       subtitle: "Belum dibaca",
       icon: <Bell className="h-5 w-5" />,
       color: "from-amber-600 to-amber-800",
-      increase: "3 notifikasi baru",
+      increase: statsLoading 
+        ? "Loading..." 
+        : `${(statsData?.data?.notification_percentage_from_last_month || 0) > 0 ? "+" : ""}${statsData?.data?.notification_percentage_from_last_month || 0}% dari bulan lalu`,
     },
   ]
 

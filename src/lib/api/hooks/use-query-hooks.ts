@@ -34,6 +34,7 @@ import {
 } from '../services';
 import { fileService } from '../services/file-service';
 import { notificationService } from '../services/notification-service';
+import { brokerService } from '../services/broker-service';
 
 // AUTH HOOKS
 
@@ -775,4 +776,12 @@ export const useGetNotificationByReceiverEmail = (receiverEmail: string, page: n
     queryKey: ['notifications', 'receiver', receiverEmail, page, limit],
     queryFn: () => notificationService.getNotificationByReceiverEmail(receiverEmail, page, limit),
   });
-}
+};
+
+// BROKER HOOKS
+export const useGetStatisticDashboardDosenPembimbing = () => {
+  return useQuery({
+    queryKey: ['statisticDashboardDosenPembimbing'],
+    queryFn: () => brokerService.getStatisticDashboardDosenPembimbing(),
+  });
+};
