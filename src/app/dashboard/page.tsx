@@ -24,7 +24,9 @@ export default function DashboardRedirect() {
         MAHASISWA: '/dashboard/mahasiswa',
         "DOSEN PEMBIMBING": '/dashboard/dosen-pembimbing',
         ADMIN: '/dashboard/admin',
-        "LO-MBKM": '/dashboard/lo-mbkm'
+        "LO-MBKM": '/dashboard/lo-mbkm',
+        "DOSEN PEMONEV": '/dashboad/dosen-pemonev',
+        MITRA: '/dashboard/mitra'
       }
       
       router.replace(roleRoutes[role])

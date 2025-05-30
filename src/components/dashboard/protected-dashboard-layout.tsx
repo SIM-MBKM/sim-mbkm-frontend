@@ -26,9 +26,9 @@ export function ProtectedDashboardLayout({
         MAHASISWA: '/dashboard/mahasiswa',
         "DOSEN PEMBIMBING": '/dashboard/dosen-pembimbing',
         ADMIN: '/dashboard/admin',
-        SUPERADMIN: '/dashboard/superadmin',
-        PIMPINAN: '/dashboard/pimpinan',
-        TENDIK: '/dashboard/tendik'
+        "LO-MBKM": '/dashboard/lo-mbkm',
+        "DOSEN PEMONEV": '/dashboard/dosen-pemonev',
+        "MITRA" :'/dashboard/mitra',
       };
 
       // Redirect to the appropriate dashboard

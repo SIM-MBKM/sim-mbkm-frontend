@@ -51,6 +51,7 @@ export const userService = {
 
   getUserDatas: async () => {
     const response = await userApi.get<BaseResponse<User>>(`/user`);
+    console.log(response);
     return response.data;
   },
 
