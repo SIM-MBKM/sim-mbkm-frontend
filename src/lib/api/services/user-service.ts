@@ -1,5 +1,5 @@
-import { apiServices } from '../axios-instance';
-import { BaseResponse } from './registration-service';
+import { apiServices } from "../axios-instance";
+import { BaseResponse } from "./registration-service";
 
 const userApi = apiServices.user;
 
@@ -33,37 +33,39 @@ export interface UserUpdateInput {
 export const userService = {
   // Get current user profile
   getCurrentUser: async () => {
-    const response = await userApi.get<User>('/users/me');
+    const response = await userApi.get<User>("/users/me");
     return response.data;
   },
 
   // Get user role
   getUserRole: async () => {
-    const response = await userApi.get<UserRoleResponse>('/user/role');
+    const response = await userApi.get<UserRoleResponse>("/users/me/role");
     return response.data;
   },
 
   // Get user by ID
   getUserById: async (id: string) => {
-    const response = await userApi.get<User>(`/users/${id}`);
+    const response = await userApi.get<User>(`/by-user-id/${id}`);
     return response.data;
   },
 
   getUserDatas: async () => {
-    const response = await userApi.get<BaseResponse<User>>(`/user`);
-    console.log(response);
+    const response = await userApi.get<BaseResponse<User>>(`/users/me`);
     return response.data;
   },
 
   // Update user profile
   updateUser: async (userId: string, userData: UserUpdateInput) => {
-    const response = await userApi.put<User>(`/users/${userId}`, userData);
+    const response = await userApi.put<User>(
+      `/users/update/${userId}`,
+      userData
+    );
     return response.data;
   },
 
   // Get all users (admin only)
   getAllUsers: async (page = 1, limit = 10) => {
-    const response = await userApi.get<{users: User[], total: number}>(
+    const response = await userApi.get<{ users: User[]; total: number }>(
       `/users?page=${page}&limit=${limit}`
     );
     return response.data;
@@ -71,17 +73,17 @@ export const userService = {
 
   // Get users by role
   getUsersByRole: async (role: string, page = 1, limit = 10) => {
-    const response = await userApi.get<{users: User[], total: number}>(
-      `/users/role/${role}?page=${page}&limit=${limit}`
+    const response = await userApi.get<{ users: User[]; total: number }>(
+      `/users/?role_name=${role}?page=${page}&limit=${limit}`
     );
     return response.data;
   },
 
   // Search users
   searchUsers: async (query: string, page = 1, limit = 10) => {
-    const response = await userApi.get<{users: User[], total: number}>(
+    const response = await userApi.get<{ users: User[]; total: number }>(
       `/users/search?q=${query}&page=${page}&limit=${limit}`
     );
     return response.data;
   },
-}; 
+};

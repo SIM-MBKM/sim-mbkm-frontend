@@ -62,10 +62,8 @@ export const authService = {
 
       if (provider === "google") {
         response = await authApi.get<AuthResponse>("/auth/google/redirect");
-      } else if (provider === "microsoft") {
-        response = await authApi.get<AuthResponse>("/auth/microsoft/redirect");
       } else {
-        throw new Error(`Unsupported provider: ${provider}`);
+        response = await authApi.get<AuthResponse>("/auth/its/redirect");
       }
 
       localStorage.setItem("auth_token", response.data.access_token);
