@@ -25,6 +25,7 @@ export interface SubjectFilterRequest {
   kelas: string;
   departement: string;
   tipe_mata_kuliah: string;
+  mata_kuliah: string;
 }
 
 export interface Subject {

@@ -171,37 +171,46 @@ export function MatchingDialog({ open, onOpenChange, activity }: MatchingDialogP
 
   // Submit matching
   const handleSubmit = async () => {
-    console.log("Selected subjects:", selectedSubjects);
+    console.log("Current selected subjects BEFORE submit:", selectedSubjects);
     
-    if (selectedSubjects.length === 0) {
-      toast({
-        title: "No subjects selected",
-        description: "Please select at least one subject to create a matching.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // No longer prevent saving if selectedSubjects is empty, allows removing all matches
+    // if (selectedSubjects.length === 0) {
+    //   toast({
+    //     title: "No subjects selected",
+    //     description: "Please select at least one subject to create a matching.",
+    //     variant: "destructive",
+    //   });
+    //   return;
+    // }
 
     try {
       setIsSubmitting(true);
       
-      // Get existing matched subjects
+      // Get existing matched subjects IDs from activity
       const existingMatchedIds = activity.matching 
         ? Array.isArray(activity.matching)
           ? activity.matching.map(match => String(match.subject_id)).filter(Boolean)
           : [String((activity.matching as { subject_id: number }).subject_id)].filter(Boolean)
         : [];
 
-      // Calculate added and removed subjects
-      const subjectsToAdd = selectedSubjects.map(String).filter(id => !existingMatchedIds.includes(id));
-      const subjectsToRemove = existingMatchedIds.filter(id => !selectedSubjects.map(String).includes(id));
+      // Calculate added and removed subjects based on IDs
+      const subjectsToAdd = selectedSubjects.filter(id => !existingMatchedIds.includes(id));
+      const subjectsToRemove = existingMatchedIds.filter(id => !selectedSubjects.includes(id));
       
       // Prepare the request payload
       const matchingPayload = {
         activity_id: String(activity.id),
-        subject_id_add: subjectsToAdd.length > 0 ? subjectsToAdd.map(String) : undefined,
+        subject_id_add: subjectsToAdd.length > 0 ? subjectsToAdd : undefined,
         subject_id_remove: subjectsToRemove.length > 0 ? subjectsToRemove : undefined
       };
+
+      // Avoid sending a request if there are no changes
+      if (!matchingPayload.subject_id_add && !matchingPayload.subject_id_remove) {
+        console.log("No changes to submit.");
+        handleCloseDialog(false); // Close without refreshing if no changes
+        return;
+      }
+
       console.log("Preparing to send matching request with payload:", matchingPayload);
       
       // Call the mutation
@@ -312,26 +321,26 @@ export function MatchingDialog({ open, onOpenChange, activity }: MatchingDialogP
                 const subject = filteredSubjects.find(s => s.id === subjectId) || 
                                (matchedSubjects.find(s => s.id === subjectId || s.subject_id === subjectId) as Subject | undefined);
                 
+                if (!subject) return null;
+                
                 return (
-                  subject && (
-                    <Badge
-                      key={`selected-${subject.id || Math.random()}`}
-                      variant="secondary"
-                      className="flex items-center gap-1 pl-2 pr-1 py-1"
+                  <Badge
+                    key={`selected-${subject.id}-${subjectId}`}
+                    variant="secondary"
+                    className="flex items-center gap-1 pl-2 pr-1 py-1"
+                  >
+                    <span className="truncate max-w-[150px]">{subject.mata_kuliah}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5 rounded-full"
+                      onClick={() => handleToggleSubject(subject.id)}
                     >
-                      <span className="truncate max-w-[150px]">{subject.mata_kuliah}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-5 w-5 rounded-full"
-                        onClick={() => handleToggleSubject(subject.id)}
-                      >
-                        <X className="h-3 w-3" />
-                        <span className="sr-only">Remove</span>
-                      </Button>
-                    </Badge>
-                  )
-                )
+                      <X className="h-3 w-3" />
+                      <span className="sr-only">Remove</span>
+                    </Button>
+                  </Badge>
+                );
               })}
             </div>
           </motion.div>
@@ -428,7 +437,7 @@ export function MatchingDialog({ open, onOpenChange, activity }: MatchingDialogP
           </Button>
           <Button 
             onClick={handleSubmit} 
-            disabled={isSubmitting || selectedSubjects.length === 0}
+            disabled={isSubmitting}
             type="button"
             className="bg-purple-600 hover:bg-purple-700 text-white"
           >

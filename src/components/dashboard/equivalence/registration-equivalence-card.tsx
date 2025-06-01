@@ -88,7 +88,6 @@ export function RegistrationCard({
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [page, setPage] = useState(1)
   const [hasMoreData, setHasMoreData] = useState(true)
-  // const observerRef = useRef<IntersectionObserver | null>(null)
   const loadingElementRef = useRef<HTMLDivElement | null>(null)
   const submitEquivalenceMutation = useSubmitEquivalenceRequest()
   
@@ -99,7 +98,8 @@ export function RegistrationCard({
     prodi_penyelenggara: "",
     kelas: "",
     departement: "",
-    tipe_mata_kuliah: ""
+    tipe_mata_kuliah: "",
+    mata_kuliah: "",
   })
 
   // Debounced filter for API calls
@@ -122,7 +122,8 @@ export function RegistrationCard({
       prodi_penyelenggara: "",
       kelas: "",
       departement: "",
-      tipe_mata_kuliah: ""
+      tipe_mata_kuliah: "",
+      mata_kuliah: "",
     })
     setSearchTerm("")
     setPage(1)
@@ -149,7 +150,7 @@ export function RegistrationCard({
     limit: 10,
     filter: {
       ...debouncedFilter,
-      kode: debouncedSearchTerm || debouncedFilter.kode
+      mata_kuliah: debouncedSearchTerm || debouncedFilter.mata_kuliah
     }
   });
 
@@ -284,6 +285,33 @@ export function RegistrationCard({
 
   // Determine if we're in a loading state (either external or from the mutation)
   const isLoading = externalLoading || submitEquivalenceMutation.isPending
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const target = entries[0];
+        if (target.isIntersecting && hasMoreData && !isLoadingSubjects && !isFetching) {
+          setPage((prevPage) => prevPage + 1);
+        }
+      },
+      {
+        root: null,
+        rootMargin: "20px",
+        threshold: 0.1,
+      }
+    );
+
+    if (loadingElementRef.current) {
+      observer.observe(loadingElementRef.current);
+    }
+
+    return () => {
+      if (loadingElementRef.current) {
+        observer.unobserve(loadingElementRef.current);
+      }
+    };
+  }, [hasMoreData, isLoadingSubjects, isFetching]);
 
   return (
     <Card className="overflow-hidden border-[#003478]/20">

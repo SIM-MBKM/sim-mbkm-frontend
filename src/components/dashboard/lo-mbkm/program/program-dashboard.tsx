@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button"
 import { AddProgramForm } from "./add-program-form"
 import { useMediaQuery } from "@/lib/hooks/use-media-query"
 import { MobileMenu } from "./mobile-menu"
-import { useAllProgramTypes, useAllLevels, useAllGroups, useActivities, useCreateActivity } from "@/lib/api/hooks/use-query-hooks"
+import { useAllProgramTypes, useAllLevels, useAllGroups, useActivities, useCreateActivity, useGetAcademicYears } from "@/lib/api/hooks/use-query-hooks"
 import { Activity, ProgramTypeResponse, ActivityFilter, ActivityAllResponse, ActivityCreateInput } from "@/lib/api/services/activity-service"
 import { toast } from "react-toastify"
 
@@ -23,6 +23,7 @@ type ProgramAPIContextType = {
   programTypes: ProgramTypeResponse[] | undefined;
   levels: ProgramTypeResponse[] | undefined;
   groups: ProgramTypeResponse[] | undefined;
+  academicYears: string[] | undefined;
   activities: Activity[] | undefined;
   isLoading: boolean;
   activitiesPagination: {
@@ -72,6 +73,7 @@ function ProgramAPIProvider({ children }: { children: React.ReactNode }) {
   const { data: programTypesData, isLoading: isProgramTypesLoading } = useAllProgramTypes();
   const { data: levelsData, isLoading: isLevelsLoading } = useAllLevels();
   const { data: groupsData, isLoading: isGroupsLoading } = useAllGroups();
+  const { data: academicYearsData, isLoading: isAcademicYearsLoading } = useGetAcademicYears();
   
   // Fetch activities with pagination
   const { 
@@ -104,14 +106,23 @@ function ProgramAPIProvider({ children }: { children: React.ReactNode }) {
     setActivitiesPage(1);
   };
 
+  // Effect to refetch activities when filters change
+  useEffect(() => {
+    // We don't need to manually call refetch here because activityFilters
+    // is part of the queryKey for useActivities. React Query automatically
+    // handles the refetch when activityFilters changes.
+    console.log("Activity filters changed:", activityFilters);
+  }, [activityFilters]);
+
   // Combined loading state
-  const isLoading = isProgramTypesLoading || isLevelsLoading || isGroupsLoading || isActivitiesLoading;
+  const isLoading = isProgramTypesLoading || isLevelsLoading || isGroupsLoading || isActivitiesLoading || isAcademicYearsLoading;
 
   // Extract data from query results
   const programTypes = programTypesData?.data;
   const levels = levelsData?.data;
   const groups = groupsData?.data;
-  const activities = activitiesData?.data;
+  const academicYears = academicYearsData?.data;
+  const activities = activitiesData?.data || [];
 
   // Create pagination object for activities
   const activitiesPagination = {
@@ -156,6 +167,7 @@ function ProgramAPIProvider({ children }: { children: React.ReactNode }) {
     programTypes,
     levels,
     groups,
+    academicYears,
     activities,
     isLoading,
     activitiesPagination,

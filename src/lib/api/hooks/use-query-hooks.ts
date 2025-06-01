@@ -9,7 +9,6 @@ import {
   userService,
   type LoginCredentials,
   type LogoutCredentials,
-  type SignupCredentials,
   type UserUpdateInput,
   type ActivityCreateInput,
   type LogbookInput,

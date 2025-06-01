@@ -17,7 +17,7 @@ interface ProgramFilterProps {
 }
 
 export function ProgramFilter({ selectedTab, onTabChange }: ProgramFilterProps) {
-  const { setFilters, activitiesData, programTypes, levels, groups, currentFilters, isLoading } = useProgramAPI()
+  const { setFilters, activitiesData, programTypes, levels, groups, academicYears, currentFilters, isLoading } = useProgramAPI()
   const prevSelectedTabRef = useRef<string>(selectedTab);
   const [nameFilter, setNameFilter] = useState("");
   
@@ -181,6 +181,26 @@ export function ProgramFilter({ selectedTab, onTabChange }: ProgramFilterProps) 
               </Select>
             </div>
 
+            <div>
+              <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Academic Year</h3>
+              <Select 
+                value={currentFilters.academic_year || "_all"} 
+                onValueChange={(value) => handleSelectChange("academic_year", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select academic year" />
+                </SelectTrigger>
+                <SelectContent className="bg-white dark:bg-slate-800">
+                  <SelectItem value="_all">All Academic Years</SelectItem>
+                  {academicYears?.map((year) => (
+                    <SelectItem key={year} value={year}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <Button 
               variant="outline" 
               size="sm" 
@@ -191,6 +211,7 @@ export function ProgramFilter({ selectedTab, onTabChange }: ProgramFilterProps) 
                 level_id: "",
                 group_id: "",
                 activity_id: "",
+                academic_year: "",
                 approval_status: selectedTab
               })}
             >

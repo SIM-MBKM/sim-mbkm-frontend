@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Search, Filter, Plus, FileText, Book, Layers } from "lucide-react"
+import { Search, Plus, FileText, Book, Layers } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
@@ -59,7 +59,7 @@ export function SubjectsDashboard() {
     subjectFilter: {
       ...filters,
       mata_kuliah: searchTerm || filters.mata_kuliah,
-      departemen: "Teknik Geofisika" // Ensure we only get Geofisika subjects
+      departemen: "Teknik Geofisika"
     }
   })
 
@@ -69,7 +69,7 @@ export function SubjectsDashboard() {
     subjectFilter: {
       ...filters,
       mata_kuliah: searchTerm || filters.mata_kuliah,
-      departemen: filters.departemen || "" // Allow filtering by department
+      departemen: "Non Teknik Geofisika" // Set default value for non-geofisika
     }
   })
 
@@ -136,6 +136,7 @@ export function SubjectsDashboard() {
   const handleTabChange = (value: string) => {
     setActiveTab(value)
     setCurrentPage(1) // Reset to first page when changing tabs
+    
     // Reset filters when changing tabs
     setFilters({
       kode: "",
@@ -143,7 +144,8 @@ export function SubjectsDashboard() {
       semester: "",
       prodi_penyelenggara: "",
       kelas: "",
-      departemen: "",
+      departemen: value === "teknik-geofisika" ? "Teknik Geofisika" : 
+                  value === "other-departments" ? "Non Teknik Geofisika" : "",
       tipe_mata_kuliah: "",
     })
     setSearchTerm("")
@@ -248,14 +250,14 @@ export function SubjectsDashboard() {
           <Input placeholder="Search subjects..." className="pl-10" value={searchTerm} onChange={handleSearch} />
         </div>
         <div className="flex gap-2">
-          <Button
+          {/* <Button
             variant="outline"
             onClick={() => document.getElementById("filters-section")?.scrollIntoView({ behavior: "smooth" })}
             className="flex items-center gap-2"
           >
             <Filter className="h-4 w-4" />
             <span className="hidden sm:inline">Filters</span>
-          </Button>
+          </Button> */}
           <Button onClick={handleAddSubject} className="flex text-white items-center gap-2 bg-purple-600 hover:bg-purple-700">
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Add Subject</span>
@@ -373,9 +375,9 @@ export function SubjectsDashboard() {
           open={showEditForm}
           onOpenChange={setShowEditForm}
           subject={selectedSubject}
-          onSuccess={() => {
-            toast.success("Subject has been updated successfully")
-          }}
+          // onSuccess={() => {
+          //   toast.success("Subject has been updated successfully")
+          // }}
         />
       )}
     </div>
