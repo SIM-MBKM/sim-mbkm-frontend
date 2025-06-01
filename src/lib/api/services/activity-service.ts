@@ -212,7 +212,7 @@ export const activityService = {
 
   // Delete activity
   deleteActivity: async (id: string) => {
-    const response = await activityApi.delete(`/activities/${id}`);
+    const response = await activityApi.delete(`/activity/${id}`);
     return response.data;
   },
 

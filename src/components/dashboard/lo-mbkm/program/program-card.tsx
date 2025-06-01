@@ -12,6 +12,7 @@ import { useToast } from "@/lib/api/hooks/use-toast"
 import { Activity, ActivityUpdateInput } from "@/lib/api/services/activity-service"
 import { activityService } from "@/lib/api/services"
 import { useQueryClient } from "@tanstack/react-query"
+import { useDeleteActivity } from "@/lib/api/hooks/use-query-hooks"
 
 import {
   AlertDialog,
@@ -34,11 +35,14 @@ interface ProgramCardProps {
 }
 
 export function ProgramCard({ program, isSelected, onSelect }: ProgramCardProps) {
-  const { updateProgram, deleteProgram } = usePrograms()
+  const { updateProgram } = usePrograms()
   const { toast } = useToast()
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const queryClient = useQueryClient()
+
+  // Initialize delete mutation hook
+  const deleteActivityMutation = useDeleteActivity();
 
   // Check if the program is a local Program type (has participants property)
   const isLocalProgram = (prog: ProgramOrActivity): prog is Program => {
@@ -106,20 +110,40 @@ export function ProgramCard({ program, isSelected, onSelect }: ProgramCardProps)
   const handleDelete = () => {
     // Only allow deletion for local programs
     if (isLocalProgram(program)) {
-      deleteProgram(program.id)
+      // Use the local delete function for local programs if needed,
+      // although typically API programs are the ones being managed.
+      // If there's no local program management needed, this branch can be removed.
+      // For now, assuming we only delete API activities via the API.
+      console.warn("Local program deletion attempted, but not fully implemented via context.");
       toast({
-        title: "Program deleted",
-        description: "The program has been successfully deleted.",
-        variant: "destructive",
-      })
-    } else {
-      toast({
-        title: "API Operation",
-        description: "Deletion for API programs is not implemented yet.",
+        title: "Local Delete",
+        description: "Local program deletion is not fully implemented in this component.",
         variant: "default",
-      })
+      });
+    } else {
+      // Use the API mutation for API programs
+      deleteActivityMutation.mutate(program.id, {
+        onSuccess: () => {
+          toast({
+            title: "Program deleted",
+            description: "The program has been successfully deleted.",
+            variant: "destructive",
+          });
+          setShowDeleteDialog(false); // Close dialog on success
+          // Invalidate activities query to remove the deleted program from the list
+          queryClient.invalidateQueries({ queryKey: ['activities'] });
+        },
+        onError: (error) => {
+          console.error("Delete error:", error);
+          toast({
+            title: "Delete failed",
+            description: error instanceof Error ? error.message : "Failed to delete program. Please try again.",
+            variant: "destructive",
+          });
+          setShowDeleteDialog(false); // Close dialog even on error
+        },
+      });
     }
-    setShowDeleteDialog(false)
   }
 
   // Format date safely
@@ -272,7 +296,17 @@ export function ProgramCard({ program, isSelected, onSelect }: ProgramCardProps)
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
-              Delete
+              {deleteActivityMutation.isPending ? (
+                <span className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Deleting...
+                </span>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
