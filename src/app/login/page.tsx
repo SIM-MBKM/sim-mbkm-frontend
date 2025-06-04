@@ -1,15 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { authService } from "@/lib/api/services";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import Link from "next/link";
-import Image from "next/image";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -19,7 +17,6 @@ export default function LoginPage() {
     email: "",
   });
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
