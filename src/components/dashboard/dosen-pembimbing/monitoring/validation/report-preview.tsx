@@ -1,121 +1,121 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { X, Download, FileText, Maximize2, Minimize2, CheckCircle, XCircle, Clock, Save, Eye } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { format, parseISO } from "date-fns"
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Download, FileText, Maximize2, Minimize2, CheckCircle, XCircle, Clock, Save, Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { format, parseISO } from "date-fns";
 // import { toast } from "react-toastify"
 // import 'react-toastify/dist/ReactToastify.css'
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { ReportSchedule } from "@/lib/api/services";
-import { useGetTemporaryLink } from "@/lib/api/hooks/use-query-hooks"
+import { useGetTemporaryLink } from "@/lib/api/hooks/use-query-hooks";
 
 interface ReportPreviewProps {
-  report: ReportSchedule
-  onClose: () => void
-  onStatusChange?: (reportId: string, status: string, feedback: string) => void
+  report: ReportSchedule;
+  onClose: () => void;
+  onStatusChange?: (reportId: string, status: string, feedback: string) => void;
 }
 
 export function ReportPreview({ report, onClose, onStatusChange }: ReportPreviewProps) {
-  const [fullscreen, setFullscreen] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const [status, setStatus] = useState<string>(report.report?.academic_advisor_status || "PENDING")
-  const [feedback, setFeedback] = useState<string>(report.report?.feedback || "")
-  const [isEditing, setIsEditing] = useState(false)
+  const [fullscreen, setFullscreen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [status, setStatus] = useState<string>(report.report?.academic_advisor_status || "PENDING");
+  const [feedback, setFeedback] = useState<string>(report.report?.feedback || "");
+  const [isEditing, setIsEditing] = useState(false);
 
   // Add useGetTemporaryLink hook
-  const { data: fileData, isLoading: isLoadingFile } = useGetTemporaryLink(report.report?.file_storage_id || "")
+  const { data: fileData, isLoading: isLoadingFile } = useGetTemporaryLink(report.report?.file_storage_id || "");
 
   useEffect(() => {
     // Simulate loading
     const timer = setTimeout(() => {
-      setLoading(false)
-    }, 1500)
+      setLoading(false);
+    }, 1500);
 
-    return () => clearTimeout(timer)
-  }, [])
+    return () => clearTimeout(timer);
+  }, []);
 
   // Close on escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onClose()
+        onClose();
       }
-    }
+    };
 
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [onClose])
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
   const formatDate = (dateString: string) => {
     try {
-      return format(parseISO(dateString), "MMMM d, yyyy")
-    } catch  {
-      return dateString
+      return format(parseISO(dateString), "MMMM d, yyyy");
+    } catch {
+      return dateString;
     }
-  }
+  };
 
   const getStatusIcon = (statusValue: string) => {
     if (!report.report) {
-      return <Clock className="h-5 w-5 text-amber-500" />
+      return <Clock className="h-5 w-5 text-amber-500" />;
     }
 
     if (statusValue === "APPROVED") {
-      return <CheckCircle className="h-5 w-5 text-green-500" />
+      return <CheckCircle className="h-5 w-5 text-green-500" />;
     } else if (statusValue === "REJECTED") {
-      return <XCircle className="h-5 w-5 text-red-500" />
+      return <XCircle className="h-5 w-5 text-red-500" />;
     } else {
-      return <Clock className="h-5 w-5 text-amber-500" />
+      return <Clock className="h-5 w-5 text-amber-500" />;
     }
-  }
+  };
 
   const handleSubmit = async () => {
     if (!report.report) {
       // toast.error("Cannot update status for a report that hasn't been submitted yet")
-      return
+      return;
     }
 
-    setSubmitting(true)
+    setSubmitting(true);
 
     try {
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Call the onStatusChange callback to update the parent component
       if (onStatusChange) {
-        onStatusChange(report.report?.id || "", status, feedback)
+        onStatusChange(report.report?.id || "", status, feedback);
       }
 
       // toast.success(`Report status updated to ${status}`)
 
       // Close the preview on success
-      onClose()
+      onClose();
     } catch {
       // toast.error("Failed to update report status")
-      
+
       // Close the preview even on failure
-      onClose()
+      onClose();
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const handleDownload = () => {
     if (fileData?.url) {
-      window.open(fileData.url, '_blank')
+      window.open(fileData.url, "_blank");
     }
-  }
+  };
 
   const handlePreview = () => {
     if (fileData?.url) {
       // Open in new tab for preview
-      window.open(fileData.url, '_blank')
+      window.open(fileData.url, "_blank");
     }
-  }
+  };
 
   return (
     <AnimatePresence>
@@ -315,8 +315,8 @@ export function ReportPreview({ report, onClose, onStatusChange }: ReportPreview
                                 status === "APPROVED"
                                   ? "text-green-600 dark:text-green-500"
                                   : status === "REJECTED"
-                                    ? "text-red-600 dark:text-red-500"
-                                    : "text-amber-600 dark:text-amber-500"
+                                  ? "text-red-600 dark:text-red-500"
+                                  : "text-amber-600 dark:text-amber-500"
                               }`}
                             >
                               {getStatusIcon(status)}
@@ -338,8 +338,8 @@ export function ReportPreview({ report, onClose, onStatusChange }: ReportPreview
                     <div className="mt-6 pt-4 border-t">
                       <h3 className="font-medium mb-4">Document</h3>
                       <div className="flex gap-3">
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           className="flex items-center gap-2"
                           onClick={handlePreview}
                           disabled={isLoadingFile}
@@ -360,8 +360,8 @@ export function ReportPreview({ report, onClose, onStatusChange }: ReportPreview
                             </>
                           )}
                         </Button>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           className="flex items-center gap-2"
                           onClick={handleDownload}
                           disabled={isLoadingFile}
@@ -397,5 +397,5 @@ export function ReportPreview({ report, onClose, onStatusChange }: ReportPreview
         </motion.div>
       </motion.div>
     </AnimatePresence>
-  )
+  );
 }

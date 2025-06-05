@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { ReactNode, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useRoleManager } from '@/lib/hooks/use-role-manager';
-import { UserRole } from '@/lib/redux/roleSlice';
-import { Loader2 } from 'lucide-react';
+import { ReactNode, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useRoleManager } from "@/lib/hooks/use-role-manager";
+import { UserRole } from "@/lib/redux/roleSlice";
+import { Loader2 } from "lucide-react";
 
 interface ProtectedDashboardLayoutProps {
   children: ReactNode;
   allowedRole: UserRole;
 }
 
-export function ProtectedDashboardLayout({ 
-  children, 
-  allowedRole 
+export function ProtectedDashboardLayout({
+  children,
+  allowedRole,
 }: ProtectedDashboardLayoutProps) {
   const router = useRouter();
   const { role, loading } = useRoleManager();
@@ -23,12 +23,12 @@ export function ProtectedDashboardLayout({
     if (!loading && role && role !== allowedRole) {
       // Map role to correct dashboard route
       const roleRoutes: Record<UserRole, string> = {
-        MAHASISWA: '/dashboard/mahasiswa',
-        "DOSEN PEMBIMBING": '/dashboard/dosen-pembimbing',
-        ADMIN: '/dashboard/admin',
-        "LO-MBKM": '/dashboard/lo-mbkm',
-        "DOSEN PEMONEV": '/dashboard/dosen-pemonev',
-        "MITRA" :'/dashboard/mitra',
+        MAHASISWA: "/dashboard/mahasiswa",
+        "DOSEN PEMBIMBING": "/dashboard/dosen-pembimbing",
+        ADMIN: "/dashboard/admin",
+        "LO-MBKM": "/dashboard/lo-mbkm",
+        "DOSEN PEMONEV": "/dashboard/dosen-pemonev",
+        MITRA: "/dashboard/mitra",
       };
 
       // Redirect to the appropriate dashboard
@@ -47,9 +47,5 @@ export function ProtectedDashboardLayout({
 
   // If role matches or not loaded yet, render children
   // return <DashboardLayout>{children}</DashboardLayout>;
-  return (
-    <>
-      {children}
-    </>
-  );
-} 
+  return <>{children}</>;
+}

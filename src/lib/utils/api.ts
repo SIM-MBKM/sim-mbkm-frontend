@@ -1,6 +1,6 @@
 // import type { Subject, MatchingRequest } from "../types"
 import type { Subject, MatchingRequest } from "@/lib/utils/types";
-import { Activity, PaginatedResponse } from '@/lib/api/services';
+import { Activity, PaginatedResponse } from "@/lib/api/services";
 
 // Mock data based on the provided JSON
 const mockActivities: Activity[] = [
@@ -83,7 +83,8 @@ const mockActivities: Activity[] = [
         documents: [
           {
             document_type: "Acceptence Letter",
-            file_storage_id: "sim_mbkm/7e315e0f-af28-4cbc-b05f-e5450914df72.docx",
+            file_storage_id:
+              "sim_mbkm/7e315e0f-af28-4cbc-b05f-e5450914df72.docx",
             id: "c158b786-0757-4e0e-b28f-0ef83a519dc3",
             name: "DOKUMEN TESTING.docx",
             subject_id: "ebdbff93-2f95-403f-ad91-57b1ed6bbea9",
@@ -104,7 +105,8 @@ const mockActivities: Activity[] = [
         documents: [
           {
             document_type: "Acceptence Letter",
-            file_storage_id: "sim_mbkm/b9906f30-cd62-4291-9b3e-41ede64cadfe.docx",
+            file_storage_id:
+              "sim_mbkm/b9906f30-cd62-4291-9b3e-41ede64cadfe.docx",
             id: "4d70adaa-10f9-41da-a0a0-4ec861554025",
             name: "DOKUMEN TESTING.docx",
             subject_id: "f92b580f-d9df-4211-817f-f97c5b20887f",
@@ -148,7 +150,8 @@ const mockActivities: Activity[] = [
         documents: [
           {
             document_type: "Acceptence Letter",
-            file_storage_id: "sim_mbkm/7e315e0f-af28-4cbc-b05f-e5450914df72.docx",
+            file_storage_id:
+              "sim_mbkm/7e315e0f-af28-4cbc-b05f-e5450914df72.docx",
             id: "c158b786-0757-4e0e-b28f-0ef83a519dc3",
             name: "DOKUMEN TESTING.docx",
             subject_id: "ebdbff93-2f95-403f-ad91-57b1ed6bbea9",
@@ -169,7 +172,8 @@ const mockActivities: Activity[] = [
         documents: [
           {
             document_type: "Acceptence Letter",
-            file_storage_id: "sim_mbkm/b9906f30-cd62-4291-9b3e-41ede64cadfe.docx",
+            file_storage_id:
+              "sim_mbkm/b9906f30-cd62-4291-9b3e-41ede64cadfe.docx",
             id: "4d70adaa-10f9-41da-a0a0-4ec861554025",
             name: "DOKUMEN TESTING.docx",
             subject_id: "f92b580f-d9df-4211-817f-f97c5b20887f",
@@ -194,7 +198,7 @@ const mockActivities: Activity[] = [
     program_provider: "ITS",
     approval_status: "APPROVED",
     submitted_by: "58beb504-1b33-430d-8563-eba349abd584",
-    submitted_user_role: "MAHASISWA", 
+    submitted_user_role: "MAHASISWA",
     program_type: "Magang",
     level: "Regional",
     group: "ITS",
@@ -279,7 +283,8 @@ const mockActivities: Activity[] = [
         documents: [
           {
             document_type: "Acceptence Letter",
-            file_storage_id: "sim_mbkm/7e315e0f-af28-4cbc-b05f-e5450914df72.docx",
+            file_storage_id:
+              "sim_mbkm/7e315e0f-af28-4cbc-b05f-e5450914df72.docx",
             id: "c158b786-0757-4e0e-b28f-0ef83a519dc3",
             name: "DOKUMEN TESTING.docx",
             subject_id: "ebdbff93-2f95-403f-ad91-57b1ed6bbea9",
@@ -377,7 +382,7 @@ const mockActivities: Activity[] = [
     group: "FMIPA",
     matching: null,
   },
-]
+];
 
 // Mock subjects data
 const mockSubjects: Subject[] = [
@@ -446,7 +451,7 @@ const mockSubjects: Subject[] = [
     tipe_mata_kuliah: "wajib",
     documents: [],
   },
-]
+];
 
 // Sample data based on the provided JSON
 const sampleSubjects: Subject[] = [
@@ -595,20 +600,20 @@ const sampleSubjects: Subject[] = [
       },
     ],
   },
-]
+];
 
 // Fetch activities
 export async function fetchActivities(): Promise<Activity[]> {
   // Simulate API call delay
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve(mockActivities)
-    }, 1000)
-  })
+      resolve(mockActivities);
+    }, 1000);
+  });
 }
 export async function fetchSubjects(): Promise<PaginatedResponse<Subject>> {
   // Simulate API call delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 
   return {
     message: "Get all subjects success",
@@ -624,7 +629,7 @@ export async function fetchSubjects(): Promise<PaginatedResponse<Subject>> {
     to: sampleSubjects.length,
     total: sampleSubjects.length,
     total_pages: 1,
-  }
+  };
 }
 
 export async function createSubject(subjectData: Subject): Promise<Subject> {
@@ -647,79 +652,80 @@ export async function createSubject(subjectData: Subject): Promise<Subject> {
               {
                 id: `doc_${Date.now()}`,
                 subject_id: `subject_${Date.now()}`,
-                file_storage_id: `sim_mbkm/${Date.now()}.${subjectData.documents[0].name.split(".").pop()}`,
-                name: subjectData.documents[0].name,
+                file_storage_id: `sim_mbkm/${Date.now()}-silabus-mata-kuliah`,
+                name: "Silabus Mata Kuliah",
                 document_type: "Acceptence Letter",
               },
             ]
           : [],
-      }
+      };
 
       // In a real app, you would add this to your database
       // mockSubjectsResponse.data.unshift(newSubject)
 
-      resolve(newSubject)
-    }, 1000)
-  })
+      resolve(newSubject);
+    }, 1000);
+  });
 }
 
-
-
-// 
+//
 // Create matching between activity and subjects
-export async function createMatching(matchingRequest: MatchingRequest): Promise<{success: boolean, message: string}> {
+export async function createMatching(
+  matchingRequest: MatchingRequest
+): Promise<{ success: boolean; message: string }> {
   // Simulate API call delay
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       try {
-        const { activity_id, subject_id } = matchingRequest
+        const { activity_id, subject_id } = matchingRequest;
 
         // Find the activity
-        const activityIndex = mockActivities.findIndex((a) => a.id === activity_id)
+        const activityIndex = mockActivities.findIndex(
+          (a) => a.id === activity_id
+        );
         if (activityIndex === -1) {
-          throw new Error("Activity not found")
+          throw new Error("Activity not found");
         }
 
         // Find the subjects
         const matchedSubjects = subject_id.map((id: string) => {
-          const subject = mockSubjects.find((s) => s.subject_id === id)
+          const subject = mockSubjects.find((s) => s.subject_id === id);
           if (!subject) {
-            throw new Error(`Subject with ID ${id} not found`)
+            throw new Error(`Subject with ID ${id} not found`);
           }
-          return subject
-        })
+          return subject;
+        });
 
         // Update the activity with the matched subjects
         mockActivities[activityIndex] = {
           ...mockActivities[activityIndex],
           matching: matchedSubjects,
-        }
+        };
 
-        resolve({ success: true, message: "Matching created successfully" })
+        resolve({ success: true, message: "Matching created successfully" });
       } catch (error) {
-        reject(error)
+        reject(error);
       }
-    }, 1200)
-  })
+    }, 1200);
+  });
 }
-
 
 // Delete a subject
 export async function deleteSubject(): Promise<{ success: boolean }> {
   // Simulate API call delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 
   // In a real app, you would make an API call to delete the subject
   // For now, we'll just return a success response
   return {
     success: true,
-  }
+  };
 }
 
 // Update a subject
 export async function updateSubject(subjectData: Subject): Promise<Subject> {
   // Simulate API call delay
-  await new Promise((resolve) => setTimeout(resolve, 1500))
+  await new Promise((resolve) => setTimeout(resolve, 1500));
 
   // In a real app, you would make an API call to update the subject
   // For now, we'll just return the updated subject
@@ -727,7 +733,7 @@ export async function updateSubject(subjectData: Subject): Promise<Subject> {
     id: subjectData.id,
     mata_kuliah: subjectData.mata_kuliah,
     kode: subjectData.kode,
-    subject_id: subjectData.subject_id, 
+    subject_id: subjectData.subject_id,
     semester: subjectData.semester,
     prodi_penyelenggara: subjectData.prodi_penyelenggara,
     sks: subjectData.sks,
@@ -735,20 +741,22 @@ export async function updateSubject(subjectData: Subject): Promise<Subject> {
     departemen: subjectData.departemen,
     tipe_mata_kuliah: subjectData.tipe_mata_kuliah,
     documents: subjectData.documents,
-  }
+  };
 
   // If a new file was uploaded, add it to the documents
   if (subjectData.documents) {
     const newDocument = {
       id: `doc_${Date.now()}`,
       subject_id: subjectData.id,
-      file_storage_id: `sim_mbkm/${Date.now()}.${subjectData.documents[0].name.split(".").pop()}`,
+      file_storage_id: `sim_mbkm/${Date.now()}.${subjectData.documents[0].name
+        .split(".")
+        .pop()}`,
       name: subjectData.documents[0].name,
       document_type: "Acceptence Letter",
-    }
+    };
 
-    updatedSubject.documents = [...updatedSubject.documents, newDocument]
+    updatedSubject.documents = [...updatedSubject.documents, newDocument];
   }
 
-  return updatedSubject
+  return updatedSubject;
 }

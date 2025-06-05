@@ -35,15 +35,59 @@ import {
 import { fileService } from "../services/file-service";
 import { notificationService } from "../services/notification-service";
 import { brokerService } from "../services/broker-service";
+import {
+  EvaluationCreateInput,
+  EvaluationDelete,
+  EvaluationFinalize,
+  EvaluationScoreUpdateInput,
+  EvaluationUpdateInput,
+  monevService,
+  PartnerRatingCreateInput,
+  PartnerRatingPublish,
+} from "../services/monev-service";
 
 // AUTH HOOKS
+
+export const useIdentityCheck = () => {
+  const mutation = useMutation({
+    mutationFn: async ({ email }: { email: string }) => {
+      return authService.identityCheck({ email });
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending,
+  };
+};
+
+export const useOAuthRedirect = () => {
+  const mutation = useMutation({
+    mutationFn: async ({ provider }: { provider: "google" | "sso" }) => {
+      const authServiceUrl = process.env.NEXT_PUBLIC_AUTH_SERVICE_URL;
+
+      const endpoints = {
+        google: `${authServiceUrl}/auth/google/redirect`,
+        sso: `${authServiceUrl}/auth/its/redirect`,
+      };
+
+      window.location.href = endpoints[provider];
+
+      return new Promise(() => {});
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending,
+  };
+};
 
 export const useLogin = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (credentials: LoginCredentials) =>
-      authService.login(credentials),
+    mutationFn: (credentials: LoginCredentials) => authService.login(credentials),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
     },
@@ -71,8 +115,7 @@ export const useLogout = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (credentials: LogoutCredentials) =>
-      authService.logout(credentials),
+    mutationFn: (credentials: LogoutCredentials) => authService.logout(credentials),
     onSuccess: () => {
       queryClient.clear();
     },
@@ -113,13 +156,8 @@ export const useUpdateUser = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: ({
-      userId,
-      userData,
-    }: {
-      userId: string;
-      userData: UserUpdateInput;
-    }) => userService.updateUser(userId, userData),
+    mutationFn: ({ userId, userData }: { userId: string; userData: UserUpdateInput }) =>
+      userService.updateUser(userId, userData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
     },
@@ -168,11 +206,7 @@ export const useAllGroups = () => {
   });
 };
 
-export const useActivities = (
-  page = 1,
-  limit = 10,
-  filters: ActivityFilter
-) => {
+export const useActivities = (page = 1, limit = 10, filters: ActivityFilter) => {
   return useQuery<ActivityAllResponse, Error>({
     queryKey: ["activities", page, limit, filters],
     queryFn: () => activityService.getActivities(page, limit, filters),
@@ -180,11 +214,7 @@ export const useActivities = (
   });
 };
 
-export const useUnmatchedActivities = (
-  page = 1,
-  limit = 10,
-  filters: ActivityFilter
-) => {
+export const useUnmatchedActivities = (page = 1, limit = 10, filters: ActivityFilter) => {
   return useQuery<ActivityAllResponse, Error>({
     queryKey: ["activities", "unmatched", page, limit, filters],
     queryFn: () => activityService.getUnmatchedActivities(page, limit, filters),
@@ -192,11 +222,7 @@ export const useUnmatchedActivities = (
   });
 };
 
-export const useMatchedActivities = (
-  page = 1,
-  limit = 10,
-  filters: ActivityFilter
-) => {
+export const useMatchedActivities = (page = 1, limit = 10, filters: ActivityFilter) => {
   return useQuery<ActivityAllResponse, Error>({
     queryKey: ["activities", "matched", page, limit, filters],
     queryFn: () => activityService.getMatchedActivities(page, limit, filters),
@@ -204,10 +230,7 @@ export const useMatchedActivities = (
   });
 };
 
-export const useUpdateActivityById = (
-  id: string,
-  activityData: ActivityUpdateInput
-) => {
+export const useUpdateActivityById = (id: string, activityData: ActivityUpdateInput) => {
   return useQuery({
     queryKey: ["activities", id],
     queryFn: () => activityService.updateActivityById(id, activityData),
@@ -226,8 +249,7 @@ export const useCreateActivity = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (activityData: ActivityCreateInput) =>
-      activityService.createActivity(activityData),
+    mutationFn: (activityData: ActivityCreateInput) => activityService.createActivity(activityData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activities"] });
     },
@@ -243,13 +265,8 @@ export const useUpdateActivity = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: ({
-      id,
-      activityData,
-    }: {
-      id: string;
-      activityData: Partial<ActivityCreateInput>;
-    }) => activityService.updateActivity(id, activityData),
+    mutationFn: ({ id, activityData }: { id: string; activityData: Partial<ActivityCreateInput> }) =>
+      activityService.updateActivity(id, activityData),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["activities"] });
       queryClient.invalidateQueries({ queryKey: ["activity", variables.id] });
@@ -297,8 +314,7 @@ export const useApproveStudentRegistrations = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (approvalInput: ApprovalInput) =>
-      registrationService.approveStudentRegistrations(approvalInput),
+    mutationFn: (approvalInput: ApprovalInput) => registrationService.approveStudentRegistrations(approvalInput),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userRegistrations"] });
     },
@@ -324,8 +340,7 @@ export const useRegistrationAdvisor = ({
 }) => {
   return useQuery({
     queryKey: ["userRegistrations", page, limit, filter],
-    queryFn: () =>
-      registrationService.getRegistrationAdvisor({ page, limit, filter }),
+    queryFn: () => registrationService.getRegistrationAdvisor({ page, limit, filter }),
   });
 };
 
@@ -340,8 +355,7 @@ export const useRegistrationLOMBKM = ({
 }) => {
   return useQuery({
     queryKey: ["userRegistrations", page, limit, filter],
-    queryFn: () =>
-      registrationService.getRegistrationLOMBKM({ page, limit, filter }),
+    queryFn: () => registrationService.getRegistrationLOMBKM({ page, limit, filter }),
   });
 };
 
@@ -356,8 +370,7 @@ export const useRegisterForProgram = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (registrationData: RegisterInput) =>
-      registrationService.registerForProgram(registrationData),
+    mutationFn: (registrationData: RegisterInput) => registrationService.registerForProgram(registrationData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userRegistrations"] });
     },
@@ -405,13 +418,7 @@ export const useUpdateRegistrationStudentById = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: ({
-      id,
-      registrationInput,
-    }: {
-      id: string;
-      registrationInput: RegistrationUpdateRequest;
-    }) =>
+    mutationFn: ({ id, registrationInput }: { id: string; registrationInput: RegistrationUpdateRequest }) =>
       registrationService.updateRegistrationStudentById(id, registrationInput),
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -457,8 +464,7 @@ export const useReportSchedulesByAdvisor = ({
 }) => {
   return useQuery({
     queryKey: ["reportSchedulesByAdvisor", page, limit, input],
-    queryFn: () =>
-      monitoringService.getReportSchedulesByAdvisor({ page, limit, input }),
+    queryFn: () => monitoringService.getReportSchedulesByAdvisor({ page, limit, input }),
   });
 };
 
@@ -506,8 +512,7 @@ export const useReportsApproval = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (reportApprovalInput: ReportApprovalInput) =>
-      monitoringService.reportsApproval(reportApprovalInput),
+    mutationFn: (reportApprovalInput: ReportApprovalInput) => monitoringService.reportsApproval(reportApprovalInput),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reportSchedulesByAdvisor"] });
     },
@@ -526,8 +531,7 @@ export const useSubmitTranscript = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (transcriptInput: TranscriptInput) =>
-      monitoringService.submitTranscript(transcriptInput),
+    mutationFn: (transcriptInput: TranscriptInput) => monitoringService.submitTranscript(transcriptInput),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["registrationTranscriptsByStudent"],
@@ -549,8 +553,7 @@ export const useSubmitSyllabus = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (syllabusInput: SyllabusInput) =>
-      monitoringService.submitSyllabus(syllabusInput),
+    mutationFn: (syllabusInput: SyllabusInput) => monitoringService.submitSyllabus(syllabusInput),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["registrationSyllabusesByStudent"],
@@ -620,8 +623,7 @@ export const useSubmitReport = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (reportInput: ReportInput) =>
-      monitoringService.submitReport(reportInput),
+    mutationFn: (reportInput: ReportInput) => monitoringService.submitReport(reportInput),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reportSchedulesByStudent"] });
     },
@@ -661,8 +663,7 @@ export const useSubmitLogbook = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (logbookData: LogbookInput) =>
-      monitoringService.submitLogbook(logbookData),
+    mutationFn: (logbookData: LogbookInput) => monitoringService.submitLogbook(logbookData),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["logbooks", variables.programId],
@@ -680,13 +681,8 @@ export const useUpdateLogbook = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: ({
-      id,
-      logbookData,
-    }: {
-      id: string;
-      logbookData: Partial<LogbookInput>;
-    }) => monitoringService.updateLogbook(id, logbookData),
+    mutationFn: ({ id, logbookData }: { id: string; logbookData: Partial<LogbookInput> }) =>
+      monitoringService.updateLogbook(id, logbookData),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["logbooks"] });
       queryClient.invalidateQueries({ queryKey: ["logbook", variables.id] });
@@ -712,8 +708,7 @@ export const useSubmitEquivalenceRequest = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (equivalentInput: EquivalentInput) =>
-      matchingService.submitEquivalents(equivalentInput),
+    mutationFn: (equivalentInput: EquivalentInput) => matchingService.submitEquivalents(equivalentInput),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["registrationStudentMatching"],
@@ -734,8 +729,7 @@ export const useSubmitSubject = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (subjectInput: SubjectInput) =>
-      matchingService.submitSubjects(subjectInput),
+    mutationFn: (subjectInput: SubjectInput) => matchingService.submitSubjects(subjectInput),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subjects", "activities"] });
     },
@@ -754,13 +748,8 @@ export const useUpdateSubject = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: ({
-      id,
-      subjectInput,
-    }: {
-      id: string;
-      subjectInput: SubjectInput;
-    }) => matchingService.updateSubjects(id, subjectInput),
+    mutationFn: ({ id, subjectInput }: { id: string; subjectInput: SubjectInput }) =>
+      matchingService.updateSubjects(id, subjectInput),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subjects", "activities"] });
     },
@@ -848,8 +837,7 @@ export const useSubjectsGeofisika = ({
 }) => {
   return useQuery({
     queryKey: ["subjects", "activities", page, limit, subjectFilter],
-    queryFn: () =>
-      matchingService.getSubjectsGeofisika({ page, limit, subjectFilter }),
+    queryFn: () => matchingService.getSubjectsGeofisika({ page, limit, subjectFilter }),
   });
 };
 
@@ -864,8 +852,7 @@ export const useSubjectsNonGeofisika = ({
 }) => {
   return useQuery({
     queryKey: ["subjects", "activities", page, limit, subjectFilter],
-    queryFn: () =>
-      matchingService.getSubjectsNonGeofisika({ page, limit, subjectFilter }),
+    queryFn: () => matchingService.getSubjectsNonGeofisika({ page, limit, subjectFilter }),
   });
 };
 
@@ -902,35 +889,17 @@ export const useGetNotificationByID = (id: string) => {
   });
 };
 
-export const useGetNotificationBySenderEmail = (
-  senderEmail: string,
-  page: number,
-  limit: number
-) => {
+export const useGetNotificationBySenderEmail = (senderEmail: string, page: number, limit: number) => {
   return useQuery({
     queryKey: ["notifications", "sender", senderEmail, page, limit],
-    queryFn: () =>
-      notificationService.getNotificationBySenderEmail(
-        senderEmail,
-        page,
-        limit
-      ),
+    queryFn: () => notificationService.getNotificationBySenderEmail(senderEmail, page, limit),
   });
 };
 
-export const useGetNotificationByReceiverEmail = (
-  receiverEmail: string,
-  page: number,
-  limit: number
-) => {
+export const useGetNotificationByReceiverEmail = (receiverEmail: string, page: number, limit: number) => {
   return useQuery({
     queryKey: ["notifications", "receiver", receiverEmail, page, limit],
-    queryFn: () =>
-      notificationService.getNotificationByReceiverEmail(
-        receiverEmail,
-        page,
-        limit
-      ),
+    queryFn: () => notificationService.getNotificationByReceiverEmail(receiverEmail, page, limit),
   });
 };
 
@@ -939,5 +908,212 @@ export const useGetStatisticDashboardDosenPembimbing = () => {
   return useQuery({
     queryKey: ["statisticDashboardDosenPembimbing"],
     queryFn: () => brokerService.getStatisticDashboardDosenPembimbing(),
+  });
+};
+
+// MONEV HOOKS
+
+export const useSubmitEvaluation = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (evaluationInput: EvaluationCreateInput) => monevService.submitEvaluation(evaluationInput),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["evaluations"] });
+    },
+    onError: (error) => {
+      console.error("Error submitting evaluation:", error);
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending,
+  };
+};
+
+export const useUpdateEvaluation = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (evaluationInput: EvaluationUpdateInput) => monevService.updateEvaluation(evaluationInput),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["evaluations"] });
+      queryClient.invalidateQueries({ queryKey: ["evaluation", variables.id] });
+    },
+    onError: (error) => {
+      console.error("Error updating evaluation:", error);
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending,
+  };
+};
+
+export const useEvaluationById = (id?: string) => {
+  return useQuery({
+    queryKey: ["evaluation", id],
+    queryFn: () => monevService.getEvaluationById(id!),
+    enabled: !!id,
+  });
+};
+
+export const useEvaluations = (page = 1, perPage = 10) => {
+  return useQuery({
+    queryKey: ["evaluations", page, perPage],
+    queryFn: () => monevService.getEvaluations(page, perPage),
+    staleTime: 5000, // 5 seconds
+  });
+};
+
+export const useFinalizeEvaluation = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (evaluationFinalize: EvaluationFinalize) => monevService.finalizeEvaluation(evaluationFinalize),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["evaluations"] });
+      queryClient.invalidateQueries({ queryKey: ["evaluation", variables.id] });
+    },
+    onError: (error) => {
+      console.error("Error finalizing evaluation:", error);
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending,
+  };
+};
+
+export const useDeleteEvaluation = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (evaluationDelete: EvaluationDelete) => monevService.deleteEvaluation(evaluationDelete),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["evaluations"] });
+    },
+    onError: (error) => {
+      console.error("Error deleting evaluation:", error);
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending,
+  };
+};
+
+export const useUpdateEvaluationScore = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (scoreInput: EvaluationScoreUpdateInput) => monevService.updateEvaluationScore(scoreInput),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["evaluations"] });
+      queryClient.invalidateQueries({
+        queryKey: ["evaluation", variables.evaluation_id],
+      });
+    },
+    onError: (error) => {
+      console.error("Error updating evaluation score:", error);
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending,
+  };
+};
+
+export const useSubmitPartnerRating = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (ratingInput: PartnerRatingCreateInput) => monevService.submitPartnerRating(ratingInput),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["partnerRatings"] });
+    },
+    onError: (error) => {
+      console.error("Error submitting partner rating:", error);
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending,
+  };
+};
+
+export const usePartnerRatingById = (id?: string) => {
+  return useQuery({
+    queryKey: ["partnerRating", id],
+    queryFn: () => monevService.getPartnerRatingById(id!),
+    enabled: !!id,
+  });
+};
+
+export const usePublishPartnerRating = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (ratingPublish: PartnerRatingPublish) => monevService.publishPartnerRating(ratingPublish),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["partnerRatings"] });
+      queryClient.invalidateQueries({
+        queryKey: ["partnerRating", variables.id],
+      });
+    },
+    onError: (error) => {
+      console.error("Error publishing partner rating:", error);
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending,
+  };
+};
+
+export const userPartnerRatings = (page = 1, perPage = 10) => {
+  return useQuery({
+    queryKey: ["partnerRatings", page, perPage],
+    queryFn: () => monevService.getPartnerRatings(page, perPage),
+    staleTime: 5000, // 5 seconds
+  });
+};
+
+export const useUsersByRole = (role: "mahasiswa" | "dosen_pemonev" | "dosen_pembimbing") => {
+  return useQuery({
+    queryKey: ["users", "role", role],
+    queryFn: () => userService.getUsersByRole(role),
+    staleTime: 5 * 60 * 1000, // 5 minutes - user data doesn't change frequently
+  });
+};
+
+export const useMahasiswaUsers = () => {
+  return useQuery({
+    queryKey: ["users", "mahasiswa"],
+    queryFn: () => userService.getUsersByRole("mahasiswa"),
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useDosenPemonevUsers = () => {
+  return useQuery({
+    queryKey: ["users", "dosen_pemonev"],
+    queryFn: () => userService.getUsersByRole("dosen_pemonev"),
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useDosenPembimbingUsers = () => {
+  return useQuery({
+    queryKey: ["users", "dosen_pembimbing"],
+    queryFn: () => userService.getUsersByRole("dosen_pembimbing"),
+    staleTime: 5 * 60 * 1000,
   });
 };

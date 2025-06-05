@@ -4,29 +4,24 @@ import { createLaravelSecurity } from "../utils/security";
 
 // Konfigurasi untuk Security
 // const HASH_METHOD = 'sha256';
-const APP_KEY = process.env.NEXT_PUBLIC_APP_KEY || 'secret';
+const APP_KEY = process.env.NEXT_PUBLIC_APP_KEY || "secret";
 // const CIPHER_MODE = 'aes';
 
 // Base URL for each service
 const SERVICE_URLS = {
-  ACTIVITY:
-    process.env.NEXT_PUBLIC_ACTIVITY_SERVICE_URL || "http://localhost:3001",
+  ACTIVITY: process.env.NEXT_PUBLIC_ACTIVITY_SERVICE_URL || "http://localhost:3001",
   USER: process.env.NEXT_PUBLIC_USER_SERVICE_URL || "http://localhost:3002",
   AUTH: process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || "http://localhost:3003",
-  REGISTRATION:
-    process.env.NEXT_PUBLIC_REGISTRATION_SERVICE_URL || "http://localhost:3004",
-  MATCHING:
-    process.env.NEXT_PUBLIC_MATCHING_SERVICE_URL || "http://localhost:3005",
-  MONITORING:
-    process.env.NEXT_PUBLIC_MONITORING_SERVICE_URL || "http://localhost:3006",
-  FILE:
-    process.env.NEXT_PUBLIC_FILE_SERVICE_URL || "http://localhost:3007",
-  NOTIFICATION:
-    process.env.NEXT_PUBLIC_NOTIFICATION_SERVICE_URL || "http://localhost:3008",
-  BROKER:
-    process.env.NEXT_PUBLIC_BROKER_SERVICE_URL || "http://localhost:3009",
+  REGISTRATION: process.env.NEXT_PUBLIC_REGISTRATION_SERVICE_URL || "http://localhost:3004",
+  MATCHING: process.env.NEXT_PUBLIC_MATCHING_SERVICE_URL || "http://localhost:3005",
+  MONITORING: process.env.NEXT_PUBLIC_MONITORING_SERVICE_URL || "http://localhost:3006",
+  FILE: process.env.NEXT_PUBLIC_FILE_SERVICE_URL || "http://localhost:3007",
+  NOTIFICATION: process.env.NEXT_PUBLIC_NOTIFICATION_SERVICE_URL || "http://localhost:3008",
+  BROKER: process.env.NEXT_PUBLIC_BROKER_SERVICE_URL || "http://localhost:3009",
+  MONEV: process.env.NEXT_PUBLIC_MONEV_SERVICE_URL || "http://localhost:3010",
+  CALENDAR: process.env.NEXT_PUBLIC_CALENDAR_SERVICE_URL || "http://localhost:3011",
+  REPORT: process.env.NEXT_PUBLIC_REPORT_SERVICE_URL || "http://localhost:3012",
 };
-
 
 export function getAccessKey(): string {
   // security
@@ -36,11 +31,8 @@ export function getAccessKey(): string {
   return accessKey;
 }
 
-
-
 // Create axios instances for each service
 const createAxiosInstance = (baseURL: string): AxiosInstance => {
-  
   const instance = axios.create({
     baseURL,
     timeout: 15000,
@@ -57,17 +49,17 @@ const createAxiosInstance = (baseURL: string): AxiosInstance => {
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
-      
+
       // Tambahkan security headers
       try {
         // Generate Access-Key header dengan timestamp
         const accessKey = getAccessKey();
-        
-        config.headers['Access-Key'] = accessKey;
+
+        config.headers["Access-Key"] = accessKey;
       } catch (error) {
-        console.error('Error adding security headers:', error);
+        console.error("Error adding security headers:", error);
       }
-      
+
       return config;
     },
     (error) => Promise.reject(error)
@@ -101,4 +93,7 @@ export const apiServices = {
   file: createAxiosInstance(SERVICE_URLS.FILE),
   notification: createAxiosInstance(SERVICE_URLS.NOTIFICATION),
   broker: createAxiosInstance(SERVICE_URLS.BROKER),
+  monev: createAxiosInstance(SERVICE_URLS.MONEV),
+  calendar: createAxiosInstance(SERVICE_URLS.CALENDAR),
+  report: createAxiosInstance(SERVICE_URLS.REPORT),
 };
