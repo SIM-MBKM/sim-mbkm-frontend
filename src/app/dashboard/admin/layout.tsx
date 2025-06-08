@@ -5,14 +5,10 @@ import "@/app/globals.css";
 
 export const metadata = {
   title: "Dashboard Admin",
-  description: "Dashboard Admin MBKM ITS",
+  description: "Dashboard Admin SIM-MBKM ITS",
 };
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="light">
       <DashboardProvider>{children}</DashboardProvider>

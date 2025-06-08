@@ -31,6 +31,12 @@ import {
   SubjectFilter,
   MatchingInput,
   SubjectInput,
+  PaginatedResponse,
+  User,
+  UserFilter,
+  Role,
+  BaseResponse,
+  UserAlt,
 } from "../services";
 import { fileService } from "../services/file-service";
 import { notificationService } from "../services/notification-service";
@@ -45,6 +51,8 @@ import {
   PartnerRatingCreateInput,
   PartnerRatingPublish,
 } from "../services/monev-service";
+import { string } from "zod";
+import { UserRole } from "../services";
 
 // AUTH HOOKS
 
@@ -141,6 +149,7 @@ export const useUserRole = () => {
   return useQuery({
     queryKey: ["userRole"],
     queryFn: () => userService.getUserRole(),
+    staleTime: 5 * 60 * 1000, // 5min
     retry: 1,
   });
 };
@@ -158,8 +167,13 @@ export const useUpdateUser = () => {
   const mutation = useMutation({
     mutationFn: ({ userId, userData }: { userId: string; userData: UserUpdateInput }) =>
       userService.updateUser(userId, userData),
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.setQueryData(["user", variables.userId], data);
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    },
+    onError: (error) => {
+      console.error("Failed to update");
     },
   });
 
@@ -167,6 +181,52 @@ export const useUpdateUser = () => {
     ...mutation,
     isLoading: mutation.isPending,
   };
+};
+
+export const useUsers = (page = 1, perPage = 10, filters: UserFilter = {}) => {
+  return useQuery<PaginatedResponse<UserAlt>, Error>({
+    queryKey: ["users", page, perPage, filters],
+    queryFn: () => userService.getAllUsers(page, perPage, filters),
+    staleTime: 2 * 60 * 1000, // 2min
+  });
+};
+
+export const useUser = (userId: string) => {
+  return useQuery({
+    queryKey: ["user", userId],
+    queryFn: () => userService.getUserById(userId),
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useRoles = () => {
+  return useQuery<BaseResponse<Role[]>, Error>({
+    queryKey: ["roles"],
+    queryFn: () => userService.getAllRoles(),
+    staleTime: 10 * 60 * 1000, // Rarely changes -- for future dev
+  });
+};
+
+export const useUpdateUserRole = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: string }) =>
+      userService.updateUserRoleByUserId(userId, role),
+    onSuccess: (data, variables) => {
+      // Invalidate and refetch user-related queries
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      queryClient.invalidateQueries({ queryKey: ["userRole"] });
+    },
+    onError: (error) => {
+      console.error("Error updating user role:", error);
+    },
+  });
+
+  // Return the mutation object so we can access its properties
+  return mutation;
 };
 
 // ACTIVITY HOOKS

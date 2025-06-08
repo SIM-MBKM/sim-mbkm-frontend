@@ -1,7 +1,14 @@
 "use client";
 
-import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
+import { UserManagementDashboard } from "@/components/dashboard/admin/users/user-management-dashboard";
+import { UserAPIProvider } from "@/lib/api/providers/user-provider";
 
 export default function AdminDashboard() {
-  return <div>page</div>;
+  return (
+    <div className="mb-6 mt-20">
+      <UserAPIProvider>
+        <UserManagementDashboard />
+      </UserAPIProvider>
+    </div>
+  );
 }

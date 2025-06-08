@@ -25,6 +25,7 @@ import {
   Briefcase,
   FileEdit,
   Monitor,
+  DatabaseIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -82,15 +83,6 @@ const MENU_ITEMS: Record<
     {
       section: "Dokumentasi dan Monitoring",
       items: [
-        // {
-        //   label: "Monitoring Status",
-        //   icon: <ClipboardList className="h-5 w-5" />,
-        //   href: "/dashboard/mahasiswa/monitoring",
-        //   children: [
-        //     { label: "Status Dokumen", href: "/dashboard/mahasiswa/monitoring/documents" },
-        //     { label: "Status Validasi", href: "/dashboard/mahasiswa/monitoring/validation" },
-        //   ]
-        // },
         {
           label: "Input Logbook",
           icon: <FileText className="h-5 w-5" />,
@@ -295,9 +287,9 @@ const MENU_ITEMS: Record<
           href: "/dashboard/admin/users",
         },
         {
-          label: "Monev",
-          icon: <Monitor className="h-5 w-5" />,
-          href: "/dashboard/admin/monev",
+          label: "Kelola Report",
+          icon: <DatabaseIcon className="h-5 w-5" />,
+          href: "/dashboard/admin/reports",
         },
       ],
     },
@@ -324,15 +316,7 @@ interface SidebarItemProps {
   onClose?: () => void;
 }
 
-function SidebarItem({
-  icon,
-  label,
-  active,
-  href = "#",
-  badge,
-  nestedItems,
-  onClose,
-}: SidebarItemProps) {
+function SidebarItem({ icon, label, active, href = "#", badge, nestedItems, onClose }: SidebarItemProps) {
   const [expanded, setExpanded] = useState(false);
   const hasChildren = nestedItems && nestedItems.length > 0;
 
@@ -341,21 +325,14 @@ function SidebarItem({
       <motion.div
         className={cn(
           "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-          active
-            ? "bg-[#003478]/10 text-[#003478] font-medium"
-            : "text-gray-700 hover:bg-gray-100 hover:text-[#003478]"
+          active ? "bg-[#003478]/10 text-[#003478] font-medium" : "text-gray-700 hover:bg-gray-100 hover:text-[#003478]"
         )}
         whileHover={{ x: 4 }}
         whileTap={{ scale: 0.98 }}
       >
         {hasChildren ? (
-          <div
-            className="flex flex-1 items-center gap-3 cursor-pointer"
-            onClick={() => setExpanded(!expanded)}
-          >
-            <span className="flex h-6 w-6 items-center justify-center">
-              {icon}
-            </span>
+          <div className="flex flex-1 items-center gap-3 cursor-pointer" onClick={() => setExpanded(!expanded)}>
+            <span className="flex h-6 w-6 items-center justify-center">{icon}</span>
             <span className="flex-1">{label}</span>
             {badge && (
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#003478] text-[10px] font-medium text-white">
@@ -363,22 +340,12 @@ function SidebarItem({
               </span>
             )}
             <span className="flex h-4 w-4 items-center justify-center">
-              {expanded ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
+              {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </span>
           </div>
         ) : (
-          <Link
-            href={href}
-            className="flex flex-1 items-center gap-3"
-            onClick={onClose}
-          >
-            <span className="flex h-6 w-6 items-center justify-center">
-              {icon}
-            </span>
+          <Link href={href} className="flex flex-1 items-center gap-3" onClick={onClose}>
+            <span className="flex h-6 w-6 items-center justify-center">{icon}</span>
             <span className="flex-1">{label}</span>
             {badge && (
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#003478] text-[10px] font-medium text-white">
@@ -415,11 +382,7 @@ function SidebarItem({
                       className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-[#003478]"
                       onClick={onClose}
                     >
-                      {child.icon && (
-                        <span className="flex h-5 w-5 items-center justify-center">
-                          {child.icon}
-                        </span>
-                      )}
+                      {child.icon && <span className="flex h-5 w-5 items-center justify-center">{child.icon}</span>}
                       <span>{child.label}</span>
                     </Link>
                   </motion.div>
@@ -433,31 +396,65 @@ function SidebarItem({
   );
 }
 
+// Skeleton loading component for sidebar sections
+function SidebarSkeleton() {
+  // Fixed array sizes to avoid hydration mismatch
+  const skeletonSections = [3, 4, 2, 3]; // Predefined number of items per section
+
+  return (
+    <div className="space-y-6">
+      {/* Generate 4 skeleton sections with fixed item counts */}
+      {skeletonSections.map((itemCount, sectionIndex) => (
+        <div key={sectionIndex} className="mb-6">
+          {/* Section title skeleton */}
+          <div className="h-3 bg-gray-200 rounded mb-3 px-3 w-20 animate-pulse"></div>
+
+          {/* Section items skeleton */}
+          <div className="space-y-1">
+            {[...Array(itemCount)].map((_, itemIndex) => (
+              <div key={itemIndex} className="flex items-center gap-3 rounded-md px-3 py-2">
+                {/* Icon skeleton */}
+                <div className="h-6 w-6 bg-gray-200 rounded animate-pulse"></div>
+                {/* Label skeleton */}
+                <div
+                  className={`h-4 bg-gray-200 rounded animate-pulse ${
+                    itemIndex % 3 === 0 ? "w-24" : itemIndex % 3 === 1 ? "w-32" : "w-28"
+                  }`}
+                ></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {/* Help box skeleton */}
+      <div className="mt-auto pt-4">
+        <div className="rounded-md bg-gray-100 p-4 animate-pulse">
+          <div className="h-4 bg-gray-200 rounded mb-2 w-24"></div>
+          <div className="h-3 bg-gray-200 rounded mb-3 w-full"></div>
+          <div className="h-3 bg-gray-200 rounded w-20"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Sidebar() {
   const { sidebarOpen, toggleSidebar, isMobile } = useDashboard();
   const { role, loading } = useRoleManager();
   const pathname = usePathname();
 
-  // Default menu items if role is not loaded yet
-  const menuItems =
-    role && MENU_ITEMS[role as UserRole]
-      ? MENU_ITEMS[role as UserRole]
-      : MENU_ITEMS.MAHASISWA; // Fallback to MAHASISWA if role not loaded
-
   const isActiveLink = (href: string) => {
-    // return pathname === href || pathname.startsWith(`${href}/`)
     return pathname === href;
   };
+
+  // Only get menu items if role is loaded and available
+  const menuItems = role && MENU_ITEMS[role as UserRole] ? MENU_ITEMS[role as UserRole] : null;
 
   return (
     <div className={cn("bg-white", !isMobile && "mr-10")}>
       {/* Sidebar - Mobile Overlay */}
-      {isMobile && sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-20"
-          onClick={toggleSidebar}
-        />
-      )}
+      {isMobile && sidebarOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-20" onClick={toggleSidebar} />}
 
       {/* Sidebar */}
       <AnimatePresence>
@@ -472,37 +469,25 @@ export function Sidebar() {
               stiffness: 400,
               damping: 40,
             }}
-            className={cn(
-              "fixed top-16 left-0 bottom-0 z-30 bg-white",
-              isMobile ? "w-full md:w-80" : "w-64"
-            )}
+            className={cn("fixed top-16 left-0 bottom-0 z-30 bg-white", isMobile ? "w-full md:w-80" : "w-64")}
           >
             <div className="flex justify-between items-center p-4">
               <h2 className="text-[#003478] font-bold">Menu</h2>
               {isMobile && (
-                <Button
-                  variant="default"
-                  size="icon"
-                  onClick={toggleSidebar}
-                  className="hover:bg-gray-100 border-none"
-                >
+                <Button variant="default" size="icon" onClick={toggleSidebar} className="hover:bg-gray-100 border-none">
                   <X className="h-4 w-4" />
                 </Button>
               )}
             </div>
 
             <div className="p-4 overflow-y-auto h-[calc(100%-60px)]">
-              {loading ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#003478]"></div>
-                </div>
+              {loading || !menuItems ? (
+                <SidebarSkeleton />
               ) : (
                 <>
                   {menuItems.map((section, index) => (
                     <div key={index} className="mb-6">
-                      <h3 className="text-xs font-medium text-gray-500 mb-3 px-3 uppercase">
-                        {section.section}
-                      </h3>
+                      <h3 className="text-xs font-medium text-gray-500 mb-3 px-3 uppercase">{section.section}</h3>
                       <div className="space-y-1">
                         {section.items.map((item, itemIndex) => (
                           <SidebarItem
@@ -523,16 +508,9 @@ export function Sidebar() {
                   {/* Help Box */}
                   <div className="mt-auto pt-4">
                     <div className="rounded-md bg-[#003478]/10 p-4">
-                      <h3 className="font-medium text-[#003478] mb-1">
-                        Butuh bantuan?
-                      </h3>
-                      <p className="text-xs text-gray-500 mb-3">
-                        Hubungi tim support kami untuk bantuan
-                      </p>
-                      <a
-                        href="#"
-                        className="text-xs font-medium text-[#003478] hover:underline"
-                      >
+                      <h3 className="font-medium text-[#003478] mb-1">Butuh bantuan?</h3>
+                      <p className="text-xs text-gray-500 mb-3">Hubungi tim support kami untuk bantuan</p>
+                      <a href="#" className="text-xs font-medium text-[#003478] hover:underline">
                         Kontak Support →
                       </a>
                     </div>
@@ -561,11 +539,7 @@ export function Sidebar() {
             onClick={toggleSidebar}
             className=" hover:bg-gray-100 bg-gray-200  shadow-xl"
           >
-            {sidebarOpen ? (
-              <ChevronLeft className="h-5 w-5" />
-            ) : (
-              <ChevronRight className="h-5 w-5" />
-            )}
+            {sidebarOpen ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
           </Button>
         </motion.div>
       )}

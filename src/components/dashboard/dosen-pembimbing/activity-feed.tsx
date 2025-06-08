@@ -1,87 +1,83 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Bell, Info, Calendar, Building, ChevronDown, ChevronUp, ListCheck, Award } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { useGetNotificationByReceiverEmail } from "@/lib/api/hooks/use-query-hooks"
-import { useAppSelector } from "@/lib/redux/hooks"
-import { RootState } from "@/lib/redux/store"
-import Link from "next/link"
-import { Notification } from "@/lib/api/services/notification-service"
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Bell, Info, Calendar, Building, ChevronDown, ChevronUp, ListCheck, Award } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useGetNotificationByReceiverEmail } from "@/lib/api/hooks/use-query-hooks";
+import { useAppSelector } from "@/lib/redux/hooks";
+import { RootState } from "@/lib/redux/store";
+import Link from "next/link";
+import { Notification } from "@/lib/api/services/notification-service";
 
 interface Activity {
-  id: string
-  date: string
-  title: string
-  description: string
-  link?: string
-  icon: "info" | "calendar" | "company" | "notification" | "task" | "achievement"
-  sender_name?: string
-  type?: string
+  id: string;
+  date: string;
+  title: string;
+  description: string;
+  link?: string;
+  icon: "info" | "calendar" | "company" | "notification" | "task" | "achievement";
+  sender_name?: string;
+  type?: string;
 }
 
 interface ActivityFeedProps {
-  activities?: Activity[]
+  activities?: Activity[];
 }
 
 export function ActivityFeed({ activities: propActivities }: ActivityFeedProps) {
-  const [expanded, setExpanded] = useState(true)
-  const [visibleActivities, setVisibleActivities] = useState(5)
-  
-  const user = useAppSelector((state: RootState) => state.userData.user)
-  const { data: notificationsData, isLoading } = useGetNotificationByReceiverEmail(
-    user?.email || "", 
-    1, 
-    3
-  )
+  const [expanded, setExpanded] = useState(true);
+  const [visibleActivities, setVisibleActivities] = useState(5);
+
+  const user = useAppSelector((state: RootState) => state.userData.user);
+  const { data: notificationsData, isLoading } = useGetNotificationByReceiverEmail(user?.email || "", 1, 3);
 
   const getIcon = (iconType: string) => {
     switch (iconType) {
       case "info":
-        return <Info className="h-5 w-5 text-blue-500" />
+        return <Info className="h-5 w-5 text-blue-500" />;
       case "calendar":
-        return <Calendar className="h-5 w-5 text-amber-500" />
+        return <Calendar className="h-5 w-5 text-amber-500" />;
       case "company":
-        return <Building className="h-5 w-5 text-green-500" />
+        return <Building className="h-5 w-5 text-green-500" />;
       case "task":
-        return <ListCheck className="h-5 w-5 text-amber-500" />
+        return <ListCheck className="h-5 w-5 text-amber-500" />;
       case "achievement":
-        return <Award className="h-5 w-5 text-purple-500" />
+        return <Award className="h-5 w-5 text-purple-500" />;
       case "notification":
       default:
-        return <Bell className="h-5 w-5 text-gray-500" />
+        return <Bell className="h-5 w-5 text-gray-500" />;
     }
-  }
+  };
 
   // Map notifications to activities format
   const mapNotificationToActivity = (notification: Notification): Activity => {
     // Format date to more readable format
-    const date = new Date(notification.created_at)
-    const formattedDate = date.toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    })
+    const date = new Date(notification.created_at);
+    const formattedDate = date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
 
     // Determine icon based on notification type
-    let iconType: "info" | "calendar" | "company" | "notification" | "task" | "achievement" = "notification"
-    
+    let iconType: "info" | "calendar" | "company" | "notification" | "task" | "achievement" = "notification";
+
     if (notification.type) {
       switch (notification.type.toLowerCase()) {
         case "register":
-          iconType = "info"
-          break
+          iconType = "info";
+          break;
         case "approval registration":
         case "approval report":
-          iconType = "task"
-          break
+          iconType = "task";
+          break;
         case "new activity":
-          iconType = "company"
-          break
+          iconType = "company";
+          break;
         default:
-          iconType = "notification"
+          iconType = "notification";
       }
     }
 
@@ -93,18 +89,18 @@ export function ActivityFeed({ activities: propActivities }: ActivityFeedProps) 
       link: "/dashboard/dosen-pembimbing/notifications",
       icon: iconType,
       sender_name: notification.sender_name,
-      type: notification.type
-    }
-  }
+      type: notification.type,
+    };
+  };
 
   // Use notifications data if available, otherwise use prop activities
-  const activities = notificationsData?.data 
+  const activities = notificationsData?.data
     ? notificationsData.data.map(mapNotificationToActivity)
-    : propActivities || []
+    : propActivities || [];
 
   // Determine how many activities to show
-  const displayActivities = activities.slice(0, visibleActivities)
-  
+  const displayActivities = activities.slice(0, visibleActivities);
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
@@ -132,9 +128,11 @@ export function ActivityFeed({ activities: propActivities }: ActivityFeedProps) 
             >
               {isLoading ? (
                 <div className="space-y-4">
-                  {Array(3).fill(0).map((_, index) => (
-                    <div key={index} className="h-24 bg-gray-100 animate-pulse rounded-lg"></div>
-                  ))}
+                  {Array(3)
+                    .fill(0)
+                    .map((_, index) => (
+                      <div key={index} className="h-24 bg-gray-100 animate-pulse rounded-lg"></div>
+                    ))}
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -172,9 +170,7 @@ export function ActivityFeed({ activities: propActivities }: ActivityFeedProps) 
                       </motion.div>
                     ))
                   ) : (
-                    <div className="text-center py-6 text-gray-500">
-                      Tidak ada notifikasi terbaru
-                    </div>
+                    <div className="text-center py-6 text-gray-500">Tidak ada notifikasi terbaru</div>
                   )}
 
                   {activities.length > visibleActivities && (
@@ -196,5 +192,5 @@ export function ActivityFeed({ activities: propActivities }: ActivityFeedProps) 
         </AnimatePresence>
       </CardContent>
     </Card>
-  )
+  );
 }

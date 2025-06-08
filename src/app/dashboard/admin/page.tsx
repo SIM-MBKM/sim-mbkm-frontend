@@ -6,10 +6,8 @@ import { ProtectedDashboardLayout } from "@/components/dashboard/protected-dashb
 
 export default function MahasiswaDashboard() {
   return (
-    <ProtectedDashboardLayout allowedRole="ADMIN">
-      <DashboardLayout>
-        <Dashboard />
-      </DashboardLayout>
-    </ProtectedDashboardLayout>
+    <DashboardLayout>
+      <Dashboard />
+    </DashboardLayout>
   );
 }
