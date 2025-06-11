@@ -1,6 +1,7 @@
 "use client";
 
 import { UserManagementDashboard } from "@/components/dashboard/admin/users/user-management-dashboard";
+import { Toaster } from "@/components/ui/toaster";
 import { UserAPIProvider } from "@/lib/api/providers/user-provider";
 
 export default function AdminDashboard() {
@@ -9,6 +10,7 @@ export default function AdminDashboard() {
       <UserAPIProvider>
         <UserManagementDashboard />
       </UserAPIProvider>
+      <Toaster />
     </div>
   );
 }

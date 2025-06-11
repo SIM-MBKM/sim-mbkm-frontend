@@ -21,6 +21,7 @@ export interface Evaluation {
 export interface EvaluationList {
   id: string;
   status: "pending" | "in_progress" | "completed";
+  registration_id?: string;
   mahasiswa_id: string;
   dosen_pemonev_id: string;
 }
@@ -140,48 +141,41 @@ export interface PaginatedResponse<T> {
   total_pages: number;
 }
 
+export interface BaseResponse<T> {
+  message: string;
+  status: string;
+  data: T;
+}
+
+export interface BaseResponseNoData {
+  message: string;
+  status: string;
+}
+
 // Evaluation endpoints
 export const monevService = {
-  submitEvaluation: async (
-    evaluationInput: EvaluationCreateInput
-  ): Promise<EvaluationResponse> => {
-    const response = await monevApi.post<EvaluationResponse>(
-      "/evaluations",
-      evaluationInput
-    );
+  submitEvaluation: async (evaluationInput: EvaluationCreateInput): Promise<EvaluationResponse> => {
+    const response = await monevApi.post<EvaluationResponse>("/evaluations", evaluationInput);
     return response.data;
   },
 
-  updateEvaluation: async (
-    evaluationInput: EvaluationUpdateInput
-  ): Promise<EvaluationResponse> => {
-    const response = await monevApi.patch<EvaluationResponse>(
-      `/evaluations/${evaluationInput.id}`,
-      evaluationInput
-    );
+  updateEvaluation: async (evaluationInput: EvaluationUpdateInput): Promise<EvaluationResponse> => {
+    const response = await monevApi.patch<EvaluationResponse>(`/evaluations/${evaluationInput.id}`, evaluationInput);
     return response.data;
   },
 
   getEvaluationById: async (id: string): Promise<EvaluationResponse> => {
-    const response = await monevApi.get<EvaluationResponse>(
-      `/evaluations/${id}`
-    );
+    const response = await monevApi.get<EvaluationResponse>(`/evaluations/${id}`);
     return response.data;
   },
 
-  getEvaluations: async (
-    page: number = 1,
-    perPage: number = 10
-  ): Promise<PaginatedResponse<EvaluationList>> => {
-    const response = await monevApi.get<PaginatedResponse<EvaluationList>>(
-      "/evaluations",
-      {
-        params: {
-          page,
-          per_page: perPage,
-        },
-      }
-    );
+  getEvaluations: async (page: number = 1, perPage: number = 10): Promise<PaginatedResponse<EvaluationList>> => {
+    const response = await monevApi.get<PaginatedResponse<EvaluationList>>("/evaluations/all", {
+      params: {
+        page,
+        per_page: perPage,
+      },
+    });
 
     return response.data;
   },
@@ -191,15 +185,12 @@ export const monevService = {
     page: number = 1,
     perPage: number = 10
   ): Promise<PaginatedResponse<EvaluationList>> => {
-    const response = await monevApi.get<PaginatedResponse<EvaluationList>>(
-      `/evaluations/mahasiswa/${mahasiswaId}`,
-      {
-        params: {
-          page,
-          per_page: perPage,
-        },
-      }
-    );
+    const response = await monevApi.get<PaginatedResponse<EvaluationList>>(`/evaluations/mahasiswa/${mahasiswaId}`, {
+      params: {
+        page,
+        per_page: perPage,
+      },
+    });
 
     return response.data;
   },
@@ -222,9 +213,20 @@ export const monevService = {
     return response.data;
   },
 
-  finalizeEvaluation: async (
-    evaluationFinalize: EvaluationFinalize
-  ): Promise<EvaluationResponse> => {
+  getEvaluationsByPemonevMe: async (
+    page: number = 1,
+    perPage: number = 10
+  ): Promise<PaginatedResponse<EvaluationList>> => {
+    const response = await monevApi.get<PaginatedResponse<EvaluationList>>("/evaluations/pemonev-me", {
+      params: {
+        page,
+        per_page: perPage,
+      },
+    });
+    return response.data;
+  },
+
+  finalizeEvaluation: async (evaluationFinalize: EvaluationFinalize): Promise<EvaluationResponse> => {
     const response = await monevApi.patch<EvaluationResponse>(
       `/evaluations/${evaluationFinalize.id}/submit`,
       evaluationFinalize
@@ -232,49 +234,32 @@ export const monevService = {
     return response.data;
   },
 
-  deleteEvaluation: async (
-    evaluationDelete: EvaluationDelete
-  ): Promise<EvaluationResponse> => {
-    const response = await monevApi.delete<EvaluationResponse>(
-      `/evaluations/${evaluationDelete.id}`
-    );
+  deleteEvaluation: async (evaluationDelete: EvaluationDelete): Promise<EvaluationResponse> => {
+    const response = await monevApi.delete<EvaluationResponse>(`/evaluations/${evaluationDelete.id}`);
     return response.data;
   },
 
-  updateEvaluationScore: async (
-    evaluationScoreInput: EvaluationScoreUpdateInput
-  ): Promise<EvaluationScoreResponse> => {
+  updateEvaluationScore: async (evaluationScoreInput: EvaluationScoreUpdateInput): Promise<EvaluationScoreResponse> => {
     const { evaluation_id, id, ...scoreData } = evaluationScoreInput;
-    const response = await monevApi.patch<EvaluationScoreResponse>(
+    const response = await monevApi.put<EvaluationScoreResponse>(
       `/evaluations/${evaluation_id}/scores/${id}`,
       scoreData
     );
     return response.data;
   },
 
-  submitPartnerRating: async (
-    partnerRatingInput: PartnerRatingCreateInput
-  ): Promise<PartnerRatingResponse> => {
-    const response = await monevApi.post<PartnerRatingResponse>(
-      "/partner-ratings",
-      partnerRatingInput
-    );
+  submitPartnerRating: async (partnerRatingInput: PartnerRatingCreateInput): Promise<PartnerRatingResponse> => {
+    const response = await monevApi.post<PartnerRatingResponse>("/partner-ratings", partnerRatingInput);
     return response.data;
   },
 
-  getPartnerRatings: async (
-    page: number = 1,
-    perPage: number = 10
-  ): Promise<PaginatedResponse<PartnerRatingList>> => {
-    const response = await monevApi.get<PaginatedResponse<PartnerRatingList>>(
-      "/partner-ratings",
-      {
-        params: {
-          page,
-          per_page: perPage,
-        },
-      }
-    );
+  getPartnerRatings: async (page: number = 1, perPage: number = 10): Promise<PaginatedResponse<PartnerRatingList>> => {
+    const response = await monevApi.get<PaginatedResponse<PartnerRatingList>>("/partner-ratings", {
+      params: {
+        page,
+        per_page: perPage,
+      },
+    });
     return response.data;
   },
 
@@ -297,27 +282,17 @@ export const monevService = {
   },
 
   getPartnerRatingById: async (id: string): Promise<PartnerRatingResponse> => {
-    const response = await monevApi.get<PartnerRatingResponse>(
-      `/partner-ratings/${id}`
-    );
+    const response = await monevApi.get<PartnerRatingResponse>(`/partner-ratings/${id}`);
     return response.data;
   },
 
-  publishPartnerRating: async (
-    partnerRatingPublish: PartnerRatingPublish
-  ): Promise<PartnerRatingResponse> => {
-    const response = await monevApi.patch<PartnerRatingResponse>(
-      `/partner-ratings/${partnerRatingPublish.id}/publish`
-    );
+  publishPartnerRating: async (partnerRatingPublish: PartnerRatingPublish): Promise<PartnerRatingResponse> => {
+    const response = await monevApi.patch<PartnerRatingResponse>(`/partner-ratings/${partnerRatingPublish.id}/publish`);
     return response.data;
   },
 
-  deletePartnerRating: async (
-    partnerRatingId: string
-  ): Promise<PartnerRatingResponse> => {
-    const response = await monevApi.delete<PartnerRatingResponse>(
-      `/partner-ratings/${partnerRatingId}`
-    );
+  deletePartnerRating: async (partnerRatingId: string): Promise<PartnerRatingResponse> => {
+    const response = await monevApi.delete<PartnerRatingResponse>(`/partner-ratings/${partnerRatingId}`);
     return response.data;
   },
 };

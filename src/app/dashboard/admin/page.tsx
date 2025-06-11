@@ -4,10 +4,12 @@ import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
 import { Dashboard } from "@/components/dashboard/lo-mbkm/dashboard"; // Temporarily using LO-MBKM dashboard
 import { ProtectedDashboardLayout } from "@/components/dashboard/protected-dashboard-layout";
 
-export default function MahasiswaDashboard() {
+export default function AdminDashboard() {
   return (
-    <DashboardLayout>
-      <Dashboard />
-    </DashboardLayout>
+    <ProtectedDashboardLayout allowedRole="ADMIN">
+      <DashboardLayout>
+        <Dashboard />
+      </DashboardLayout>
+    </ProtectedDashboardLayout>
   );
 }

@@ -1,16 +1,15 @@
-"use client"
+"use client";
 
-import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
+import { DashboardLayoutDosen } from "@/components/dashboard/dashboard-layout-dosen";
 import { Dashboard } from "@/components/dashboard/dosen-pembimbing/dashboard";
-// import { ProtectedDashboardLayout } from "@/components/dashboard/protected-dashboard-layout"
+import { ProtectedDashboardLayout } from "@/components/dashboard/protected-dashboard-layout";
 
-export default function MahasiswaDashboard() {
+export default function DosenPembimbingDashboard() {
   return (
-    // <ProtectedDashboardLayout allowedRole="DOSEN PEMBIMBING">
-    <DashboardLayout>
-      <Dashboard />
-    </DashboardLayout>
-    // </ProtectedDashboardLayout>
-  )
+    <ProtectedDashboardLayout allowedRole="DOSEN PEMBIMBING">
+      <DashboardLayoutDosen>
+        <Dashboard />
+      </DashboardLayoutDosen>
+    </ProtectedDashboardLayout>
+  );
 }
-

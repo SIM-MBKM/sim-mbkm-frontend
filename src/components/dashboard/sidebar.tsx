@@ -204,6 +204,29 @@ const MENU_ITEMS: Record<
     },
   ],
 
+  "DOSEN PEMONEV": [
+    {
+      section: "Beranda",
+      items: [
+        {
+          label: "Beranda",
+          icon: <Home className="h-5 w-5" />,
+          href: "/dashboard/dosen-pemonev",
+        },
+      ],
+    },
+    {
+      section: "Monev",
+      items: [
+        {
+          label: "Kelola Monev",
+          icon: <FileEdit className="h-5 w-5" />,
+          href: "/dashboard/dosen-pemonev/monev",
+        },
+      ],
+    },
+  ],
+
   "LO-MBKM": [
     {
       section: "Beranda",
@@ -290,6 +313,11 @@ const MENU_ITEMS: Record<
           label: "Kelola Report",
           icon: <DatabaseIcon className="h-5 w-5" />,
           href: "/dashboard/admin/reports",
+        },
+        {
+          label: "Kelola Kalender",
+          icon: <Calendar className="h-5 w-5" />,
+          href: "/dashboard/admin/calendar",
         },
       ],
     },

@@ -65,7 +65,7 @@ export function UserCard({ user, isSelected, onToggleSelect, currentUserRole }: 
 
       toast({
         title: "Role Updated",
-        description: `${user.name}'s role has been updated to ${selectedRole}`,
+        description: `${user.email}'s role has been updated to ${selectedRole}`,
       });
 
       setIsEditing(false);

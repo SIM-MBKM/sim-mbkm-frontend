@@ -363,6 +363,21 @@ export const useUpcomingActivities = () => {
 };
 
 // REGISTRATION HOOKS
+export const useRegistrations = ({
+  page = 1,
+  limit = 10,
+  filter,
+}: {
+  page: number;
+  limit: number;
+  filter: RegistrationFilter;
+}) => {
+  return useQuery({
+    queryKey: ["registrations"],
+    queryFn: () => registrationService.getAllRegistrations({ page, limit, filter }),
+  });
+};
+
 export const useCheckEligibility = (activity_id: string) => {
   return useQuery({
     queryKey: ["checkEligibility", activity_id],
@@ -1020,6 +1035,14 @@ export const useEvaluationById = (id?: string) => {
   });
 };
 
+export const useEvaluationsByPemonevMe = (page = 1, perPage = 10) => {
+  return useQuery({
+    queryKey: ["evaluations", page, perPage],
+    queryFn: () => monevService.getEvaluationsByPemonevMe(page, perPage),
+    staleTime: 5000, // 5 seconds
+  });
+};
+
 export const useEvaluations = (page = 1, perPage = 10) => {
   return useQuery({
     queryKey: ["evaluations", page, perPage],
@@ -1157,7 +1180,15 @@ export const useUsersByRole = (role: "mahasiswa" | "dosen_pemonev" | "dosen_pemb
 export const useMahasiswaUsers = () => {
   return useQuery({
     queryKey: ["users", "mahasiswa"],
-    queryFn: () => userService.getUsersByRole("mahasiswa"),
+    queryFn: () => userService.getUsersByRole("MAHASISWA"),
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useMahasiswaUsersAlt = () => {
+  return useQuery({
+    queryKey: ["users", "mahasiswa"],
+    queryFn: () => userService.getUsersByRoleAlt("MAHASISWA"),
     staleTime: 5 * 60 * 1000,
   });
 };
@@ -1165,15 +1196,70 @@ export const useMahasiswaUsers = () => {
 export const useDosenPemonevUsers = () => {
   return useQuery({
     queryKey: ["users", "dosen_pemonev"],
-    queryFn: () => userService.getUsersByRole("dosen_pemonev"),
+    queryFn: () => userService.getUsersByRole("DOSEN PEMONEV"),
     staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useDosenPemonevUsersAlt = () => {
+  return useQuery({
+    queryKey: ["users", "dosen_pemonev"],
+    queryFn: () => userService.getUsersByRoleAlt("DOSEN PEMONEV"),
   });
 };
 
 export const useDosenPembimbingUsers = () => {
   return useQuery({
     queryKey: ["users", "dosen_pembimbing"],
-    queryFn: () => userService.getUsersByRole("dosen_pembimbing"),
+    queryFn: () => userService.getUsersByRole("DOSEN PEMBIMBING"),
     staleTime: 5 * 60 * 1000,
   });
+};
+
+export const useDosenPembimbingUsersAlt = () => {
+  return useQuery({
+    queryKey: ["users", "dosen_pembimbing"],
+    queryFn: () => userService.getUsersByRoleAlt("DOSEN PEMBIMBING"),
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useChangeSelfRoleToDosenPembimbing = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: () => userService.updateUserRoleSelfToDosenPembimbing(),
+    onSuccess: () => {
+      // Invalidate and refetch user-related queries
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      queryClient.invalidateQueries({ queryKey: ["userRole"] });
+    },
+    onError: (error) => {
+      console.error("Error updating user role:", error);
+    },
+  });
+
+  // Return the mutation object so we can access its properties
+  return mutation;
+};
+
+export const useChangeSelfRoleToDosenPemonev = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: () => userService.updateUserRoleSelfToDosenPemonev(),
+    onSuccess: () => {
+      // Invalidate and refetch user-related queries
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      queryClient.invalidateQueries({ queryKey: ["userRole"] });
+    },
+    onError: (error) => {
+      console.error("Error updating user role:", error);
+    },
+  });
+
+  // Return the mutation object so we can access its properties
+  return mutation;
 };

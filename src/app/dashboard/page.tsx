@@ -25,7 +25,7 @@ export default function DashboardRedirect() {
         "DOSEN PEMBIMBING": "/dashboard/dosen-pembimbing",
         ADMIN: "/dashboard/admin",
         "LO-MBKM": "/dashboard/lo-mbkm",
-        "DOSEN PEMONEV": "/dashboad/dosen-pemonev",
+        "DOSEN PEMONEV": "/dashboard/dosen-pemonev",
         MITRA: "/dashboard/mitra",
       };
 
@@ -48,13 +48,9 @@ export default function DashboardRedirect() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
         <div className="bg-red-50 p-6 rounded-lg border border-red-200 max-w-md text-center">
-          <h2 className="text-lg font-medium text-red-800 mb-2">
-            Gagal memuat data
-          </h2>
+          <h2 className="text-lg font-medium text-red-800 mb-2">Gagal memuat data</h2>
           <p className="text-red-600 mb-4">
-            {error instanceof Error
-              ? error.message
-              : "Terjadi kesalahan saat memuat data pengguna"}
+            {error instanceof Error ? error.message : "Terjadi kesalahan saat memuat data pengguna"}
           </p>
           <button
             onClick={() => window.location.reload()}
@@ -70,12 +66,8 @@ export default function DashboardRedirect() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center">
       <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200 max-w-md text-center">
-        <h2 className="text-lg font-medium text-yellow-800 mb-2">
-          Peran Tidak Ditemukan
-        </h2>
-        <p className="text-yellow-600 mb-4">
-          Tidak dapat menemukan peran pengguna. Silakan hubungi administrator.
-        </p>
+        <h2 className="text-lg font-medium text-yellow-800 mb-2">Peran Tidak Ditemukan</h2>
+        <p className="text-yellow-600 mb-4">Tidak dapat menemukan peran pengguna. Silakan hubungi administrator.</p>
         <button
           onClick={() => window.location.reload()}
           className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded"

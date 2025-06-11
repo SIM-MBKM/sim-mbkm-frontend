@@ -1,8 +1,8 @@
-import { apiServices } from '../axios-instance';
-import { Transcript } from './monitoring-service';
+import { number } from "zod";
+import { apiServices } from "../axios-instance";
+import { Transcript } from "./monitoring-service";
 
 const registrationApi = apiServices.registration;
-
 
 export interface Document {
   id: string;
@@ -24,8 +24,8 @@ export interface Registration {
   academic_advisor_id: string;
   mentor_name: string;
   mentor_email: string;
-  lo_validation: 'PENDING' | 'APPROVED' | 'REJECTED';
-  academic_advisor_validation: 'PENDING' | 'APPROVED' | 'REJECTED';
+  lo_validation: "PENDING" | "APPROVED" | "REJECTED";
+  academic_advisor_validation: "PENDING" | "APPROVED" | "REJECTED";
   semester: number;
   total_sks: number;
   activity_name: string;
@@ -79,7 +79,6 @@ export interface PaginatedResponse<T> {
   total_pages: number;
 }
 
-
 export interface RegisterInput {
   activityId: string;
   acceptanceLetter?: File;
@@ -103,36 +102,36 @@ export interface RegistrationTranscript {
   approval_status: boolean;
   lo_validation: string;
   academic_advisor_validation: string;
-  transcript_data: Transcript[]
+  transcript_data: Transcript[];
 }
 
 export interface RegistrationTranscriptData {
   user_id: string;
   user_nrp: string;
-  registrations: RegistrationTranscript[]
+  registrations: RegistrationTranscript[];
 }
 
 export interface RegistrationTranscriptsByStudentResponse {
   message: string;
   status: string;
-  data: RegistrationTranscriptData
+  data: RegistrationTranscriptData;
 }
 
 export interface RegistrationStudentMatchingData {
   user_id: string;
   user_nrp: string;
   user_name: string;
-  registrations: Registration[]
+  registrations: Registration[];
 }
 
 export interface RegistrationStudentMatchingResponse {
   message: string;
   status: string;
-  data: RegistrationStudentMatchingData
+  data: RegistrationStudentMatchingData;
 }
 
 export interface ApprovalInput {
-  status: 'APPROVED' | 'REJECTED';
+  status: "APPROVED" | "REJECTED";
   id: string[];
 }
 
@@ -146,19 +145,19 @@ export interface RegistrationSyllabus {
   approval_status: boolean;
   lo_validation: string;
   academic_advisor_validation: string;
-  syllabus_data: Transcript[]
+  syllabus_data: Transcript[];
 }
 
 export interface RegistrationSyllabusData {
   user_id: string;
   user_nrp: string;
-  registrations: RegistrationSyllabus[]
+  registrations: RegistrationSyllabus[];
 }
 
 export interface RegistrationSyllabusesByStudentResponse {
   message: string;
   status: string;
-  data: RegistrationSyllabusData
+  data: RegistrationSyllabusData;
 }
 
 export interface RegistrationUpdateRequest {
@@ -174,7 +173,7 @@ export interface RegistrationUpdateRequest {
 export interface BaseResponse<T> {
   message: string;
   status: string;
-  data: T
+  data: T;
 }
 
 export interface Eligibility {
@@ -193,48 +192,47 @@ export interface RegistrationFilter {
 
 // Registration management service endpoints
 export const registrationService = {
-
   // Register for a program
   registerForProgram: async (registrationData: RegisterInput) => {
     // Always use FormData for registration
     const formData = new FormData();
-    
+
     // Add activity ID
-    formData.append('activity_id', registrationData.activityId);
-    
+    formData.append("activity_id", registrationData.activityId);
+
     // Add advisor information
-    formData.append('academic_advisor_id', registrationData.academic_advisor_id);
-    formData.append('advising_confirmation', String(registrationData.advising_confirmation));
-    formData.append('academic_advisor', registrationData.academic_advisor);
-    formData.append('academic_advisor_email', registrationData.academic_advisor_email);
-    
+    formData.append("academic_advisor_id", registrationData.academic_advisor_id);
+    formData.append("advising_confirmation", String(registrationData.advising_confirmation));
+    formData.append("academic_advisor", registrationData.academic_advisor);
+    formData.append("academic_advisor_email", registrationData.academic_advisor_email);
+
     // Add mentor information
-    formData.append('mentor_name', registrationData.mentor_name);
-    formData.append('mentor_email', registrationData.mentor_email);
-    
+    formData.append("mentor_name", registrationData.mentor_name);
+    formData.append("mentor_email", registrationData.mentor_email);
+
     // Add academic information
-    formData.append('semester', String(registrationData.semester));
-    formData.append('total_sks', String(registrationData.total_sks));
-    
+    formData.append("semester", String(registrationData.semester));
+    formData.append("total_sks", String(registrationData.total_sks));
+
     // Add files if they exist
     if (registrationData.acceptanceLetter) {
-      formData.append('file', registrationData.acceptanceLetter);
+      formData.append("file", registrationData.acceptanceLetter);
     }
-    
+
     if (registrationData.geoletter) {
-      formData.append('geoletter', registrationData.geoletter);
+      formData.append("geoletter", registrationData.geoletter);
     }
-    
+
     // Send the request
-    const response = await registrationApi.post<Registration>('/registration', formData, {
+    const response = await registrationApi.post<Registration>("/registration", formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
     return response.data;
   },
 
-  checkEligibility: async(activity_id: string) => {
+  checkEligibility: async (activity_id: string) => {
     const response = await registrationApi.get<BaseResponse<Eligibility>>(
       `/registration/check-eligibility?activity_id=${activity_id}`
     );
@@ -243,52 +241,65 @@ export const registrationService = {
 
   updateRegistrationStudentById: async (id: string, data: RegistrationUpdateRequest) => {
     data.advising_confirmation = true;
-    const response = await registrationApi.put<{data: string, message: string, status: string}>(
+    const response = await registrationApi.put<{ data: string; message: string; status: string }>(
       `/registration/${id}`,
-      data,
+      data
     );
     return response.data;
   },
 
-  getRegistrationAdvisor: async({page, limit, filter}: {page: number, limit: number, filter: RegistrationFilter}) => {
+  getRegistrationAdvisor: async ({
+    page,
+    limit,
+    filter,
+  }: {
+    page: number;
+    limit: number;
+    filter: RegistrationFilter;
+  }) => {
     const response = await registrationApi.post<PaginatedResponse<Registration>>(
       `/registration/advisor?page=${page}&limit=${limit}`,
-      filter,
+      filter
     );
     return response.data;
   },
- 
-  getRegistrationLOMBKM: async({page, limit, filter}: {page: number, limit: number, filter: RegistrationFilter}) => {
+
+  getRegistrationLOMBKM: async ({
+    page,
+    limit,
+    filter,
+  }: {
+    page: number;
+    limit: number;
+    filter: RegistrationFilter;
+  }) => {
     const response = await registrationApi.post<PaginatedResponse<Registration>>(
       `/registration/lo-mbkm?page=${page}&limit=${limit}`,
-      filter,
+      filter
     );
     return response.data;
   },
-  
+
   getRegistrationStudentMatching: async () => {
-    const response = await registrationApi.post<RegistrationStudentMatchingResponse>(
-      '/registration/student/matching',
-      {
-        "activity_name": "",
-        "user_name": "",
-        "user_nrp": "",
-        "academic_advisor": "",
-        "lo_validation": "",
-        "academic_advisor_validation": ""
-      },
-    );
+    const response = await registrationApi.post<RegistrationStudentMatchingResponse>("/registration/student/matching", {
+      activity_name: "",
+      user_name: "",
+      user_nrp: "",
+      academic_advisor: "",
+      lo_validation: "",
+      academic_advisor_validation: "",
+    });
     return response.data;
   },
 
   // Get user's registrations
   getUserRegistrations: async () => {
-    const response = await registrationApi.get<Registration[]>('/registrations/my');
+    const response = await registrationApi.get<Registration[]>("/registrations/my");
     return response.data;
   },
 
   approveStudentRegistrations: async (approvalInput: ApprovalInput) => {
-    const response = await registrationApi.post<BaseResponse<string>>('/registration/approval', approvalInput);
+    const response = await registrationApi.post<BaseResponse<string>>("/registration/approval", approvalInput);
     return response.data;
   },
 
@@ -297,43 +308,43 @@ export const registrationService = {
     const response = await registrationApi.post<PaginatedResponse<Registration>>(
       `/registration/student?page=${page}&limit=${limit}`,
       {
-        "activity_name": "",
-        "user_name": "",
-        "user_nrp": "",
-        "academic_advisor": "",
-        "lo_validation": "",
-        "academic_advisor_validation": ""
-    },
+        activity_name: "",
+        user_name: "",
+        user_nrp: "",
+        academic_advisor: "",
+        lo_validation: "",
+        academic_advisor_validation: "",
+      }
     );
     return response.data;
   },
 
   getRegistrationTranscriptsByStudent: async () => {
     const response = await registrationApi.post<RegistrationTranscriptsByStudentResponse>(
-      '/registration/student/transcripts',
+      "/registration/student/transcripts",
       {
-        "activity_name": "",
-        "user_name": "",
-        "user_nrp": "",
-        "academic_advisor": "",
-        "lo_validation": "",
-        "academic_advisor_validation": ""
-    },
+        activity_name: "",
+        user_name: "",
+        user_nrp: "",
+        academic_advisor: "",
+        lo_validation: "",
+        academic_advisor_validation: "",
+      }
     );
     return response.data;
   },
 
   getRegistrationSyllabusesByStudent: async () => {
     const response = await registrationApi.post<RegistrationSyllabusesByStudentResponse>(
-      '/registration/student/syllabuses',
+      "/registration/student/syllabuses",
       {
-        "activity_name": "",
-        "user_name": "",
-        "user_nrp": "",
-        "academic_advisor": "",
-        "lo_validation": "",
-        "academic_advisor_validation": ""
-    },
+        activity_name: "",
+        user_name: "",
+        user_nrp: "",
+        academic_advisor: "",
+        lo_validation: "",
+        academic_advisor_validation: "",
+      }
     );
     return response.data;
   },
@@ -345,29 +356,44 @@ export const registrationService = {
   },
 
   // Update registration documents
-  updateRegistrationDocuments: async (
-    registrationId: string, 
-    documents: { type: string; file: File }[]
-  ) => {
+  updateRegistrationDocuments: async (registrationId: string, documents: { type: string; file: File }[]) => {
     const formData = new FormData();
-    
+
     documents.forEach((doc, index) => {
       formData.append(`documents[${index}][type]`, doc.type);
       formData.append(`documents[${index}][file]`, doc.file);
     });
-    
-    const response = await registrationApi.patch<Registration>(
-      `/registrations/${registrationId}/documents`, 
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
+
+    const response = await registrationApi.patch<Registration>(`/registrations/${registrationId}/documents`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  },
+
+  getAllRegistrations: async ({ page, limit, filter }: { page: number; limit: number; filter: RegistrationFilter }) => {
+    const response = await registrationApi.post<PaginatedResponse<Registration>>(
+      `/registration/all?page=${page}&limit=${limit}`,
+      filter
     );
     return response.data;
   },
 
+  //    page,
+  //   limit,
+  //   filter,
+  // }: {
+  //   page: number;
+  //   limit: number;
+  //   filter: RegistrationFilter;
+  // }) => {
+  //   const response = await registrationApi.post<PaginatedResponse<Registration>>(
+  //     `/registration/advisor?page=${page}&limit=${limit}`,
+  //     filter
+  //   );
+  //   return response.data;
+  // },
   // Search programs
   // searchPrograms: async (query: string, page = 1, limit = 10) => {
   //   const response = await registrationApi.get<{programs: Program[], total: number}>(
@@ -375,4 +401,4 @@ export const registrationService = {
   //   );
   //   return response.data;
   // },
-}; 
+};

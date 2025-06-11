@@ -134,6 +134,13 @@ export const userService = {
     return response.data;
   },
 
+  // Alternative, with auth user id included
+  getUsersByRoleAlt: async (role: string, page = 1, perPage = 1000) => {
+    const queryParams = buildUserParams(page, perPage, { role_name: role });
+    const response = await userApi.get<PaginatedResponse<UserAlt>>(`/users/?${queryParams}`);
+    return response.data;
+  },
+
   // Get all roles available (admin)
   getAllRoles: async () => {
     const response = await userApi.get<BaseResponse<Role[]>>(`/roles`);
@@ -145,6 +152,17 @@ export const userService = {
     const response = await userApi.put<BaseResponseNoData>(`users/${id}/role`, {
       role_name: role,
     });
+    return response.data;
+  },
+
+  // Update self user role (dosen pembimbing / dosen pemonev )
+  updateUserRoleSelfToDosenPembimbing: async () => {
+    const response = await userApi.put<BaseResponseNoData>(`users/me/role/dosen-pembimbing`);
+    return response.data;
+  },
+
+  updateUserRoleSelfToDosenPemonev: async () => {
+    const response = await userApi.put<BaseResponseNoData>(`users/me/role/dosen-pemonev`);
     return response.data;
   },
 
