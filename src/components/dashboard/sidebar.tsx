@@ -104,9 +104,9 @@ const MENU_ITEMS: Record<
       section: "MBKM",
       items: [
         {
-          label: "MBKM",
+          label: "Monev",
           icon: <BookOpen className="h-5 w-5" />,
-          href: "/dashboard/mahasiswa/mbkm",
+          href: "/dashboard/mahasiswa/monev",
         },
         {
           label: "Ekivalensi MK",
@@ -242,11 +242,6 @@ const MENU_ITEMS: Record<
       section: "Manajemen Sistem",
       items: [
         {
-          label: "Kelola User",
-          icon: <Users className="h-5 w-5" />,
-          href: "/dashboard/lo-mbkm/users",
-        },
-        {
           label: "Kelola Program",
           icon: <Briefcase className="h-5 w-5" />,
           href: "/dashboard/lo-mbkm/program",
@@ -272,9 +267,9 @@ const MENU_ITEMS: Record<
           href: "/dashboard/lo-mbkm/monev",
         },
         {
-          label: "Kelola Statistik",
-          icon: <FileEdit className="h-5 w-5" />,
-          href: "/dashboard/lo-mbkm/statistik",
+          label: "Kelola Kalender",
+          icon: <Calendar className="h-5 w-5" />,
+          href: "/dashboard/lo-mbkm/calender",
         },
       ],
     },

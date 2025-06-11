@@ -38,6 +38,24 @@ import {
   BaseResponse,
   UserAlt,
 } from "../services";
+import {
+  reportService,
+  type CreateReportRequest,
+  type UpdateReportRequest,
+  type ScheduleReportRequest,
+  type ExportReportRequest,
+  type ReportFilters,
+  type ReportResultFilters,
+  type PaginationParams,
+  type ApiResponse,
+  type ReportListItem,
+  type Report,
+  type ReportResult,
+  type ReportResultListItem,
+  type PaginatedResponse as PaginatedResponseReport,
+  type ReportExport,
+  type DownloadResponse,
+} from "../services/report-service";
 import { fileService } from "../services/file-service";
 import { notificationService } from "../services/notification-service";
 import { brokerService } from "../services/broker-service";
@@ -1043,6 +1061,14 @@ export const useEvaluationsByPemonevMe = (page = 1, perPage = 10) => {
   });
 };
 
+export const useEvaluationsByMahasiswaMe = (page = 1, perPage = 10) => {
+  return useQuery({
+    queryKey: ["evaluations", page, perPage],
+    queryFn: () => monevService.getEvaluationsByMahasiswaMe(page, perPage),
+    staleTime: 5000, // 5 seconds
+  });
+};
+
 export const useEvaluations = (page = 1, perPage = 10) => {
   return useQuery({
     queryKey: ["evaluations", page, perPage],
@@ -1262,4 +1288,237 @@ export const useChangeSelfRoleToDosenPemonev = () => {
 
   // Return the mutation object so we can access its properties
   return mutation;
+};
+
+// REPORT HOOKS
+export const useReports = (params?: ReportFilters & PaginationParams) => {
+  return useQuery<PaginatedResponseReport<ReportListItem>, Error>({
+    queryKey: ["reports", params?.page || 1, params?.per_page || 10, params?.name, params?.is_scheduled],
+    queryFn: () => reportService.getReports(params),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+export const useReport = (id?: string) => {
+  return useQuery<ApiResponse<Report>, Error>({
+    queryKey: ["report", id],
+    queryFn: () => reportService.getReport(id!),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+export const useReportResults = (reportId?: string, params?: ReportResultFilters & PaginationParams) => {
+  return useQuery<PaginatedResponseReport<ReportResultListItem>, Error>({
+    queryKey: [
+      "reportResults",
+      reportId,
+      params?.page || 1,
+      params?.per_page || 10,
+      params?.date_from,
+      params?.date_to,
+    ],
+    queryFn: () => reportService.getReportResults(reportId!, params),
+    enabled: !!reportId,
+    staleTime: 2 * 60 * 1000,
+  });
+};
+
+export const useReportResult = (resultId?: string) => {
+  return useQuery<ApiResponse<ReportResult>, Error>({
+    queryKey: ["reportResult", resultId],
+    queryFn: () => reportService.getReportResult(resultId!),
+    enabled: !!resultId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+export const useScheduledReports = () => {
+  return useQuery<ApiResponse<Report[]>, Error>({
+    queryKey: ["scheduledReports"],
+    queryFn: () => reportService.getScheduledReports(),
+    staleTime: 10 * 60 * 1000, // 10 minutes - scheduled reports don't change often
+  });
+};
+
+// REPORT MUTATION HOOKS
+
+export const useCreateReport = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (data: CreateReportRequest) => reportService.createReport(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+    },
+    onError: (error) => {
+      console.error("Error creating report:", error);
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending,
+  };
+};
+
+export const useUpdateReport = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateReportRequest }) => reportService.updateReport(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+      queryClient.invalidateQueries({ queryKey: ["report", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["scheduledReports"] });
+    },
+    onError: (error) => {
+      console.error("Error updating report:", error);
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending,
+  };
+};
+
+export const useDeleteReport = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (id: string) => reportService.deleteReport(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+      queryClient.invalidateQueries({ queryKey: ["scheduledReports"] });
+    },
+    onError: (error) => {
+      console.error("Error deleting report:", error);
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending,
+  };
+};
+
+export const useGenerateReport = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (id: string) => reportService.generateReport(id),
+    onSuccess: (_, reportId) => {
+      queryClient.invalidateQueries({ queryKey: ["reportResults", reportId] });
+      queryClient.invalidateQueries({ queryKey: ["report", reportId] });
+    },
+    onError: (error) => {
+      console.error("Error generating report:", error);
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending,
+  };
+};
+
+// REPORT RESULT MUTATION HOOKS
+
+export const useDeleteReportResult = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (resultId: string) => reportService.deleteReportResult(resultId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reportResults"] });
+    },
+    onError: (error) => {
+      console.error("Error deleting report result:", error);
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending,
+  };
+};
+
+export const useExportReportResult = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: ({ resultId, data }: { resultId: string; data?: ExportReportRequest }) =>
+      reportService.exportReportResult(resultId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["reportResult", variables.resultId] });
+    },
+    onError: (error) => {
+      console.error("Error exporting report result:", error);
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending,
+  };
+};
+
+export const useDownloadReportResult = () => {
+  const mutation = useMutation({
+    mutationFn: (resultId: string) => reportService.downloadReportResult(resultId),
+    onError: (error) => {
+      console.error("Error downloading report result:", error);
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending,
+  };
+};
+
+// REPORT SCHEDULING HOOKS
+
+export const useScheduleReport = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: ({ reportId, data }: { reportId: string; data: ScheduleReportRequest }) =>
+      reportService.scheduleReport(reportId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+      queryClient.invalidateQueries({ queryKey: ["report", variables.reportId] });
+      queryClient.invalidateQueries({ queryKey: ["scheduledReports"] });
+    },
+    onError: (error) => {
+      console.error("Error scheduling report:", error);
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending,
+  };
+};
+
+export const useRemoveSchedule = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (reportId: string) => reportService.removeSchedule(reportId),
+    onSuccess: (_, reportId) => {
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+      queryClient.invalidateQueries({ queryKey: ["report", reportId] });
+      queryClient.invalidateQueries({ queryKey: ["scheduledReports"] });
+    },
+    onError: (error) => {
+      console.error("Error removing schedule:", error);
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending,
+  };
 };

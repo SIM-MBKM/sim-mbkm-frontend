@@ -226,6 +226,16 @@ export const monevService = {
     return response.data;
   },
 
+  getEvaluationsByMahasiswaMe: async (
+    page: number = 1,
+    perPage: number = 10
+  ): Promise<PaginatedResponse<EvaluationList>> => {
+    const response = await monevApi.get<PaginatedResponse<EvaluationList>>("/evaluations/mahasiswa-me", {
+      params: { page, per_page: perPage },
+    });
+    return response.data;
+  },
+
   finalizeEvaluation: async (evaluationFinalize: EvaluationFinalize): Promise<EvaluationResponse> => {
     const response = await monevApi.patch<EvaluationResponse>(
       `/evaluations/${evaluationFinalize.id}/submit`,
