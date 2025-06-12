@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useState, useRef } from "react"
-import { motion, AnimatePresence, useInView } from "framer-motion"
+import { useState, useRef } from "react";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
   CheckCircle,
   XCircle,
@@ -18,25 +18,25 @@ import {
   Zap,
   Hash,
   LayoutGrid,
-  School
-} from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
-import { DocumentPreview } from "./document-preview"
-import { ParticleEffect } from "./particle-effect"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Registration } from "@/lib/api/services";
+  School,
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { DocumentPreview } from "./document-preview";
+import { ParticleEffect } from "./particle-effect";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Registration } from "@/lib/api/services/registration-service";
 
 interface RegistrationCardProps {
-  registration: Registration
-  isSelected: boolean
-  onToggleSelect: () => void
-  onApprove: () => void
-  onReject: () => void
-  isDisabled?: boolean
+  registration: Registration;
+  isSelected: boolean;
+  onToggleSelect: () => void;
+  onApprove: () => void;
+  onReject: () => void;
+  isDisabled?: boolean;
 }
 
 export function RegistrationCard({
@@ -47,82 +47,80 @@ export function RegistrationCard({
   onReject,
   isDisabled = false,
 }: RegistrationCardProps) {
-  const [expanded, setExpanded] = useState(false)
-  const [showDocumentPreview, setShowDocumentPreview] = useState<string | null>(null)
-  const [showApproveEffect, setShowApproveEffect] = useState(false)
-  const [showRejectEffect, setShowRejectEffect] = useState(false)
-  const [activeTab, setActiveTab] = useState("info")
-  const cardRef = useRef(null)
-  const isInView = useInView(cardRef, { once: false, amount: 0.3 })
+  const [expanded, setExpanded] = useState(false);
+  const [showDocumentPreview, setShowDocumentPreview] = useState<string | null>(null);
+  const [showApproveEffect, setShowApproveEffect] = useState(false);
+  const [showRejectEffect, setShowRejectEffect] = useState(false);
+  const [activeTab, setActiveTab] = useState("info");
+  const cardRef = useRef(null);
+  const isInView = useInView(cardRef, { once: false, amount: 0.3 });
 
   const handleApprove = () => {
-    setShowApproveEffect(true)
+    setShowApproveEffect(true);
     setTimeout(() => {
-      onApprove()
-      setShowApproveEffect(false)
-    }, 800)
-  }
+      onApprove();
+      setShowApproveEffect(false);
+    }, 800);
+  };
 
   const handleReject = () => {
-    setShowRejectEffect(true)
+    setShowRejectEffect(true);
     setTimeout(() => {
-      onReject()
-      setShowRejectEffect(false)
-    }, 800)
-  }
+      onReject();
+      setShowRejectEffect(false);
+    }, 800);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "APPROVED":
-        return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-900"
+        return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-900";
       case "REJECTED":
-        return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-900"
+        return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-900";
       case "PENDING":
       default:
-        return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-900"
+        return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-900";
     }
-  }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "APPROVED":
-        return <CheckCircle className="h-4 w-4" />
+        return <CheckCircle className="h-4 w-4" />;
       case "REJECTED":
-        return <XCircle className="h-4 w-4" />
+        return <XCircle className="h-4 w-4" />;
       case "PENDING":
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   // Count total subjects
-  const totalSubjects = 
-    (registration.equivalents?.length || 0) + 
-    (registration.matching?.length || 0);
+  const totalSubjects = (registration.equivalents?.length || 0) + (registration.matching?.length || 0);
 
   // Animation variants
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
-      transition: { 
+      transition: {
         duration: 0.5,
-        ease: "easeOut"
-      }
-    }
+        ease: "easeOut",
+      },
+    },
   };
 
-  const countUp = { 
+  const countUp = {
     hidden: { opacity: 0 },
-    visible: { 
+    visible: {
       opacity: 1,
-      transition: { 
-        staggerChildren: 0.1 
-      }
-    }
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
   };
-  
+
   return (
     <motion.div
       ref={cardRef}
@@ -141,10 +139,10 @@ export function RegistrationCard({
           registration.academic_advisor_validation === "APPROVED"
             ? "border-green-500/50 dark:border-green-700/50"
             : registration.academic_advisor_validation === "REJECTED"
-              ? "border-red-500/50 dark:border-red-700/50"
-              : isSelected
-                ? "border-primary/50 dark:border-primary/50"
-                : "border-neutral-200"
+            ? "border-red-500/50 dark:border-red-700/50"
+            : isSelected
+            ? "border-primary/50 dark:border-primary/50"
+            : "border-neutral-200"
         }`}
       >
         <CardContent className="p-0">
@@ -154,8 +152,8 @@ export function RegistrationCard({
                 <div
                   className="flex-shrink-0"
                   onClick={(e) => {
-                    e.stopPropagation()
-                    onToggleSelect()
+                    e.stopPropagation();
+                    onToggleSelect();
                   }}
                 >
                   <Checkbox
@@ -166,7 +164,7 @@ export function RegistrationCard({
 
                 <div className="flex-1">
                   <div className="flex flex-col md:flex-row md:items-center gap-2">
-                    <motion.h3 
+                    <motion.h3
                       className="text-lg font-semibold"
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -182,38 +180,26 @@ export function RegistrationCard({
                     </Badge>
                   </div>
 
-                  <motion.div 
+                  <motion.div
                     className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-muted-foreground"
                     variants={countUp}
                     initial="hidden"
                     animate="visible"
                   >
-                    <motion.div 
-                      className="flex items-center gap-1"
-                      variants={countUp}
-                    >
+                    <motion.div className="flex items-center gap-1" variants={countUp}>
                       <User className="h-3.5 w-3.5" />
                       <span>{registration.user_name || registration.user_nrp}</span>
                     </motion.div>
-                    <motion.div 
-                      className="flex items-center gap-1"
-                      variants={countUp}
-                    >
+                    <motion.div className="flex items-center gap-1" variants={countUp}>
                       <BookOpen className="h-3.5 w-3.5" />
                       <span>Semester {registration.semester}</span>
                     </motion.div>
-                    <motion.div 
-                      className="flex items-center gap-1"
-                      variants={countUp}
-                    >
+                    <motion.div className="flex items-center gap-1" variants={countUp}>
                       <Award className="h-3.5 w-3.5" />
                       <span>{registration.total_sks} SKS</span>
                     </motion.div>
                     {totalSubjects > 0 && (
-                      <motion.div 
-                        className="flex items-center gap-1 text-primary"
-                        variants={countUp}
-                      >
+                      <motion.div className="flex items-center gap-1 text-primary" variants={countUp}>
                         <BookOpenCheck className="h-3.5 w-3.5" />
                         <span>{totalSubjects} Courses</span>
                       </motion.div>
@@ -247,16 +233,13 @@ export function RegistrationCard({
                     </Button>
                   </>
                 )}
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => setExpanded(!expanded)} 
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setExpanded(!expanded)}
                   className="h-8 w-8 transition-all duration-300"
                 >
-                  <motion.div
-                    animate={{ rotate: expanded ? 180 : 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
+                  <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.3 }}>
                     <ChevronDown className="h-4 w-4" />
                   </motion.div>
                 </Button>
@@ -306,7 +289,7 @@ export function RegistrationCard({
 
                     <TabsContent value="info" className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <motion.div 
+                        <motion.div
                           className="space-y-4"
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -354,7 +337,7 @@ export function RegistrationCard({
                         </motion.div>
 
                         <div className="space-y-4">
-                          <motion.div 
+                          <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.2 }}
@@ -381,7 +364,7 @@ export function RegistrationCard({
                               </div>
                             </div>
                           </motion.div>
-                          
+
                           <motion.div
                             className="mt-6 p-4 rounded-lg border border-primary/20 bg-primary/5"
                             initial={{ opacity: 0, y: 10 }}
@@ -401,7 +384,10 @@ export function RegistrationCard({
                                 <span className="text-sm">Matching</span>
                               </div>
                               <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="h-7 px-2 bg-purple-50 text-purple-700 border-purple-200">
+                                <Badge
+                                  variant="outline"
+                                  className="h-7 px-2 bg-purple-50 text-purple-700 border-purple-200"
+                                >
                                   <Zap className="h-3.5 w-3.5 mr-1" />
                                   {registration.equivalents?.length || 0}
                                 </Badge>
@@ -414,7 +400,7 @@ export function RegistrationCard({
                     </TabsContent>
 
                     <TabsContent value="documents" className="space-y-4">
-                      <motion.div 
+                      <motion.div
                         className="space-y-3"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -448,11 +434,7 @@ export function RegistrationCard({
 
                     {registration.matching && registration.matching.length > 0 && (
                       <TabsContent value="matching" className="space-y-4">
-                        <motion.div 
-                          className="space-y-4"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                        >
+                        <motion.div className="space-y-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
                               <FolderSync className="h-5 w-5 text-blue-500" />
@@ -460,18 +442,18 @@ export function RegistrationCard({
                             </div>
                             <Badge className="bg-blue-500/80">{registration.matching.length} courses</Badge>
                           </div>
-                          
+
                           <div className="bg-blue-50/30 dark:bg-blue-900/10 p-4 rounded-lg border border-blue-100 dark:border-blue-800/30 mb-4">
                             <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
                               <School className="h-3.5 w-3.5 text-blue-600" />
                               <span>About Matching Courses</span>
                             </h5>
                             <p className="text-xs text-muted-foreground leading-relaxed">
-                              Matching courses are subjects that have been matched with the student&apos;s MBKM program 
+                              Matching courses are subjects that have been matched with the student&apos;s MBKM program
                               activities. These matches are based on curriculum alignment and learning outcomes.
                             </p>
                           </div>
-                          
+
                           <div className="grid gap-4">
                             {registration.matching.map((item, index) => (
                               <motion.div
@@ -483,14 +465,17 @@ export function RegistrationCard({
                               >
                                 {/* Decorative gradient */}
                                 <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-indigo-50 opacity-50 dark:from-blue-950/20 dark:to-indigo-950/20"></div>
-                                
+
                                 {/* Content */}
                                 <div className="relative">
                                   <div className="flex items-start justify-between mb-3">
                                     <div>
                                       <h5 className="font-semibold flex items-center gap-2">
                                         <span>{item.mata_kuliah}</span>
-                                        <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:border-blue-700">
+                                        <Badge
+                                          variant="outline"
+                                          className="bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:border-blue-700"
+                                        >
                                           {item.sks} SKS
                                         </Badge>
                                       </h5>
@@ -500,29 +485,32 @@ export function RegistrationCard({
                                           <span className="font-medium">{item.kode}</span>
                                         </p>
                                         <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-400">
-                                          {typeof item.semester === 'string' ? item.semester : `Semester ${item.semester}`}
+                                          {typeof item.semester === "string"
+                                            ? item.semester
+                                            : `Semester ${item.semester}`}
                                         </span>
                                       </div>
                                     </div>
-                                    
+
                                     <div className="flex items-center gap-2">
                                       {item.documents?.length > 0 ? (
                                         <TooltipProvider>
                                           <Tooltip>
                                             <TooltipTrigger asChild>
-                                              <Button 
-                                                variant="ghost" 
-                                                size="sm" 
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
                                                 className="h-8 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                                                onClick={() => item.documents?.length && setShowDocumentPreview(item.documents[0].file_storage_id)}
+                                                onClick={() =>
+                                                  item.documents?.length &&
+                                                  setShowDocumentPreview(item.documents[0].file_storage_id)
+                                                }
                                               >
                                                 <FileText className="h-4 w-4 mr-1" />
                                                 View Document
                                               </Button>
                                             </TooltipTrigger>
-                                            <TooltipContent>
-                                              {item.documents[0].name}
-                                            </TooltipContent>
+                                            <TooltipContent>{item.documents[0].name}</TooltipContent>
                                           </Tooltip>
                                         </TooltipProvider>
                                       ) : (
@@ -530,7 +518,7 @@ export function RegistrationCard({
                                       )}
                                     </div>
                                   </div>
-                                  
+
                                   <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-y-3 gap-x-2 text-sm border-t pt-3">
                                     <div className="space-y-1">
                                       <h6 className="text-xs text-muted-foreground">Department</h6>
@@ -559,11 +547,7 @@ export function RegistrationCard({
 
                     {registration.equivalents && registration.equivalents.length > 0 && (
                       <TabsContent value="equivalents" className="space-y-4">
-                        <motion.div 
-                          className="space-y-4"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                        >
+                        <motion.div className="space-y-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
                               <Zap className="h-5 w-5 text-purple-500" />
@@ -579,10 +563,11 @@ export function RegistrationCard({
                             </h5>
                             <p className="text-xs text-muted-foreground leading-relaxed">
                               Equivalent courses are recognized as equal to specific courses in the ITS curriculum.
-                              Credits earned in these courses will be automatically transferred to the student&apos;s academic record.
+                              Credits earned in these courses will be automatically transferred to the student&apos;s
+                              academic record.
                             </p>
                           </div>
-                          
+
                           <div className="grid gap-4">
                             {registration.equivalents.map((item, index) => (
                               <motion.div
@@ -594,14 +579,17 @@ export function RegistrationCard({
                               >
                                 {/* Decorative gradient */}
                                 <div className="absolute inset-0 bg-gradient-to-r from-purple-50 to-fuchsia-50 opacity-50 dark:from-purple-950/20 dark:to-fuchsia-950/20"></div>
-                                
+
                                 {/* Content */}
                                 <div className="relative">
                                   <div className="flex items-start justify-between mb-3">
                                     <div>
                                       <h5 className="font-semibold flex items-center gap-2">
                                         <span>{item.mata_kuliah}</span>
-                                        <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/50 dark:border-purple-700">
+                                        <Badge
+                                          variant="outline"
+                                          className="bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/50 dark:border-purple-700"
+                                        >
                                           {item.sks} SKS
                                         </Badge>
                                       </h5>
@@ -611,29 +599,32 @@ export function RegistrationCard({
                                           <span className="font-medium">{item.kode}</span>
                                         </p>
                                         <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-400">
-                                          {typeof item.semester === 'string' ? item.semester : `Semester ${item.semester}`}
+                                          {typeof item.semester === "string"
+                                            ? item.semester
+                                            : `Semester ${item.semester}`}
                                         </span>
                                       </div>
                                     </div>
-                                    
+
                                     <div className="flex items-center gap-2">
                                       {item.documents?.length > 0 ? (
                                         <TooltipProvider>
                                           <Tooltip>
                                             <TooltipTrigger asChild>
-                                              <Button 
-                                                variant="ghost" 
-                                                size="sm" 
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
                                                 className="h-8 text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
-                                                onClick={() => item.documents?.length && setShowDocumentPreview(item.documents[0].file_storage_id)}
+                                                onClick={() =>
+                                                  item.documents?.length &&
+                                                  setShowDocumentPreview(item.documents[0].file_storage_id)
+                                                }
                                               >
                                                 <FileText className="h-4 w-4 mr-1" />
                                                 View Document
                                               </Button>
                                             </TooltipTrigger>
-                                            <TooltipContent>
-                                              {item.documents[0].name}
-                                            </TooltipContent>
+                                            <TooltipContent>{item.documents[0].name}</TooltipContent>
                                           </Tooltip>
                                         </TooltipProvider>
                                       ) : (
@@ -641,7 +632,7 @@ export function RegistrationCard({
                                       )}
                                     </div>
                                   </div>
-                                  
+
                                   <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-y-3 gap-x-2 text-sm border-t pt-3">
                                     <div className="space-y-1">
                                       <h6 className="text-xs text-muted-foreground">Department</h6>
@@ -677,12 +668,9 @@ export function RegistrationCard({
 
       <AnimatePresence>
         {showDocumentPreview && (
-          <DocumentPreview
-            documentId={showDocumentPreview}
-            onClose={() => setShowDocumentPreview(null)}
-          />
+          <DocumentPreview documentId={showDocumentPreview} onClose={() => setShowDocumentPreview(null)} />
         )}
       </AnimatePresence>
     </motion.div>
-  )
+  );
 }

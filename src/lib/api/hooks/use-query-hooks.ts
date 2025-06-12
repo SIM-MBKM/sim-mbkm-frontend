@@ -5,22 +5,17 @@ import {
   authService,
   matchingService,
   monitoringService,
-  registrationService,
   userService,
   type LoginCredentials,
   type LogoutCredentials,
   type UserUpdateInput,
   type ActivityCreateInput,
   type LogbookInput,
-  type RegisterInput,
   type TranscriptInput,
   SyllabusInput,
   ReportInput,
   EquivalentInput,
-  RegistrationUpdateRequest,
   SubjectFilterRequest,
-  ApprovalInput,
-  RegistrationFilter,
   ReportApprovalInput,
   TranscriptByAdvisorInput,
   SyllabusByAdvisorInput,
@@ -69,6 +64,13 @@ import {
   PartnerRatingCreateInput,
   PartnerRatingPublish,
 } from "../services/monev-service";
+import {
+  registrationService,
+  type RegistrationFilter,
+  type RegisterInput,
+  type ApprovalInput,
+  type RegistrationUpdateRequest,
+} from "../services/registration-service";
 import { string } from "zod";
 import { UserRole } from "../services";
 

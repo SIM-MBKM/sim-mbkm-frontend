@@ -31,7 +31,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import type { UserAlt, Registration } from "@/lib/api/services";
+import type { UserAlt } from "@/lib/api/services";
+import { Registration } from "@/lib/api/services/registration-service";
 import type { EvaluationList } from "@/lib/api/services/monev-service";
 import { EvaluationUpdateDialog } from "./evaluation-update-dialog";
 

@@ -1,15 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 
-export default function AuthCallbackPage() {
+// Create a separate component for the callback logic
+function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<"loading" | "success" | "error">(
-    "loading"
-  );
+  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
 
   useEffect(() => {
     const handleCallback = () => {
@@ -85,13 +84,34 @@ export default function AuthCallbackPage() {
           {status === "error" && (
             <div>
               <div className="text-red-500 text-4xl mb-4">✗</div>
-              <p className="text-red-600">
-                Authentication failed. Redirecting...
-              </p>
+              <p className="text-red-600">Authentication failed. Redirecting...</p>
             </div>
           )}
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// Loading fallback component
+function AuthCallbackLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <Card className="w-full max-w-md">
+        <CardContent className="p-6 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#013880] mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Main page component with Suspense boundary
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={<AuthCallbackLoading />}>
+      <AuthCallbackContent />
+    </Suspense>
   );
 }

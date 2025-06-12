@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -71,7 +71,8 @@ const useAuthRedirect = () => {
   return { isCheckingAuth };
 };
 
-const useOAuthErrorHandler = () => {
+// Separate component that uses useSearchParams
+const OAuthErrorHandler = () => {
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
@@ -97,6 +98,8 @@ const useOAuthErrorHandler = () => {
 
     return errorMap[error] || "Authentication failed. Please try again.";
   };
+
+  return null; // This component doesn't render anything
 };
 
 const useEmailAuth = () => {
@@ -135,7 +138,8 @@ const useEmailAuth = () => {
   };
 };
 
-export default function LoginPage() {
+// Main login component content
+function LoginPageContent() {
   const { isCheckingAuth } = useAuthRedirect();
   const { formData, errors, handleInputChange, setError } = useLoginForm();
 
@@ -144,9 +148,6 @@ export default function LoginPage() {
 
   const { checkEmailAndRedirect, isChecking } = useEmailAuth();
   const oauthRedirectMutation = useOAuthRedirect();
-
-  // Handle OAuth errors from URL params
-  useOAuthErrorHandler();
 
   // Show loading spinner while checking authentication
   if (isCheckingAuth) {
@@ -179,93 +180,121 @@ export default function LoginPage() {
   const isLoading = isChecking || loginMutation.isLoading || oauthRedirectMutation.isLoading;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-8">Sign in</h1>
-        </div>
+    <>
+      {/* OAuth Error Handler wrapped in its own Suspense */}
+      <Suspense fallback={null}>
+        <OAuthErrorHandler />
+      </Suspense>
 
-        <Card className="border border-gray-200 shadow-sm">
-          <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="sr-only">Login Form</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Email Login Form */}
-            <form onSubmit={onEmailSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Your email address"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#013880] focus:border-transparent ${
-                    errors.email ? "border-red-500" : "border-gray-300"
-                  }`}
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md space-y-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-semibold text-gray-900 mb-8">Sign in</h1>
+          </div>
+
+          <Card className="border border-gray-200 shadow-sm">
+            <CardHeader className="space-y-1 pb-4">
+              <CardTitle className="sr-only">Login Form</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Email Login Form */}
+              <form onSubmit={onEmailSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                    Email
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Your email address"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#013880] focus:border-transparent ${
+                      errors.email ? "border-red-500" : "border-gray-300"
+                    }`}
+                    disabled={isLoading}
+                  />
+                  {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={isLoading || !formData.email.trim()}
+                  className="w-full bg-[#013880] hover:bg-[#012660] text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isChecking ? "Checking..." : "Continue"}
+                </Button>
+              </form>
+
+              {/* Divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <Separator className="w-full" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-gray-500">OR</span>
+                </div>
+              </div>
+
+              {/* Social Login Options */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Google Login */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleOAuthRedirect("google")}
                   disabled={isLoading}
-                />
-                {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
+                  className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#013880] focus:border-transparent transition-colors duration-200"
+                >
+                  <GoogleIcon />
+                  Google
+                </Button>
+
+                {/* ITS Login */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleOAuthRedirect("sso")}
+                  disabled={isLoading}
+                  className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#013880] focus:border-transparent transition-colors duration-200"
+                >
+                  <ITSIcon />
+                  ITS
+                </Button>
               </div>
 
-              <Button
-                type="submit"
-                disabled={isLoading || !formData.email.trim()}
-                className="w-full bg-[#013880] hover:bg-[#012660] text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isChecking ? "Checking..." : "Continue"}
-              </Button>
-            </form>
+              {/* Show login mutation errors if any */}
+              {loginMutation.error && (
+                <div className="text-sm text-red-600 text-center">
+                  {loginMutation.error.message || "Login failed. Please try again."}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </>
+  );
+}
 
-            {/* Divider */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <Separator className="w-full" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-gray-500">OR</span>
-              </div>
-            </div>
-
-            {/* Social Login Options */}
-            <div className="grid grid-cols-2 gap-3">
-              {/* Google Login */}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleOAuthRedirect("google")}
-                disabled={isLoading}
-                className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#013880] focus:border-transparent transition-colors duration-200"
-              >
-                <GoogleIcon />
-                Google
-              </Button>
-
-              {/* ITS Login */}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleOAuthRedirect("sso")}
-                disabled={isLoading}
-                className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#013880] focus:border-transparent transition-colors duration-200"
-              >
-                <ITSIcon />
-                ITS
-              </Button>
-            </div>
-
-            {/* Show login mutation errors if any */}
-            {loginMutation.error && (
-              <div className="text-sm text-red-600 text-center">
-                {loginMutation.error.message || "Login failed. Please try again."}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+// Loading fallback for the main page
+function LoginPageLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#013880] mx-auto"></div>
+        <p className="mt-4 text-gray-600">Loading...</p>
       </div>
     </div>
+  );
+}
+
+// Main page component with Suspense boundary
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginPageLoading />}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
 

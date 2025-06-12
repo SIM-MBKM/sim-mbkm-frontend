@@ -1,15 +1,9 @@
-"use client"
+"use client";
 
 import React, { useState, useEffect } from "react";
 import { FileText, Download, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Document } from "@/lib/api/services/registration-service";
 import { useGetTemporaryLink } from "@/lib/api/hooks/use-query-hooks";
 import { toast } from "react-toastify";
@@ -33,16 +27,15 @@ export function DocumentPreview({ documentId, onClose }: DocumentPreviewProps) {
   useEffect(() => {
     if (documentId) {
       // In a real application, you would fetch the document data from your API
-      // This is just for simulating a fetch - in a real app you'd get this from the parent 
+      // This is just for simulating a fetch - in a real app you'd get this from the parent
       // component or fetch it using the ID
       const fetchTimeout = setTimeout(() => {
         setDocItem({
           id: "doc-" + documentId.substring(0, 6),
           registration_id: "reg-123",
-          subject_id: "subject-123",
           file_storage_id: documentId,
           name: "Document " + documentId.substring(0, 6) + ".pdf",
-          document_type: "application/pdf"
+          document_type: "application/pdf",
         });
         setIsPDF(true);
         setLoading(false);
@@ -57,17 +50,12 @@ export function DocumentPreview({ documentId, onClose }: DocumentPreviewProps) {
   }, [documentId]);
 
   // Use the hook to get the temporary link
-  const { 
-    data: fileData, 
-    isLoading: isFileLoading, 
-    error: fileError,
-    refetch
-  } = useGetTemporaryLink(documentId);
+  const { data: fileData, isLoading: isFileLoading, error: fileError, refetch } = useGetTemporaryLink(documentId);
 
   // Determine document icon based on mime type
   const getDocumentIcon = () => {
     if (!docItem) return <FileText className="h-16 w-16 text-blue-500" />;
-    
+
     if (docItem.document_type.includes("pdf")) {
       return <FileText className="h-16 w-16 text-red-500" />;
     } else if (docItem.document_type.includes("image")) {
@@ -77,17 +65,17 @@ export function DocumentPreview({ documentId, onClose }: DocumentPreviewProps) {
     } else if (docItem.document_type.includes("excel") || docItem.document_type.includes("sheet")) {
       return <FileText className="h-16 w-16 text-green-500" />;
     }
-    
+
     return <FileText className="h-16 w-16 text-gray-500" />;
   };
 
   const handleDownload = () => {
     if (fileData?.url) {
       // Create a temporary anchor element to trigger the download
-      const link = window.document.createElement('a');
+      const link = window.document.createElement("a");
       link.href = fileData.url;
-      link.target = '_blank';
-      link.download = docItem?.name || 'document';
+      link.target = "_blank";
+      link.download = docItem?.name || "document";
       window.document.body.appendChild(link);
       link.click();
       window.document.body.removeChild(link);
@@ -99,7 +87,7 @@ export function DocumentPreview({ documentId, onClose }: DocumentPreviewProps) {
 
   const handleOpenInNewTab = () => {
     if (fileData?.url) {
-      window.open(fileData.url, '_blank');
+      window.open(fileData.url, "_blank");
     } else {
       toast.error("Unable to open file. Please try again later.");
       refetch();
@@ -112,11 +100,7 @@ export function DocumentPreview({ documentId, onClose }: DocumentPreviewProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-blue-500" />
-            {loading ? (
-              <Skeleton className="h-6 w-40" />
-            ) : (
-              <span>{docItem?.name}</span>
-            )}
+            {loading ? <Skeleton className="h-6 w-40" /> : <span>{docItem?.name}</span>}
           </DialogTitle>
           <div className="mt-1 text-sm text-muted-foreground">
             {loading ? (
@@ -147,11 +131,7 @@ export function DocumentPreview({ documentId, onClose }: DocumentPreviewProps) {
             </div>
           ) : fileData?.url ? (
             isPDF ? (
-              <iframe 
-                src={fileData.url} 
-                className="w-full h-[60vh]" 
-                title={docItem?.name || "Document Preview"} 
-              />
+              <iframe src={fileData.url} className="w-full h-[60vh]" title={docItem?.name || "Document Preview"} />
             ) : (
               <div className="flex flex-col items-center justify-center p-10 text-center">
                 {getDocumentIcon()}
@@ -189,9 +169,11 @@ export function DocumentPreview({ documentId, onClose }: DocumentPreviewProps) {
               <span className="ml-4">Link expires: {new Date(fileData.expired_at).toLocaleString()}</span>
             )}
           </div>
-          <Button variant="ghost" onClick={() => onClose()}>Close</Button>
+          <Button variant="ghost" onClick={() => onClose()}>
+            Close
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-} 
+}

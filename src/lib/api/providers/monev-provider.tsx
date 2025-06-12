@@ -13,7 +13,8 @@ import {
   useDosenPembimbingUsersAlt,
   useRegistrations,
 } from "@/lib/api/hooks";
-import type { PaginatedResponse, UserAlt, Registration } from "@/lib/api/services";
+import type { PaginatedResponse, UserAlt } from "@/lib/api/services";
+import { Registration } from "@/lib/api/services/registration-service";
 import { EvaluationList, Evaluation, EvaluationCreateInput, EvaluationUpdateInput } from "../services/monev-service";
 import type React from "react";
 import { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";

@@ -49,6 +49,18 @@ const MENU_ITEMS: Record<
     }>;
   }[]
 > = {
+  MITRA: [
+    {
+      section: "Beranda",
+      items: [
+        {
+          label: "Beranda",
+          icon: <Home className="h-5 w-5" />,
+          href: "/dashboard/mitra",
+        },
+      ],
+    },
+  ],
   MAHASISWA: [
     {
       section: "Beranda",
