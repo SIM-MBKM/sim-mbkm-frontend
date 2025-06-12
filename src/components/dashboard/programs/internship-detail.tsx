@@ -1,17 +1,28 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import { Calendar, MapPin, Building2, Tag, School, Clock, BookOpen, ExternalLink, Bookmark, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Activity } from "@/lib/api/services/activity-service"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { toast, ToastContainer } from "react-toastify"
-import 'react-toastify/dist/ReactToastify.css'
-import { motion } from "framer-motion"
-import { useRoleManager } from "@/lib/hooks/use-role-manager"
-import { useQuery } from "@tanstack/react-query"
-import { registrationService } from "@/lib/api/services/registration-service"
+import Image from "next/image";
+import {
+  Calendar,
+  MapPin,
+  Building2,
+  Tag,
+  School,
+  Clock,
+  BookOpen,
+  ExternalLink,
+  Bookmark,
+  Loader2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Activity } from "@/lib/api/services/activity-service";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { motion } from "framer-motion";
+import { useRoleManager } from "@/lib/hooks/use-role-manager";
+import { useQuery } from "@tanstack/react-query";
+import { registrationService } from "@/lib/api/services/registration-service";
 
 interface InternshipDetailProps {
   internship: Activity;
@@ -21,33 +32,33 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  
+
   // Get the user's role
   const { role } = useRoleManager();
-  
+
   // Check if the user is a student
   const isMahasiswa = role === "MAHASISWA";
-  
+
   // Use custom implementation instead of useCheckEligibility hook to conditionally enable the query
   const { refetch: checkEligibility } = useQuery({
-    queryKey: ['checkEligibility', internship.id],
+    queryKey: ["checkEligibility", internship.id],
     queryFn: () => registrationService.checkEligibility(internship.id),
     enabled: false, // Don't run automatically on mount
     gcTime: 0, // Don't cache the result
   });
-  
-  // Check if matching data exists
-  const hasMatchings = internship.matching && internship.matching.length > 0;
-  
+
+  // Check if matching data exists - Fixed null check
+  const hasMatchings = internship.matching && Array.isArray(internship.matching) && internship.matching.length > 0;
+
   // Navigate to registration form with eligibility check
   const handleRegisterClick = async () => {
     if (!isMahasiswa) return;
-    
+
     setIsChecking(true);
-    
+
     try {
       const result = await checkEligibility();
-      
+
       if (result.data && result.data.data) {
         // Check if eligible based on the response (as boolean)
         if (result.data.data.eligible === false) {
@@ -73,20 +84,20 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
     setIsSaved(!isSaved);
     toast.success(isSaved ? "Program removed from saved items" : "Program saved successfully");
   };
-  
+
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
       className="bg-white border rounded-lg shadow-sm overflow-hidden"
     >
       <ToastContainer position="top-right" autoClose={3000} />
-      
+
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b">
         <div className="flex items-start gap-4">
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className="flex-shrink-0 bg-white p-2 rounded-lg shadow-sm"
@@ -100,7 +111,7 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
             />
           </motion.div>
           <div className="flex-1">
-            <motion.h2 
+            <motion.h2
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1 }}
@@ -108,7 +119,7 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
             >
               {internship.name}
             </motion.h2>
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
@@ -116,10 +127,10 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
             >
               {internship.program_provider}
             </motion.p>
-            
+
             <div className="flex flex-wrap gap-x-4 gap-y-2 mt-3">
               {internship.location && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
@@ -129,9 +140,9 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
                   <span>{internship.location}</span>
                 </motion.div>
               )}
-              
+
               {internship.program_type && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.4 }}
@@ -141,9 +152,9 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
                   <span>{internship.program_type}</span>
                 </motion.div>
               )}
-              
+
               {internship.months_duration && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 }}
@@ -161,17 +172,8 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
       {/* Action Buttons */}
       <div className="flex gap-3 p-6 border-b">
         {isMahasiswa && (
-          <motion.div 
-            whileHover={{ scale: 1.03 }} 
-            whileTap={{ scale: 0.97 }}
-            className="flex-1"
-          >
-            <Button 
-              variant="default" 
-              className="w-full"
-              onClick={handleRegisterClick}
-              disabled={isChecking}
-            >
+          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="flex-1">
+            <Button variant="default" className="w-full" onClick={handleRegisterClick} disabled={isChecking}>
               {isChecking ? (
                 <span className="flex items-center">
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -183,14 +185,10 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
             </Button>
           </motion.div>
         )}
-        
-        <motion.div 
-          whileHover={{ scale: 1.05 }} 
-          whileTap={{ scale: 0.95 }}
-          className={isMahasiswa ? "" : "flex-1"}
-        >
-          <Button 
-            variant="outline" 
+
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className={isMahasiswa ? "" : "flex-1"}>
+          <Button
+            variant="outline"
             onClick={toggleSave}
             className={`${isMahasiswa ? "" : "w-full"} ${isSaved ? "text-blue-600 border-blue-200 bg-blue-50" : ""}`}
           >
@@ -202,7 +200,7 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
 
       {/* Details Section */}
       <div className="p-6 border-b">
-        <motion.h3 
+        <motion.h3
           initial={{ opacity: 0, y: -5 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
@@ -210,20 +208,16 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
         >
           Detail Program
         </motion.h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <h4 className="text-sm text-gray-500 mb-2 font-medium">Deskripsi Program</h4>
             <p className="text-sm text-gray-700 leading-relaxed">
               {internship.description || "Tidak ada deskripsi program tersedia."}
             </p>
           </motion.div>
-          
-          <motion.div 
+
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
@@ -239,7 +233,7 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
                     <p className="text-sm text-gray-700">{internship.program_provider || "Tidak tersedia"}</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start">
                   <School className="h-4 w-4 text-gray-500 mt-0.5 mr-2" />
                   <div>
@@ -249,7 +243,7 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start">
                   <Calendar className="h-4 w-4 text-gray-500 mt-0.5 mr-2" />
                   <div>
@@ -259,16 +253,16 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
                 </div>
               </div>
             </div>
-            
+
             {internship.web_portal && (
               <div>
                 <h4 className="text-sm text-gray-500 mb-2 font-medium">Web Portal</h4>
                 <div className="flex items-center gap-2">
                   <ExternalLink className="h-4 w-4 text-gray-700" />
-                  <a 
-                    href={internship.web_portal} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
+                  <a
+                    href={internship.web_portal}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-sm text-blue-600 hover:underline"
                   >
                     {internship.web_portal}
@@ -282,7 +276,7 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
 
       {/* Courses Section */}
       <div className="p-6">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
@@ -291,21 +285,24 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
           <BookOpen className="h-5 w-5 text-blue-600" />
           <h3 className="text-lg font-bold">Mata Kuliah Relevan</h3>
         </motion.div>
-        
+
         {hasMatchings ? (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6, staggerChildren: 0.1 }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
           >
-            {internship.matching.map((matching, index) => (
-              <motion.div 
+            {internship.matching?.map((matching, index) => (
+              <motion.div
                 key={matching.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 + index * 0.1 }}
-                whileHover={{ y: -3, boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)" }}
+                whileHover={{
+                  y: -3,
+                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                }}
                 className="border rounded-lg p-3 bg-gray-50 hover:bg-white transition-all"
               >
                 <div className="flex items-start justify-between">
@@ -323,10 +320,10 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
                   </p>
                 </div>
               </motion.div>
-            ))}
+            )) || []}
           </motion.div>
         ) : (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
@@ -337,5 +334,5 @@ export function InternshipDetail({ internship }: InternshipDetailProps) {
         )}
       </div>
     </motion.div>
-  )
+  );
 }
