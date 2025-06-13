@@ -22,6 +22,16 @@ export interface UserAlt {
   nrp: string;
 }
 
+export interface UserAlt2 {
+  id: string;
+  auth_user_id: string;
+  name: string;
+  email: string;
+  role: string;
+  // department?: string; ----> currently not needed
+  nrp: string;
+}
+
 export interface UserRole {
   // role: "MAHASISWA" | "DOSEN PEMBIMBING" | "DOSEN PEMONEV" | "LO-MBKM" | "MITRA" | "ADMIN";
   role: string;
@@ -111,6 +121,11 @@ export const userService = {
 
   getUserDatas: async () => {
     const response = await userApi.get<BaseResponse<User>>(`/users/me`);
+    return response.data;
+  },
+
+  getUserDatasAlt: async () => {
+    const response = await userApi.get<BaseResponse<UserAlt2>>(`/users/me`);
     return response.data;
   },
 

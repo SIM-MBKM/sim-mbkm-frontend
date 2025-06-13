@@ -26,10 +26,35 @@ export interface EvaluationList {
   dosen_pemonev_id: string;
 }
 
+export interface EvaluationListAlt {
+  id: string;
+  status: "pending" | "in_progress" | "completed";
+  registration_id?: string;
+  mahasiswa_id: string;
+  mahasiswa_data: UserData;
+  dosen_pemonev_id: string;
+  dosen_pemonev_data: UserData;
+}
+
+export interface UserData {
+  id: string;
+  name: string;
+  email: string;
+}
+
 export interface EvaluationScore {
   id: string;
   score: number;
   grade_letter: string;
+  subject_data: SubjectData;
+}
+
+export interface SubjectData {
+  name: string;
+  code: string;
+  credits: number;
+  course_type: string;
+  department: string;
 }
 
 export interface PartnerRating {
@@ -67,10 +92,10 @@ export interface EvaluationCreateInput {
 export interface EvaluationUpdateInput {
   id: string;
   event_id?: string;
-  mahasiswa_id: string;
-  dosen_pemonev_id: string;
-  registration_id: string;
-  status: "pending" | "in_progress" | "completed";
+  mahasiswa_id?: string;
+  dosen_pemonev_id?: string;
+  registration_id?: string;
+  status?: "pending" | "in_progress" | "completed";
 }
 
 export interface EvaluationFinalize {
@@ -169,6 +194,11 @@ export const monevService = {
     return response.data;
   },
 
+  getEvaluationByIdMe: async (id: string): Promise<EvaluationResponse> => {
+    const response = await monevApi.get<EvaluationResponse>(`/evaluations/mahasiswa-me/${id}`);
+    return response.data;
+  },
+
   getEvaluations: async (page: number = 1, perPage: number = 10): Promise<PaginatedResponse<EvaluationList>> => {
     const response = await monevApi.get<PaginatedResponse<EvaluationList>>("/evaluations/all", {
       params: {
@@ -229,8 +259,8 @@ export const monevService = {
   getEvaluationsByMahasiswaMe: async (
     page: number = 1,
     perPage: number = 10
-  ): Promise<PaginatedResponse<EvaluationList>> => {
-    const response = await monevApi.get<PaginatedResponse<EvaluationList>>("/evaluations/mahasiswa-me", {
+  ): Promise<PaginatedResponse<EvaluationListAlt>> => {
+    const response = await monevApi.get<PaginatedResponse<EvaluationListAlt>>("/evaluations/mahasiswa-me", {
       params: { page, per_page: perPage },
     });
     return response.data;

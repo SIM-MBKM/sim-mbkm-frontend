@@ -26,6 +26,7 @@ import {
   FileEdit,
   Monitor,
   DatabaseIcon,
+  CircleUserRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -57,6 +58,16 @@ const MENU_ITEMS: Record<
           label: "Beranda",
           icon: <Home className="h-5 w-5" />,
           href: "/dashboard/mitra",
+        },
+      ],
+    },
+    {
+      section: "Pengaturan",
+      items: [
+        {
+          label: "Profile",
+          icon: <CircleUserRound className="h-5 w-5" />,
+          href: "/dashboard/mitra/profile",
         },
       ],
     },
@@ -136,9 +147,9 @@ const MENU_ITEMS: Record<
       section: "Pengaturan",
       items: [
         {
-          label: "Pengaturan Akun",
-          icon: <Settings className="h-5 w-5" />,
-          href: "/dashboard/mahasiswa/settings",
+          label: "Profile",
+          icon: <CircleUserRound className="h-5 w-5" />,
+          href: "/dashboard/mahasiswa/profile",
         },
       ],
     },
@@ -208,9 +219,9 @@ const MENU_ITEMS: Record<
       section: "Pengaturan",
       items: [
         {
-          label: "Pengaturan Akun",
-          icon: <Settings className="h-5 w-5" />,
-          href: "/dashboard/dosen-pembimbing/settings",
+          label: "Profile",
+          icon: <CircleUserRound className="h-5 w-5" />,
+          href: "/dashboard/mahasiswa/profile",
         },
       ],
     },
@@ -234,6 +245,16 @@ const MENU_ITEMS: Record<
           label: "Kelola Monev",
           icon: <FileEdit className="h-5 w-5" />,
           href: "/dashboard/dosen-pemonev/monev",
+        },
+      ],
+    },
+    {
+      section: "Pengaturan",
+      items: [
+        {
+          label: "Profile",
+          icon: <CircleUserRound className="h-5 w-5" />,
+          href: "/dashboard/mahasiswa/profile",
         },
       ],
     },
@@ -278,20 +299,20 @@ const MENU_ITEMS: Record<
           icon: <FileEdit className="h-5 w-5" />,
           href: "/dashboard/lo-mbkm/monev",
         },
-        {
-          label: "Kelola Kalender",
-          icon: <Calendar className="h-5 w-5" />,
-          href: "/dashboard/lo-mbkm/calender",
-        },
+        // {
+        //   label: "Kelola Kalender",
+        //   icon: <Calendar className="h-5 w-5" />,
+        //   href: "/dashboard/lo-mbkm/calender",
+        // },
       ],
     },
     {
-      section: "Sistem",
+      section: "Pengaturan",
       items: [
         {
-          label: "Pengaturan",
-          icon: <Settings className="h-5 w-5" />,
-          href: "/dashboard/admin/settings",
+          label: "Profile",
+          icon: <CircleUserRound className="h-5 w-5" />,
+          href: "/dashboard/mahasiswa/profile",
         },
       ],
     },
@@ -321,20 +342,20 @@ const MENU_ITEMS: Record<
           icon: <DatabaseIcon className="h-5 w-5" />,
           href: "/dashboard/admin/reports",
         },
-        {
-          label: "Kelola Kalender",
-          icon: <Calendar className="h-5 w-5" />,
-          href: "/dashboard/admin/calendar",
-        },
+        // {
+        //   label: "Kelola Kalender",
+        //   icon: <Calendar className="h-5 w-5" />,
+        //   href: "/dashboard/admin/calendar",
+        // },
       ],
     },
     {
-      section: "Sistem",
+      section: "Pengaturan",
       items: [
         {
-          label: "Pengaturan",
-          icon: <Settings className="h-5 w-5" />,
-          href: "/dashboard/admin/settings",
+          label: "Profile",
+          icon: <CircleUserRound className="h-5 w-5" />,
+          href: "/dashboard/mahasiswa/profile",
         },
       ],
     },

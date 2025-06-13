@@ -1,7 +1,6 @@
 "use client";
 
-import type React from "react";
-import { createContext, useContext, useState, useCallback, useMemo } from "react";
+import React, { createContext, useContext, useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ClipboardList,
@@ -19,8 +18,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useEvaluationsByMahasiswaMe, useEvaluationById } from "@/lib/api/hooks";
-import type { EvaluationList, Evaluation } from "@/lib/api/services/monev-service";
+import { useEvaluationsByMahasiswaMe, useEvaluationByIdMe } from "@/lib/api/hooks";
+import type { EvaluationList, Evaluation, EvaluationListAlt } from "@/lib/api/services/monev-service";
 
 // Types
 type MahasiswaMonevStats = {
@@ -29,7 +28,7 @@ type MahasiswaMonevStats = {
 };
 
 type MahasiswaMonevContextType = {
-  evaluations: EvaluationList[] | undefined;
+  evaluations: EvaluationListAlt[] | undefined;
   isLoading: boolean;
   stats: MahasiswaMonevStats;
   expandedCard: string | null;
@@ -53,9 +52,9 @@ function useMahasiswaMonev() {
 function MahasiswaMonevProvider({ children }: { children: React.ReactNode }) {
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
 
-  const { data: evaluationsData, isLoading: isEvaluationsLoading } = useEvaluationsByMahasiswaMe(1, 50); // Get more records for simplicity
+  const { data: evaluationsData, isLoading: isEvaluationsLoading } = useEvaluationsByMahasiswaMe(1, 50);
 
-  const { data: selectedEvaluationData, isLoading: isLoadingDetails } = useEvaluationById(expandedCard || undefined);
+  const { data: selectedEvaluationData, isLoading: isLoadingDetails } = useEvaluationByIdMe(expandedCard || undefined);
 
   const evaluations = evaluationsData?.data || [];
 
@@ -108,7 +107,7 @@ function StatsHeader() {
 }
 
 // Expandable Evaluation Card
-function EvaluationCard({ evaluation }: { evaluation: EvaluationList }) {
+function EvaluationCard({ evaluation }: { evaluation: EvaluationListAlt }) {
   const { expandedCard, setExpandedCard, selectedEvaluation, isLoadingDetails } = useMahasiswaMonev();
   const isExpanded = expandedCard === evaluation.id;
 
@@ -169,7 +168,10 @@ function EvaluationCard({ evaluation }: { evaluation: EvaluationList }) {
               </div>
               <div>
                 <h3 className="font-semibold text-lg text-gray-900">Evaluation #{evaluation.id.slice(-6)}</h3>
-                <p className="text-sm text-gray-600">Evaluator: {evaluation.dosen_pemonev_id.slice(-6)}</p>
+                <p className="text-sm text-gray-600">
+                  Evaluator:{" "}
+                  {evaluation.dosen_pemonev_data?.name || evaluation.dosen_pemonev_id?.slice(-6) || "Not assigned"}
+                </p>
               </div>
             </div>
 
@@ -204,16 +206,6 @@ function EvaluationCard({ evaluation }: { evaluation: EvaluationList }) {
             />
           </div>
 
-          {/* Action Buttons */}
-          {/* <div className="flex gap-2">
-            {evaluation.status === "completed" && (
-              <Button variant="default" size="sm" className="gap-2 bg-green-600 hover:bg-green-700 text-white">
-                <Download className="h-4 w-4" />
-                Download Certificate
-              </Button>
-            )}
-          </div> */}
-
           {/* Expanded Content - Scores */}
           <AnimatePresence>
             {isExpanded && (
@@ -234,59 +226,81 @@ function EvaluationCard({ evaluation }: { evaluation: EvaluationList }) {
                       </div>
                     </div>
                   </div>
-                ) : selectedEvaluation && selectedEvaluation.scores && selectedEvaluation.scores.length > 0 ? (
-                  <div className="space-y-4">
-                    <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                      <Star className="h-4 w-4 text-blue-600" />
-                      Your Scores
-                    </h4>
+                ) : selectedEvaluation && selectedEvaluation.id === evaluation.id ? (
+                  selectedEvaluation.scores && selectedEvaluation.scores.length > 0 ? (
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                        <Star className="h-4 w-4 text-blue-600" />
+                        Your Scores
+                      </h4>
 
-                    <div className="grid gap-3">
-                      {selectedEvaluation.scores.map((score, index) => (
-                        <div key={score.id} className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <GraduationCap className="h-4 w-4 text-blue-600" />
-                              <span className="font-medium text-gray-900">Subject {index + 1}</span>
+                      <div className="grid gap-3">
+                        {selectedEvaluation.scores.map((score, index) => (
+                          <div key={score.id} className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <GraduationCap className="h-4 w-4 text-blue-600" />
+                                <div className="flex flex-col">
+                                  <span className="font-medium text-gray-900">
+                                    {score.subject_data?.name || `Subject ${index + 1}`}
+                                  </span>
+                                  {score.subject_data?.code && (
+                                    <span className="text-xs text-gray-500">
+                                      {score.subject_data.code} • {score.subject_data.credits} credits
+                                    </span>
+                                  )}
+                                  {score.subject_data?.department && (
+                                    <span className="text-xs text-gray-400">{score.subject_data.department}</span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-3">
+                                <span className="text-xl font-bold text-gray-900">{score.score || "N/A"}</span>
+                                <Badge className={`${getGradeColor(score.grade_letter)} border font-medium`}>
+                                  {score.grade_letter || "N/A"}
+                                </Badge>
+                              </div>
                             </div>
 
-                            <div className="flex items-center gap-3">
-                              <span className="text-xl font-bold text-gray-900">{score.score || "N/A"}</span>
-                              <Badge className={`${getGradeColor(score.grade_letter)} border font-medium`}>
-                                {score.grade_letter || "N/A"}
-                              </Badge>
-                            </div>
+                            {score.score && (
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div
+                                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                  style={{ width: `${score.score}%` }}
+                                />
+                              </div>
+                            )}
                           </div>
+                        ))}
+                      </div>
 
-                          {score.score && (
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div
-                                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${score.score}%` }}
-                              />
-                            </div>
-                          )}
+                      {/* Average Score */}
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium text-blue-900">Average Score</span>
+                          <span className="text-xl font-bold text-blue-600">
+                            {Math.round(
+                              selectedEvaluation.scores.reduce((acc, score) => acc + (score.score || 0), 0) /
+                                selectedEvaluation.scores.length
+                            )}
+                            /100
+                          </span>
                         </div>
-                      ))}
-                    </div>
-
-                    {/* Average Score */}
-                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium text-blue-900">Average Score</span>
-                        <span className="text-xl font-bold text-blue-600">
-                          {selectedEvaluation.scores.reduce((acc, score) => acc + (score.score || 0), 0) /
-                            selectedEvaluation.scores.length}
-                          /100
-                        </span>
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <ClipboardList className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-gray-600 font-medium">No scores available yet</p>
+                      <p className="text-gray-500 text-sm">Your evaluation is still in progress</p>
+                    </div>
+                  )
                 ) : (
                   <div className="text-center py-6">
                     <ClipboardList className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-600 font-medium">No scores available yet</p>
-                    <p className="text-gray-500 text-sm">Your evaluation is still in progress</p>
+                    <p className="text-gray-600 font-medium">Loading evaluation details...</p>
+                    <p className="text-gray-500 text-sm">Please wait while we fetch your evaluation data</p>
                   </div>
                 )}
               </motion.div>

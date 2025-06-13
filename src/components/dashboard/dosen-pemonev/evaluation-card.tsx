@@ -181,52 +181,67 @@ function ScoreUpdateDialog({
           {scoresData.length > 0 ? (
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-900 text-lg">Update Scores</h3>
-              {scoresData.map((scoreForm, index) => (
-                <div key={scoreForm.id} className="p-4 border-2 border-gray-200 rounded-lg bg-gray-50 space-y-4">
-                  <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-                    <GraduationCap className="h-5 w-5 text-blue-600" />
-                    <span className="text-base font-medium text-gray-900">Subject {index + 1}</span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700">Score (0-100)</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={scoreForm.score}
-                        onChange={(e) => handleScoreChange(index, "score", e.target.value)}
-                        disabled={isUpdating}
-                        className="bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-500 font-mono text-lg"
-                        placeholder="Enter score..."
-                      />
-                      {errors[`score_${index}`] && (
-                        <p className="text-sm text-red-600 bg-red-50 px-2 py-1 rounded border border-red-200">
-                          {errors[`score_${index}`]}
-                        </p>
-                      )}
+              {scoresData.map((scoreForm, index) => {
+                const scoreData = evaluation.scores?.[index];
+                return (
+                  <div key={scoreForm.id} className="p-4 border-2 border-gray-200 rounded-lg bg-gray-50 space-y-4">
+                    <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                      <GraduationCap className="h-5 w-5 text-blue-600" />
+                      <div className="flex flex-col">
+                        <span className="text-base font-medium text-gray-900">
+                          {scoreData?.subject_data?.name || `Subject ${index + 1}`}
+                        </span>
+                        {scoreData?.subject_data?.code && (
+                          <span className="text-xs text-gray-500">
+                            {scoreData.subject_data.code} • {scoreData.subject_data.credits} credits
+                          </span>
+                        )}
+                        {scoreData?.subject_data?.department && (
+                          <span className="text-xs text-gray-400">{scoreData.subject_data.department}</span>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700">Grade Letter</Label>
-                      <Input
-                        value={scoreForm.grade_letter}
-                        onChange={(e) => handleScoreChange(index, "grade_letter", e.target.value)}
-                        disabled={isUpdating}
-                        className="bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-500 font-mono text-lg uppercase"
-                        placeholder="A, B+, C, etc."
-                        maxLength={2}
-                      />
-                      {errors[`grade_${index}`] && (
-                        <p className="text-sm text-red-600 bg-red-50 px-2 py-1 rounded border border-red-200">
-                          {errors[`grade_${index}`]}
-                        </p>
-                      )}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium text-gray-700">Score (0-100)</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={scoreForm.score}
+                          onChange={(e) => handleScoreChange(index, "score", e.target.value)}
+                          disabled={isUpdating}
+                          className="bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-500 font-mono text-lg"
+                          placeholder="Enter score..."
+                        />
+                        {errors[`score_${index}`] && (
+                          <p className="text-sm text-red-600 bg-red-50 px-2 py-1 rounded border border-red-200">
+                            {errors[`score_${index}`]}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium text-gray-700">Grade Letter</Label>
+                        <Input
+                          value={scoreForm.grade_letter}
+                          onChange={(e) => handleScoreChange(index, "grade_letter", e.target.value)}
+                          disabled={isUpdating}
+                          className="bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-500 font-mono text-lg uppercase"
+                          placeholder="A, B+, C, etc."
+                          maxLength={2}
+                        />
+                        {errors[`grade_${index}`] && (
+                          <p className="text-sm text-red-600 bg-red-50 px-2 py-1 rounded border border-red-200">
+                            {errors[`grade_${index}`]}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <Alert className="border-yellow-200 bg-yellow-50">

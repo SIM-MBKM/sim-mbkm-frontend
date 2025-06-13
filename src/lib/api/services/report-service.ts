@@ -175,27 +175,129 @@ export const reportService = {
   },
 
   createReport: async (data: CreateReportRequest): Promise<ApiResponse<Report>> => {
-    const response = await reportApi.post<ApiResponse<Report>>("/reports", data);
+    const response = await reportApi.post<ApiResponse<Report>>("/reports", data, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
     return response.data;
   },
 
   updateReport: async (id: string, data: UpdateReportRequest): Promise<ApiResponse<Report>> => {
-    const response = await reportApi.patch<ApiResponse<Report>>(`/reports/${id}`, data);
-    return response.data;
+    try {
+      // Clean the data to ensure no undefined values
+      const cleanData = {
+        name: data.name || "",
+        description: data.description || "",
+        endpoints: data.endpoints || [],
+        fields: data.fields || [],
+        is_scheduled: data.is_scheduled || false,
+        schedule_frequency: data.schedule_frequency || null,
+      };
+
+      const response = await reportApi.patch<ApiResponse<Report>>(`/reports/${id}`, cleanData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          // Add any additional headers your backend expects
+        },
+        // Handle different response scenarios
+        validateStatus: (status) => {
+          // Accept 200, 201, 204 as successful
+          return status >= 200 && status < 300;
+        },
+      });
+
+      // Handle 204 No Content responses
+      if (response.status === 204) {
+        // Return a mock successful response structure
+        return {
+          status: "success",
+          message: "Report updated successfully",
+          data: {
+            id,
+            ...cleanData,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            results: [],
+          } as Report,
+        };
+      }
+
+      return response.data;
+    } catch (error: any) {
+      // Enhanced error handling for different scenarios
+      if (error.response?.status === 204) {
+        // Treat 204 as success
+        return {
+          status: "success",
+          message: "Report updated successfully",
+          data: {
+            id,
+            ...data,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            results: [],
+          } as Report,
+        };
+      }
+      
+      // Log detailed error information for debugging
+      console.error("Update Report Error Details:", {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        headers: error.response?.headers,
+        data: error.response?.data,
+        config: error.config,
+      });
+      
+      throw error;
+    }
   },
 
   deleteReport: async (id: string): Promise<ApiResponse<null>> => {
-    const response = await reportApi.delete<ApiResponse<null>>(`/reports/${id}`);
+    const response = await reportApi.delete<ApiResponse<null>>(`/reports/${id}`, {
+      headers: {
+        'Accept': 'application/json',
+      },
+      validateStatus: (status) => {
+        // Accept 200, 201, 204 as successful for delete
+        return status >= 200 && status < 300;
+      },
+    });
+
+    // Handle 204 No Content for delete
+    if (response.status === 204) {
+      return {
+        status: "success",
+        message: "Report deleted successfully",
+        data: null,
+      };
+    }
+
     return response.data;
   },
 
-  // Report Generation
+  // Report Generation with enhanced error handling
   generateReport: async (id: string): Promise<ApiResponse<ReportResult>> => {
-    const response = await reportApi.post<ApiResponse<ReportResult>>(`/reports/${id}/generate`);
-    return response.data;
+    try {
+      const response = await reportApi.post<ApiResponse<ReportResult>>(`/reports/${id}/generate`, {}, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        // Increase timeout for report generation as it might take longer
+        timeout: 60000, // 60 seconds
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("Generate Report Error:", error);
+      throw error;
+    }
   },
 
-  // Report Results
+  // Report Results with pagination
   getReportResults: async (
     reportId: string,
     params?: ReportResultFilters & PaginationParams
@@ -217,34 +319,155 @@ export const reportService = {
   },
 
   deleteReportResult: async (resultId: string): Promise<ApiResponse<null>> => {
-    const response = await reportApi.delete<ApiResponse<null>>(`/results/${resultId}`);
+    const response = await reportApi.delete<ApiResponse<null>>(`/results/${resultId}`, {
+      headers: {
+        'Accept': 'application/json',
+      },
+      validateStatus: (status) => {
+        return status >= 200 && status < 300;
+      },
+    });
+
+    if (response.status === 204) {
+      return {
+        status: "success",
+        message: "Report result deleted successfully",
+        data: null,
+      };
+    }
+
     return response.data;
   },
 
-  // Report Exports
+  // Batch delete report results
+  batchDeleteReportResults: async (resultIds: string[]): Promise<ApiResponse<{ deleted: number; failed: number }>> => {
+    try {
+      // If your backend supports batch delete
+      const response = await reportApi.post<ApiResponse<{ deleted: number; failed: number }>>('/results/batch-delete', {
+        result_ids: resultIds,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      // Fallback to individual deletes if batch delete is not supported
+      let deleted = 0;
+      let failed = 0;
+
+      for (const resultId of resultIds) {
+        try {
+          await reportService.deleteReportResult(resultId);
+          deleted++;
+        } catch (error) {
+          console.warn(`Failed to delete result ${resultId}:`, error);
+          failed++;
+        }
+      }
+
+      return {
+        status: "success",
+        message: `Batch delete completed: ${deleted} deleted, ${failed} failed`,
+        data: { deleted, failed },
+      };
+    }
+  },
+
+  // Report Exports with enhanced handling
   exportReportResult: async (resultId: string, data?: ExportReportRequest): Promise<ApiResponse<ReportExport>> => {
-    const response = await reportApi.post<ApiResponse<ReportExport>>(`/results/${resultId}/export`, data || {});
+    const exportData = {
+      report_result_id: resultId,
+      format: "pdf",
+      ...data,
+    };
+
+    const response = await reportApi.post<ApiResponse<ReportExport>>(`/results/${resultId}/export`, exportData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      timeout: 30000, // 30 seconds for export
+    });
     return response.data;
   },
 
   downloadReportResult: async (resultId: string): Promise<ApiResponse<DownloadResponse>> => {
-    const response = await reportApi.get<ApiResponse<DownloadResponse>>(`/results/${resultId}/download`);
+    const response = await reportApi.get<ApiResponse<DownloadResponse>>(`/results/${resultId}/download`, {
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
     return response.data;
   },
 
-  // Scheduling
+  // Scheduling with improved error handling
   scheduleReport: async (reportId: string, data: ScheduleReportRequest): Promise<ApiResponse<Report>> => {
-    const response = await reportApi.post<ApiResponse<Report>>(`/schedules/${reportId}/schedule`, data);
+    const response = await reportApi.post<ApiResponse<Report>>(`/schedules/${reportId}/schedule`, data, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
     return response.data;
   },
 
   removeSchedule: async (reportId: string): Promise<ApiResponse<null>> => {
-    const response = await reportApi.delete<ApiResponse<null>>(`/schedules/${reportId}/schedule`);
+    const response = await reportApi.delete<ApiResponse<null>>(`/schedules/${reportId}/schedule`, {
+      headers: {
+        'Accept': 'application/json',
+      },
+      validateStatus: (status) => {
+        return status >= 200 && status < 300;
+      },
+    });
+
+    if (response.status === 204) {
+      return {
+        status: "success",
+        message: "Schedule removed successfully",
+        data: null,
+      };
+    }
+
     return response.data;
   },
 
   getScheduledReports: async (): Promise<ApiResponse<Report[]>> => {
     const response = await reportApi.get<ApiResponse<Report[]>>("/schedules/scheduled");
     return response.data;
+  },
+
+  // Utility methods for statistics
+  getReportStatistics: async (): Promise<ApiResponse<{
+    total_reports: number;
+    total_results: number;
+    total_exports: number;
+    generated_today: number;
+    scheduled_reports: number;
+  }>> => {
+    try {
+      // If your backend has a dedicated statistics endpoint
+      const response = await reportApi.get<ApiResponse<any>>("/reports/statistics");
+      return response.data;
+    } catch (error) {
+      // Fallback: calculate from existing endpoints
+      console.warn("Statistics endpoint not available, calculating from data...");
+      
+      // This would be handled by the provider instead
+      throw new Error("Statistics endpoint not available");
+    }
+  },
+
+  // Health check method
+  healthCheck: async (): Promise<boolean> => {
+    try {
+      await reportApi.get("/health", { timeout: 5000 });
+      return true;
+    } catch (error) {
+      console.warn("Report API health check failed:", error);
+      return false;
+    }
   },
 };

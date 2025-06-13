@@ -156,6 +156,12 @@ export const useLogout = () => {
 };
 
 // USER HOOKS
+export const useGetUserDatasAlt = () => {
+  return useQuery({
+    queryKey: ["userDatas"],
+    queryFn: () => userService.getUserDatasAlt(),
+  });
+};
 
 export const useCurrentUser = () => {
   return useQuery({
@@ -1055,6 +1061,14 @@ export const useEvaluationById = (id?: string) => {
   });
 };
 
+export const useEvaluationByIdMe = (id?: string) => {
+  return useQuery({
+    queryKey: ["evaluation", id],
+    queryFn: () => monevService.getEvaluationByIdMe(id!),
+    enabled: !!id,
+  });
+};
+
 export const useEvaluationsByPemonevMe = (page = 1, perPage = 10) => {
   return useQuery({
     queryKey: ["evaluations", page, perPage],
@@ -1298,6 +1312,13 @@ export const useReports = (params?: ReportFilters & PaginationParams) => {
     queryKey: ["reports", params?.page || 1, params?.per_page || 10, params?.name, params?.is_scheduled],
     queryFn: () => reportService.getReports(params),
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: (failureCount, error: any) => {
+      // Don't retry on 4xx errors (client errors)
+      if (error?.response?.status >= 400 && error?.response?.status < 500) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 };
 
@@ -1307,6 +1328,12 @@ export const useReport = (id?: string) => {
     queryFn: () => reportService.getReport(id!),
     enabled: !!id,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: (failureCount, error: any) => {
+      if (error?.response?.status >= 400 && error?.response?.status < 500) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 };
 
@@ -1323,6 +1350,12 @@ export const useReportResults = (reportId?: string, params?: ReportResultFilters
     queryFn: () => reportService.getReportResults(reportId!, params),
     enabled: !!reportId,
     staleTime: 2 * 60 * 1000,
+    retry: (failureCount, error: any) => {
+      if (error?.response?.status >= 400 && error?.response?.status < 500) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 };
 
@@ -1343,6 +1376,17 @@ export const useScheduledReports = () => {
   });
 };
 
+// Enhanced statistics hook
+export const useReportStatistics = () => {
+  return useQuery({
+    queryKey: ["reportStatistics"],
+    queryFn: () => reportService.getReportStatistics(),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    retry: false, // Don't retry if endpoint doesn't exist
+    throwOnError: false, // Don't throw if endpoint doesn't exist
+  });
+};
+
 // REPORT MUTATION HOOKS
 
 export const useCreateReport = () => {
@@ -1352,9 +1396,22 @@ export const useCreateReport = () => {
     mutationFn: (data: CreateReportRequest) => reportService.createReport(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reports"] });
+      queryClient.invalidateQueries({ queryKey: ["reportStatistics"] });
     },
-    onError: (error) => {
-      console.error("Error creating report:", error);
+    onError: (error: any) => {
+      console.error("Error creating report:", {
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        data: error?.response?.data,
+        message: error?.message,
+      });
+    },
+    retry: (failureCount, error: any) => {
+      // Don't retry on client errors
+      if (error?.response?.status >= 400 && error?.response?.status < 500) {
+        return false;
+      }
+      return failureCount < 2;
     },
   });
 
@@ -1368,14 +1425,68 @@ export const useUpdateReport = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateReportRequest }) => reportService.updateReport(id, data),
-    onSuccess: (_, variables) => {
+    mutationFn: async ({ id, data }: { id: string; data: UpdateReportRequest }) => {
+      try {
+        console.log("Updating report with data:", { id, data });
+
+        const result = await reportService.updateReport(id, data);
+        console.log("Update successful:", result);
+
+        return result;
+      } catch (error: any) {
+        console.error("Update mutation error:", {
+          status: error?.response?.status,
+          statusText: error?.response?.statusText,
+          headers: error?.response?.headers,
+          data: error?.response?.data,
+          message: error?.message,
+          stack: error?.stack,
+        });
+
+        // Handle 204 responses as success
+        if (error?.response?.status === 204) {
+          console.log("Handling 204 response as success");
+          return {
+            status: "success",
+            message: "Report updated successfully",
+            data: {
+              id,
+              ...data,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              results: [],
+            } as Report,
+          };
+        }
+
+        throw error;
+      }
+    },
+    onSuccess: (result, variables) => {
+      console.log("Update mutation onSuccess:", result);
+
+      // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["reports"] });
       queryClient.invalidateQueries({ queryKey: ["report", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["scheduledReports"] });
+      queryClient.invalidateQueries({ queryKey: ["reportStatistics"] });
+
+      // Update the specific report in cache if possible
+      queryClient.setQueryData(["report", variables.id], result);
     },
-    onError: (error) => {
-      console.error("Error updating report:", error);
+    onError: (error: any, variables) => {
+      console.error("Update mutation onError:", error, variables);
+    },
+    retry: (failureCount, error: any) => {
+      // Don't retry on 204 (it's actually success)
+      if (error?.response?.status === 204) {
+        return false;
+      }
+      // Don't retry on other client errors
+      if (error?.response?.status >= 400 && error?.response?.status < 500) {
+        return false;
+      }
+      return failureCount < 2;
     },
   });
 
@@ -1390,12 +1501,24 @@ export const useDeleteReport = () => {
 
   const mutation = useMutation({
     mutationFn: (id: string) => reportService.deleteReport(id),
-    onSuccess: () => {
+    onSuccess: (result, deletedId) => {
+      // Remove from cache
+      queryClient.removeQueries({ queryKey: ["report", deletedId] });
+      queryClient.removeQueries({ queryKey: ["reportResults", deletedId] });
+
+      // Invalidate lists
       queryClient.invalidateQueries({ queryKey: ["reports"] });
       queryClient.invalidateQueries({ queryKey: ["scheduledReports"] });
+      queryClient.invalidateQueries({ queryKey: ["reportStatistics"] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error deleting report:", error);
+    },
+    retry: (failureCount, error: any) => {
+      if (error?.response?.status >= 400 && error?.response?.status < 500) {
+        return false;
+      }
+      return failureCount < 2;
     },
   });
 
@@ -1410,12 +1533,21 @@ export const useGenerateReport = () => {
 
   const mutation = useMutation({
     mutationFn: (id: string) => reportService.generateReport(id),
-    onSuccess: (_, reportId) => {
+    onSuccess: (result, reportId) => {
+      // Invalidate and refetch results for this report
       queryClient.invalidateQueries({ queryKey: ["reportResults", reportId] });
       queryClient.invalidateQueries({ queryKey: ["report", reportId] });
+      queryClient.invalidateQueries({ queryKey: ["reportStatistics"] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error generating report:", error);
+    },
+    retry: (failureCount, error: any) => {
+      // Don't retry on client errors, but do retry on server errors (generation might be temporarily unavailable)
+      if (error?.response?.status >= 400 && error?.response?.status < 500) {
+        return false;
+      }
+      return failureCount < 2;
     },
   });
 
@@ -1432,11 +1564,49 @@ export const useDeleteReportResult = () => {
 
   const mutation = useMutation({
     mutationFn: (resultId: string) => reportService.deleteReportResult(resultId),
-    onSuccess: () => {
+    onSuccess: (result, deletedResultId) => {
+      // Remove from cache
+      queryClient.removeQueries({ queryKey: ["reportResult", deletedResultId] });
+
+      // Invalidate all result lists (we don't know which report this belongs to)
       queryClient.invalidateQueries({ queryKey: ["reportResults"] });
+      queryClient.invalidateQueries({ queryKey: ["reportStatistics"] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error deleting report result:", error);
+    },
+    retry: (failureCount, error: any) => {
+      if (error?.response?.status >= 400 && error?.response?.status < 500) {
+        return false;
+      }
+      return failureCount < 2;
+    },
+  });
+
+  return {
+    ...mutation,
+    isLoading: mutation.isPending,
+  };
+};
+
+// Batch delete hook for multiple results
+export const useBatchDeleteReportResults = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (resultIds: string[]) => reportService.batchDeleteReportResults(resultIds),
+    onSuccess: (result, deletedResultIds) => {
+      // Remove each result from cache
+      deletedResultIds.forEach((resultId) => {
+        queryClient.removeQueries({ queryKey: ["reportResult", resultId] });
+      });
+
+      // Invalidate all result lists
+      queryClient.invalidateQueries({ queryKey: ["reportResults"] });
+      queryClient.invalidateQueries({ queryKey: ["reportStatistics"] });
+    },
+    onError: (error: any) => {
+      console.error("Error batch deleting report results:", error);
     },
   });
 
@@ -1452,11 +1622,20 @@ export const useExportReportResult = () => {
   const mutation = useMutation({
     mutationFn: ({ resultId, data }: { resultId: string; data?: ExportReportRequest }) =>
       reportService.exportReportResult(resultId, data),
-    onSuccess: (_, variables) => {
+    onSuccess: (result, variables) => {
+      // Update the result to reflect the new export
       queryClient.invalidateQueries({ queryKey: ["reportResult", variables.resultId] });
+      queryClient.invalidateQueries({ queryKey: ["reportResults"] });
+      queryClient.invalidateQueries({ queryKey: ["reportStatistics"] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error exporting report result:", error);
+    },
+    retry: (failureCount, error: any) => {
+      if (error?.response?.status >= 400 && error?.response?.status < 500) {
+        return false;
+      }
+      return failureCount < 2;
     },
   });
 
@@ -1469,9 +1648,10 @@ export const useExportReportResult = () => {
 export const useDownloadReportResult = () => {
   const mutation = useMutation({
     mutationFn: (resultId: string) => reportService.downloadReportResult(resultId),
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error downloading report result:", error);
     },
+    retry: false, // Don't retry downloads
   });
 
   return {
@@ -1488,13 +1668,20 @@ export const useScheduleReport = () => {
   const mutation = useMutation({
     mutationFn: ({ reportId, data }: { reportId: string; data: ScheduleReportRequest }) =>
       reportService.scheduleReport(reportId, data),
-    onSuccess: (_, variables) => {
+    onSuccess: (result, variables) => {
       queryClient.invalidateQueries({ queryKey: ["reports"] });
       queryClient.invalidateQueries({ queryKey: ["report", variables.reportId] });
       queryClient.invalidateQueries({ queryKey: ["scheduledReports"] });
+      queryClient.invalidateQueries({ queryKey: ["reportStatistics"] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error scheduling report:", error);
+    },
+    retry: (failureCount, error: any) => {
+      if (error?.response?.status >= 400 && error?.response?.status < 500) {
+        return false;
+      }
+      return failureCount < 2;
     },
   });
 
@@ -1509,13 +1696,20 @@ export const useRemoveSchedule = () => {
 
   const mutation = useMutation({
     mutationFn: (reportId: string) => reportService.removeSchedule(reportId),
-    onSuccess: (_, reportId) => {
+    onSuccess: (result, reportId) => {
       queryClient.invalidateQueries({ queryKey: ["reports"] });
       queryClient.invalidateQueries({ queryKey: ["report", reportId] });
       queryClient.invalidateQueries({ queryKey: ["scheduledReports"] });
+      queryClient.invalidateQueries({ queryKey: ["reportStatistics"] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error removing schedule:", error);
+    },
+    retry: (failureCount, error: any) => {
+      if (error?.response?.status >= 400 && error?.response?.status < 500) {
+        return false;
+      }
+      return failureCount < 2;
     },
   });
 
