@@ -57,6 +57,13 @@ export interface SubjectData {
   department: string;
 }
 
+export interface EvaluationFilter {
+  status?: "pending" | "in_progress" | "completed" | "all";
+  search?: string;
+  mahasiswa_id?: string;
+  dosen_pemonev_id?: string;
+}
+
 export interface PartnerRating {
   id: string;
   activity_id: string;
@@ -199,12 +206,34 @@ export const monevService = {
     return response.data;
   },
 
-  getEvaluations: async (page: number = 1, perPage: number = 10): Promise<PaginatedResponse<EvaluationList>> => {
+  getEvaluations: async (
+    page: number = 1,
+    perPage: number = 10,
+    filters?: EvaluationFilter
+  ): Promise<PaginatedResponse<EvaluationList>> => {
+    const params: any = {
+      page,
+      per_page: perPage,
+    };
+
+    // Add filter parameters if provided
+    if (filters) {
+      if (filters.status && filters.status !== "all") {
+        params.status = filters.status;
+      }
+      if (filters.search && filters.search.trim()) {
+        params.search = filters.search.trim();
+      }
+      if (filters.mahasiswa_id) {
+        params.mahasiswa_id = filters.mahasiswa_id;
+      }
+      if (filters.dosen_pemonev_id) {
+        params.dosen_pemonev_id = filters.dosen_pemonev_id;
+      }
+    }
+
     const response = await monevApi.get<PaginatedResponse<EvaluationList>>("/evaluations/all", {
-      params: {
-        page,
-        per_page: perPage,
-      },
+      params,
     });
 
     return response.data;

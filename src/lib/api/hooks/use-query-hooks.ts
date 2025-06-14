@@ -57,6 +57,7 @@ import { brokerService } from "../services/broker-service";
 import {
   EvaluationCreateInput,
   EvaluationDelete,
+  EvaluationFilter,
   EvaluationFinalize,
   EvaluationScoreUpdateInput,
   EvaluationUpdateInput,
@@ -1021,6 +1022,7 @@ export const useSubmitEvaluation = () => {
     mutationFn: (evaluationInput: EvaluationCreateInput) => monevService.submitEvaluation(evaluationInput),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["evaluations"] });
+      queryClient.invalidateQueries({ queryKey: ["evaluation"] });
     },
     onError: (error) => {
       console.error("Error submitting evaluation:", error);
@@ -1038,9 +1040,9 @@ export const useUpdateEvaluation = () => {
 
   const mutation = useMutation({
     mutationFn: (evaluationInput: EvaluationUpdateInput) => monevService.updateEvaluation(evaluationInput),
-    onSuccess: (_, variables) => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["evaluations"] });
-      queryClient.invalidateQueries({ queryKey: ["evaluation", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["evaluation", data.data.id] });
     },
     onError: (error) => {
       console.error("Error updating evaluation:", error);
@@ -1057,7 +1059,9 @@ export const useEvaluationById = (id?: string) => {
   return useQuery({
     queryKey: ["evaluation", id],
     queryFn: () => monevService.getEvaluationById(id!),
+    staleTime: 2 * 60 * 1000,
     enabled: !!id,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -1085,11 +1089,12 @@ export const useEvaluationsByMahasiswaMe = (page = 1, perPage = 10) => {
   });
 };
 
-export const useEvaluations = (page = 1, perPage = 10) => {
+export const useEvaluations = (page = 1, perPage = 10, filters: EvaluationFilter) => {
   return useQuery({
-    queryKey: ["evaluations", page, perPage],
-    queryFn: () => monevService.getEvaluations(page, perPage),
-    staleTime: 5000, // 5 seconds
+    queryKey: ["evaluations", page, perPage, filters],
+    queryFn: () => monevService.getEvaluations(page, perPage, filters),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -1100,7 +1105,7 @@ export const useFinalizeEvaluation = () => {
     mutationFn: (evaluationFinalize: EvaluationFinalize) => monevService.finalizeEvaluation(evaluationFinalize),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["evaluations"] });
-      queryClient.invalidateQueries({ queryKey: ["evaluation", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["evaluation"] });
     },
     onError: (error) => {
       console.error("Error finalizing evaluation:", error);
@@ -1120,6 +1125,7 @@ export const useDeleteEvaluation = () => {
     mutationFn: (evaluationDelete: EvaluationDelete) => monevService.deleteEvaluation(evaluationDelete),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["evaluations"] });
+      queryClient.invalidateQueries({ queryKey: ["evaluation"] });
     },
     onError: (error) => {
       console.error("Error deleting evaluation:", error);

@@ -1,3 +1,5 @@
+// Improved dashboard component with fixed filtering
+
 "use client";
 
 import type React from "react";
@@ -23,6 +25,8 @@ import {
   Save,
   Trash2,
   UserCheck,
+  RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -88,369 +92,6 @@ function StatsCard({
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-// Score Update Dialog Component
-function ScoreUpdateDialog({
-  evaluation,
-  onUpdateScore,
-  isUpdating,
-  trigger,
-}: {
-  evaluation: Evaluation;
-  onUpdateScore: (scoreData: EvaluationScoreUpdateInput) => Promise<void>;
-  isUpdating: boolean;
-  trigger: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(false);
-  const [scoresData, setScoresData] = useState<ScoreFormData[]>([]);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  // Initialize scores when dialog opens
-  const handleOpenChange = (newOpen: boolean) => {
-    if (newOpen && evaluation.scores) {
-      setScoresData(
-        evaluation.scores.map((score) => ({
-          id: score.id,
-          score: score.score ?? "",
-          grade_letter: score.grade_letter || "",
-        }))
-      );
-      setErrors({});
-    }
-    setOpen(newOpen);
-  };
-
-  const getGradeFromScore = (score: number): string => {
-    if (score >= 85) return "A";
-    if (score >= 80) return "A-";
-    if (score >= 75) return "B+";
-    if (score >= 70) return "B";
-    if (score >= 65) return "B-";
-    if (score >= 60) return "C+";
-    if (score >= 55) return "C";
-    if (score >= 50) return "C-";
-    if (score >= 40) return "D";
-    return "E";
-  };
-
-  const handleScoreChange = (index: number, field: "score" | "grade_letter", value: string | number) => {
-    setScoresData((prev) => {
-      const newScores = [...prev];
-      if (field === "score") {
-        const numValue = typeof value === "number" ? value : parseFloat(value.toString()) || 0;
-        newScores[index] = {
-          ...newScores[index],
-          score: numValue,
-          grade_letter: getGradeFromScore(numValue),
-        };
-      } else if (field === "grade_letter") {
-        newScores[index] = {
-          ...newScores[index],
-          grade_letter: String(value),
-        };
-      }
-      return newScores;
-    });
-  };
-
-  const validateScores = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    scoresData.forEach((score, index) => {
-      const scoreValue = typeof score.score === "number" ? score.score : parseFloat(score.score.toString()) || 0;
-
-      if (scoreValue < 0 || scoreValue > 100) {
-        newErrors[`score_${index}`] = "Score must be between 0 and 100";
-      }
-
-      if (!score.grade_letter.trim()) {
-        newErrors[`grade_${index}`] = "Grade letter is required";
-      }
-    });
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async () => {
-    if (!validateScores()) {
-      return;
-    }
-
-    try {
-      // Update each score
-      const promises = scoresData.map((scoreForm) => {
-        const scoreValue =
-          typeof scoreForm.score === "number" ? scoreForm.score : parseFloat(scoreForm.score.toString()) || 0;
-
-        return onUpdateScore({
-          evaluation_id: evaluation.id,
-          id: scoreForm.id,
-          score: scoreValue,
-          grade_letter: scoreForm.grade_letter,
-        });
-      });
-
-      await Promise.all(promises);
-      setOpen(false);
-    } catch (error) {
-      console.error("Failed to update scores:", error);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white border border-gray-200 shadow-lg">
-        <DialogHeader className="border-b border-gray-100 pb-4">
-          <DialogTitle className="flex items-center gap-2 text-gray-900">
-            <Star className="h-5 w-5 text-blue-600" />
-            Update Evaluation Scores
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6 p-1">
-          {/* Evaluation Info */}
-          <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <Label className="text-xs font-medium text-blue-700 mb-1 block">Evaluation ID</Label>
-                <p className="font-mono text-gray-900 bg-white px-2 py-1 rounded border">#{evaluation.id.slice(-8)}</p>
-              </div>
-              <div>
-                <Label className="text-xs font-medium text-blue-700 mb-1 block">Student ID</Label>
-                <p className="font-mono text-gray-900 bg-white px-2 py-1 rounded border">
-                  {evaluation.mahasiswa_id.slice(-6)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Scores */}
-          {scoresData.length > 0 ? (
-            <div className="space-y-4">
-              <h3 className="font-semibold text-gray-900 text-lg">Update Scores</h3>
-              {scoresData.map((scoreForm, index) => {
-                const scoreData = evaluation.scores?.[index];
-                return (
-                  <div key={scoreForm.id} className="p-4 border-2 border-gray-200 rounded-lg bg-gray-50 space-y-4">
-                    <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-                      <GraduationCap className="h-5 w-5 text-blue-600" />
-                      <div className="flex flex-col">
-                        <span className="text-base font-medium text-gray-900">
-                          {scoreData?.subject_data?.name || `Subject ${index + 1}`}
-                        </span>
-                        {scoreData?.subject_data?.code && (
-                          <span className="text-xs text-gray-500">
-                            {scoreData.subject_data.code} • {scoreData.subject_data.credits} credits •{" "}
-                            {scoreData.subject_data.course_type}
-                          </span>
-                        )}
-                        {scoreData?.subject_data?.department && (
-                          <span className="text-xs text-gray-400">{scoreData.subject_data.department}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-700">Score (0-100)</Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={scoreForm.score}
-                          onChange={(e) => handleScoreChange(index, "score", e.target.value)}
-                          disabled={isUpdating}
-                          className="bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-500 font-mono text-lg"
-                          placeholder="Enter score..."
-                        />
-                        {errors[`score_${index}`] && (
-                          <p className="text-sm text-red-600 bg-red-50 px-2 py-1 rounded border border-red-200">
-                            {errors[`score_${index}`]}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-700">Grade Letter</Label>
-                        <Input
-                          value={scoreForm.grade_letter}
-                          onChange={(e) => handleScoreChange(index, "grade_letter", e.target.value)}
-                          disabled={isUpdating}
-                          className="bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-500 font-mono text-lg uppercase"
-                          placeholder="A, B+, C, etc."
-                          maxLength={2}
-                        />
-                        {errors[`grade_${index}`] && (
-                          <p className="text-sm text-red-600 bg-red-50 px-2 py-1 rounded border border-red-200">
-                            {errors[`grade_${index}`]}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <Alert className="border-yellow-200 bg-yellow-50">
-              <AlertTriangle className="h-4 w-4 text-yellow-600" />
-              <AlertDescription className="text-yellow-800">No scores available for this evaluation.</AlertDescription>
-            </Alert>
-          )}
-
-          {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-            <Button
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={isUpdating}
-              className="border-gray-300 text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={isUpdating || scoresData.length === 0}
-              className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              {isUpdating ? (
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              {isUpdating ? "Updating..." : "Update Scores"}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// Evaluation View Dialog
-function EvaluationViewDialog({
-  evaluation,
-  trigger,
-  selectedEvaluation,
-}: {
-  evaluation: EvaluationList;
-  trigger: React.ReactNode;
-  selectedEvaluation?: Evaluation;
-}) {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "in_progress":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "completed":
-        return "bg-green-100 text-green-800 border-green-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-2xl bg-white border border-gray-200 shadow-lg">
-        <DialogHeader className="border-b border-gray-100 pb-4">
-          <DialogTitle className="flex items-center gap-2 text-gray-900">
-            <ClipboardList className="h-5 w-5 text-blue-600" />
-            Evaluation Details
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6 p-1">
-          {/* Basic Info */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-600">Evaluation ID</label>
-              <p className="text-sm font-mono bg-gray-50 px-2 py-1 rounded border border-gray-200 text-gray-900">
-                #{evaluation.id.slice(-8)}
-              </p>
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-600">Status</label>
-              <div className="mt-1">
-                <Badge className={`${getStatusColor(evaluation.status)} border`}>
-                  {evaluation.status.replace("_", " ").toUpperCase()}
-                </Badge>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-600">Student ID</label>
-              <p className="text-sm font-mono bg-gray-50 px-2 py-1 rounded border border-gray-200 text-gray-900">
-                {evaluation.mahasiswa_id}
-              </p>
-            </div>
-
-            {evaluation.registration_id && (
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-600">Registration ID</label>
-                <p className="text-sm font-mono bg-gray-50 px-2 py-1 rounded border border-gray-200 text-gray-900">
-                  #{evaluation.registration_id.slice(-8)}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Subject Details */}
-          {selectedEvaluation && selectedEvaluation.id === evaluation.id && selectedEvaluation.scores && (
-            <div className="space-y-3">
-              <label className="text-sm font-medium text-gray-600">Subjects ({selectedEvaluation.scores.length})</label>
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {selectedEvaluation.scores.map((score, index) => (
-                  <div key={score.id} className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <GraduationCap className="h-4 w-4 text-blue-600" />
-                        <div className="flex flex-col">
-                          <span className="font-medium text-gray-900">
-                            {score.subject_data?.name || `Subject ${index + 1}`}
-                          </span>
-                          {score.subject_data?.code && (
-                            <span className="text-xs text-gray-500">
-                              {score.subject_data.code} • {score.subject_data.credits} credits •{" "}
-                              {score.subject_data.course_type}
-                            </span>
-                          )}
-                          {score.subject_data?.department && (
-                            <span className="text-xs text-gray-400">{score.subject_data.department}</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {score.score !== null && <span className="text-lg font-bold text-gray-900">{score.score}</span>}
-                        {score.grade_letter && (
-                          <Badge variant="outline" className="font-medium">
-                            {score.grade_letter}
-                          </Badge>
-                        )}
-                        {!score.score && !score.grade_letter && (
-                          <span className="text-sm text-gray-500">Not graded</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }
 
@@ -559,46 +200,27 @@ function EnhancedEvaluationCard({
 
           <div className="flex gap-2 flex-wrap">
             {/* View Details */}
-            <EvaluationViewDialog
-              evaluation={evaluation}
-              selectedEvaluation={selectedEvaluation}
-              trigger={
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
-                >
-                  <Eye className="h-4 w-4" />
-                  View
-                </Button>
-              }
-            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onView(evaluation.id)}
+              className="flex-1 gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              <Eye className="h-4 w-4" />
+              View
+            </Button>
 
             {/* Update Scores */}
-            {canUpdateScores ? (
-              <ScoreUpdateDialog
-                evaluation={selectedEvaluation}
-                onUpdateScore={onUpdateScore}
-                isUpdating={false}
-                trigger={
-                  <Button variant="default" size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700 text-white">
-                    <Star className="h-4 w-4" />
-                    Update Scores
-                  </Button>
-                }
-              />
-            ) : (
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => onEdit(evaluation.id)}
-                className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-                disabled={isLoadingSelected && selectedEvaluationId === evaluation.id}
-              >
-                <Edit className="h-4 w-4" />
-                {isLoadingSelected && selectedEvaluationId === evaluation.id ? "Loading..." : "Edit Scores"}
-              </Button>
-            )}
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => onEdit(evaluation.id)}
+              className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={isLoadingSelected && selectedEvaluationId === evaluation.id}
+            >
+              <Edit className="h-4 w-4" />
+              {isLoadingSelected && selectedEvaluationId === evaluation.id ? "Loading..." : "Edit Scores"}
+            </Button>
 
             {/* Finalize */}
             {evaluation.status !== "completed" && (
@@ -727,23 +349,43 @@ export function MonevManagementDashboard() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("evaluations");
   const [showFilters, setShowFilters] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Handle search with debounce
+  // Local filter state for immediate UI feedback
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+  const [localStatusFilter, setLocalStatusFilter] = useState(statusFilter);
+
+  // Sync local state with provider state
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      // The provider will handle the filter update automatically
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
+    setLocalSearchTerm(searchTerm);
   }, [searchTerm]);
+
+  useEffect(() => {
+    setLocalStatusFilter(statusFilter);
+  }, [statusFilter]);
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setLocalSearchTerm(value);
+      setSearchTerm(value);
+    },
+    [setSearchTerm]
+  );
 
   const handleStatusFilterChange = useCallback(
     (value: string) => {
+      setLocalStatusFilter(value);
       setStatusFilter(value);
     },
     [setStatusFilter]
   );
 
+  const handleClearFilters = useCallback(() => {
+    setLocalSearchTerm("");
+    setLocalStatusFilter("all");
+    clearFilters();
+  }, [clearFilters]);
+
+  // Evaluation action handlers
   const handleAssignEvaluation = useCallback(
     async (studentId: string, dosenPemonevId: string, registrationId: string) => {
       try {
@@ -819,39 +461,6 @@ export function MonevManagementDashboard() {
     [updateEvaluation, refreshEvaluations, toast]
   );
 
-  const handleRefresh = useCallback(() => {
-    try {
-      // Clear selected evaluation first
-      setSelectedEvaluationId(null);
-
-      // Show loading toast
-      toast({
-        title: "Refreshing",
-        description: "Updating evaluation data...",
-        variant: "info",
-      });
-
-      // Refresh evaluations
-      refreshEvaluations();
-
-      // Success feedback after a short delay
-      setTimeout(() => {
-        toast({
-          title: "Success",
-          description: "Data refreshed successfully",
-          variant: "success",
-        });
-      }, 500);
-    } catch (error) {
-      console.error("Failed to refresh:", error);
-      toast({
-        title: "Error",
-        description: "Failed to refresh data",
-        variant: "destructive",
-      });
-    }
-  }, [refreshEvaluations, setSelectedEvaluationId, toast]);
-
   const handleDeleteEvaluation = useCallback(
     async (id: string) => {
       try {
@@ -873,26 +482,86 @@ export function MonevManagementDashboard() {
     [deleteEvaluation, toast]
   );
 
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      // Clear selected evaluation first
+      setSelectedEvaluationId(null);
+
+      // Show loading toast
+      toast({
+        title: "Refreshing",
+        description: "Updating evaluation data...",
+        variant: "info",
+      });
+
+      // Refresh evaluations
+      await refreshEvaluations();
+
+      // Success feedback
+      toast({
+        title: "Success",
+        description: "Data refreshed successfully",
+        variant: "success",
+      });
+    } catch (error) {
+      console.error("Failed to refresh:", error);
+      toast({
+        title: "Error",
+        description: "Failed to refresh data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refreshEvaluations, setSelectedEvaluationId, toast]);
+
   // Calculate additional stats
   const totalStudents = studentsWithRegistrations.length;
   const studentsWithApprovedRegistrations = studentsWithRegistrations.filter(
     (s) => s.hasRegistration && s.registrationStatus === "APPROVED"
   ).length;
 
+  // Filter status options
+  const statusOptions = [
+    { value: "all", label: "All Statuses", count: evaluationStats.total },
+    { value: "pending", label: "Pending", count: evaluationStats.pending },
+    { value: "in_progress", label: "In Progress", count: evaluationStats.inProgress },
+    { value: "completed", label: "Completed", count: evaluationStats.completed },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <ClipboardList className="h-6 w-6 text-primary" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <ClipboardList className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">Monev Management</h1>
+              <p className="text-muted-foreground">Monitor and evaluate student progress across programs</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold">Monev Management</h1>
-            <p className="text-muted-foreground">Monitor and evaluate student progress across programs</p>
-          </div>
+
+          {/* Quick refresh button */}
+          <Button onClick={handleRefresh} disabled={isRefreshing || isLoading} variant="outline" className="gap-2">
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+            {isRefreshing ? "Refreshing..." : "Refresh"}
+          </Button>
         </div>
       </motion.div>
+
+      {/* Error Alert */}
+      {evaluations === undefined && !isLoading && (
+        <Alert className="border-destructive/50 text-destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Failed to load evaluations. Please try refreshing the page or check your connection.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
@@ -940,7 +609,7 @@ export function MonevManagementDashboard() {
         />
       </div>
 
-      {/* Completion Rate Card */}
+      {/* Progress Overview */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -1019,13 +688,10 @@ export function MonevManagementDashboard() {
               <Filter className="h-4 w-4" />
               {showFilters ? "Hide Filters" : "Show Filters"}
             </Button>
-            <Button onClick={handleRefresh} size="sm" disabled={isLoading}>
-              {isLoading ? "Refreshing..." : "Refresh"}
-            </Button>
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Enhanced Filters */}
         <AnimatePresence>
           {showFilters && (
             <motion.div
@@ -1035,39 +701,51 @@ export function MonevManagementDashboard() {
               transition={{ duration: 0.3 }}
               className="mb-6 overflow-hidden"
             >
-              <Card>
-                <CardContent className="p-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="border-2 border-primary/20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Filter className="h-5 w-5" />
+                    Filter Evaluations
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Search</label>
+                      <Label className="text-sm font-medium">Search</Label>
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <Input
                           placeholder="Search evaluations..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
+                          value={localSearchTerm}
+                          onChange={(e) => handleSearchChange(e.target.value)}
                           className="pl-10"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Status</label>
-                      <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                      <Label className="text-sm font-medium">Status</Label>
+                      <Select value={localStatusFilter} onValueChange={handleStatusFilterChange}>
                         <SelectTrigger>
                           <SelectValue placeholder="All statuses" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All Statuses</SelectItem>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="in_progress">In Progress</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
+                          {statusOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              <div className="flex items-center justify-between w-full">
+                                <span>{option.label}</span>
+                                <Badge variant="secondary" className="ml-2">
+                                  {option.count}
+                                </Badge>
+                              </div>
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Per Page</label>
+                      <Label className="text-sm font-medium">Per Page</Label>
                       <Select
                         value={currentPerPage.toString()}
                         onValueChange={(value) => changePerPage(Number.parseInt(value))}
@@ -1076,28 +754,60 @@ export function MonevManagementDashboard() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="5">5</SelectItem>
-                          <SelectItem value="10">10</SelectItem>
-                          <SelectItem value="20">20</SelectItem>
-                          <SelectItem value="50">50</SelectItem>
+                          <SelectItem value="5">5 per page</SelectItem>
+                          <SelectItem value="10">10 per page</SelectItem>
+                          <SelectItem value="20">20 per page</SelectItem>
+                          <SelectItem value="50">50 per page</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Actions</Label>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={handleClearFilters} className="gap-2 flex-1">
+                          <X className="h-4 w-4" />
+                          Clear
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleRefresh}
+                          disabled={isRefreshing}
+                          className="gap-2"
+                        >
+                          <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                          Refresh
+                        </Button>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="flex justify-end gap-2 mt-4">
-                    <Button variant="outline" size="sm" onClick={clearFilters} className="gap-2">
-                      <X className="h-4 w-4" />
-                      Clear Filters
-                    </Button>
-                  </div>
+                  {/* Active Filters Display */}
+                  {(localSearchTerm || localStatusFilter !== "all") && (
+                    <div className="flex items-center gap-2 pt-2 border-t">
+                      <span className="text-sm font-medium text-gray-600">Active filters:</span>
+                      {localSearchTerm && (
+                        <Badge variant="secondary" className="gap-1">
+                          Search: "{localSearchTerm}"
+                          <X className="h-3 w-3 cursor-pointer" onClick={() => handleSearchChange("")} />
+                        </Badge>
+                      )}
+                      {localStatusFilter !== "all" && (
+                        <Badge variant="secondary" className="gap-1">
+                          Status: {statusOptions.find((o) => o.value === localStatusFilter)?.label}
+                          <X className="h-3 w-3 cursor-pointer" onClick={() => handleStatusFilterChange("all")} />
+                        </Badge>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Tab Contents */}
+        {/* Tab Contents remain the same ... */}
         <TabsContent value="evaluations" className="space-y-4 mt-0">
           {isLoading ? (
             <div className="grid gap-4">
@@ -1121,6 +831,9 @@ export function MonevManagementDashboard() {
               <div className="flex items-center justify-between">
                 <div className="text-sm text-muted-foreground">
                   Showing {evaluations.length} of {evaluationsPagination.totalItems} evaluations
+                  {(localSearchTerm || localStatusFilter !== "all") && (
+                    <span className="ml-2 text-primary font-medium">(filtered)</span>
+                  )}
                 </div>
               </div>
 
@@ -1204,7 +917,17 @@ export function MonevManagementDashboard() {
               <CardContent className="p-12 text-center">
                 <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No Evaluations Found</h3>
-                <p className="text-muted-foreground">There are no evaluations matching your criteria.</p>
+                <p className="text-muted-foreground">
+                  {localSearchTerm || localStatusFilter !== "all"
+                    ? "No evaluations match your current filters. Try adjusting your search criteria."
+                    : "There are no evaluations in the system yet."}
+                </p>
+                {(localSearchTerm || localStatusFilter !== "all") && (
+                  <Button variant="outline" onClick={handleClearFilters} className="mt-4 gap-2">
+                    <X className="h-4 w-4" />
+                    Clear Filters
+                  </Button>
+                )}
               </CardContent>
             </Card>
           )}

@@ -15,14 +15,15 @@ import {
 } from "@/lib/api/hooks";
 import type { PaginatedResponse, UserAlt } from "@/lib/api/services";
 import { Registration } from "@/lib/api/services/registration-service";
-import { EvaluationList, Evaluation, EvaluationCreateInput, EvaluationUpdateInput } from "../services/monev-service";
+import {
+  EvaluationList,
+  Evaluation,
+  EvaluationCreateInput,
+  EvaluationUpdateInput,
+  EvaluationFilter,
+} from "../services/monev-service";
 import type React from "react";
 import { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
-
-type EvaluationFilter = {
-  status?: "pending" | "in_progress" | "completed" | "all";
-  search?: string;
-};
 
 type EvaluationStats = {
   total: number;
@@ -70,7 +71,7 @@ type MonevAPIContextType = {
   refreshEvaluations: () => void;
 
   // Users and Registrations
-  dosenPemonevUsers: UserAlt[] | undefined; // Now contains unified evaluators (pemonev + pembimbing)
+  dosenPemonevUsers: UserAlt[] | undefined;
   studentsWithRegistrations: StudentWithRegistration[];
   studentsReadyForEvaluation: StudentWithRegistration[];
   isLoadingUsers: boolean;
@@ -114,17 +115,47 @@ function MonevAPIProvider({ children }: { children: React.ReactNode }) {
   const [isFormSubmitting, setFormSubmitting] = useState(false);
   const [selectedEvaluationId, setSelectedEvaluationId] = useState<string | null>(null);
 
-  // Fetch data
+  // Debounced search term for API calls
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+
+  // Debounce search term
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      // Reset to first page when search changes
+      if (searchTerm !== debouncedSearchTerm) {
+        setEvaluationsPage(1);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, debouncedSearchTerm]);
+
+  // Build filters object for API call
+  const evaluationFilters = useMemo<EvaluationFilter>(() => {
+    const filters: EvaluationFilter = {};
+
+    if (statusFilter && statusFilter !== "all") {
+      filters.status = statusFilter as "pending" | "in_progress" | "completed";
+    }
+
+    if (debouncedSearchTerm && debouncedSearchTerm.trim()) {
+      filters.search = debouncedSearchTerm.trim();
+    }
+
+    return filters;
+  }, [statusFilter, debouncedSearchTerm]);
+
+  // Fetch data with filters
   const {
     data: evaluationsData,
     isLoading: isEvaluationsLoading,
     refetch: refetchEvaluations,
-  } = useEvaluations(evaluationsPage, evaluationsPerPage);
+    error: evaluationsError,
+  } = useEvaluations(evaluationsPage, evaluationsPerPage, evaluationFilters);
 
   const { data: dosenPemonevUsersData, isLoading: isLoadingDosenPemonev } = useDosenPemonevUsersAlt();
-
   const { data: dosenPembimbingUsersData, isLoading: isLoadingDosenPembimbing } = useDosenPembimbingUsersAlt();
-
   const { data: allStudentsData, isLoading: isLoadingAllStudents } = useUsers(1, 1000, { role_name: "MAHASISWA" });
 
   const { data: registrationsData, isLoading: isLoadingRegistrations } = useRegistrations({
@@ -257,6 +288,7 @@ function MonevAPIProvider({ children }: { children: React.ReactNode }) {
     setSearchTerm("");
     setStatusFilter("all");
     setEvaluationsPage(1);
+    setDebouncedSearchTerm(""); // Clear debounced term immediately
   }, []);
 
   const refreshEvaluations = useCallback(() => {
@@ -315,10 +347,22 @@ function MonevAPIProvider({ children }: { children: React.ReactNode }) {
     [deleteEvaluationMutation, refreshEvaluations]
   );
 
-  // Auto-refetch when filters change
+  // Enhanced setStatusFilter that resets pagination
+  const setStatusFilterWithReset = useCallback((status: string) => {
+    setStatusFilter(status);
+    setEvaluationsPage(1); // Reset to first page when filter changes
+  }, []);
+
+  // Enhanced setSearchTerm that resets pagination
+  const setSearchTermWithReset = useCallback((term: string) => {
+    setSearchTerm(term);
+    // Page reset is handled in the debounce effect
+  }, []);
+
+  // Auto-refetch when filters change (now properly includes filter dependencies)
   useEffect(() => {
     refetchEvaluations();
-  }, [evaluationsPage, evaluationsPerPage, refetchEvaluations]);
+  }, [evaluationsPage, evaluationsPerPage, debouncedSearchTerm, statusFilter, refetchEvaluations]);
 
   const isLoading = isEvaluationsLoading;
   const isLoadingUsers = isLoadingDosenPemonev || isLoadingDosenPembimbing || isLoadingAllStudents;
@@ -334,14 +378,14 @@ function MonevAPIProvider({ children }: { children: React.ReactNode }) {
     changePerPage,
     currentPerPage: evaluationsPerPage,
     searchTerm,
-    setSearchTerm,
+    setSearchTerm: setSearchTermWithReset,
     statusFilter,
-    setStatusFilter,
+    setStatusFilter: setStatusFilterWithReset,
     clearFilters,
     refreshEvaluations,
 
     // Users and Registrations
-    dosenPemonevUsers: allEvaluatorUsers, // Use combined evaluators (pemonev + pembimbing)
+    dosenPemonevUsers: allEvaluatorUsers,
     studentsWithRegistrations,
     studentsReadyForEvaluation,
     isLoadingUsers,
