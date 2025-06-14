@@ -23,6 +23,8 @@ import {
 
 // Import the REAL provider instead of mock
 import { useReportAPI } from "@/lib/api/providers/report-provider";
+import EditReportDialog from "./edit-dialog";
+import CreateReportDialog from "./create-dialog";
 
 // UI Components
 const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
@@ -724,11 +726,15 @@ export default function RealReportDashboard() {
       </div>
 
       {/* REAL dialogs using provider state */}
+      <EditReportDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} report={selectedReportForEdit} />
+
       <ReportResultsDialog
         open={resultsDialogOpen}
         onOpenChange={setResultsDialogOpen}
         report={selectedReportForResults}
       />
+
+      <CreateReportDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
     </div>
   );
 }
