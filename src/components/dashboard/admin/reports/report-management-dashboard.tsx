@@ -26,6 +26,13 @@ import { useReportAPI } from "@/lib/api/providers/report-provider";
 import EditReportDialog from "./edit-dialog";
 import CreateReportDialog from "./create-dialog";
 
+// TypeScript interfaces
+interface ConfirmDeleteResultDialogProps {
+  resultId: string;
+  onConfirm: () => Promise<void>;
+  trigger: React.ReactNode;
+}
+
 // UI Components
 const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
   <div className={`bg-white border border-gray-200 rounded-lg shadow-sm ${className}`}>{children}</div>
@@ -50,13 +57,15 @@ const Button = ({
   size = "default",
   disabled = false,
   onClick,
+  title,
 }: {
   children: React.ReactNode;
   className?: string;
-  variant?: string;
-  size?: string;
+  variant?: "default" | "outline" | "destructive";
+  size?: "default" | "sm";
   disabled?: boolean;
   onClick?: (e: React.MouseEvent) => void;
+  title?: string;
 }) => {
   const baseClasses =
     "inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none";
@@ -72,11 +81,10 @@ const Button = ({
 
   return (
     <button
-      className={`${baseClasses} ${variantClasses[variant as keyof typeof variantClasses] || variantClasses.default} ${
-        sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.default
-      } ${className} gap-2`}
+      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className} gap-2`}
       onClick={onClick}
       disabled={disabled}
+      title={title}
     >
       {children}
     </button>
@@ -219,7 +227,86 @@ function StatsCard({
   );
 }
 
-// Report Results Dialog - Now uses REAL provider functions
+// NEW: Confirm Delete Result Dialog
+function ConfirmDeleteResultDialog({ resultId, onConfirm, trigger }: ConfirmDeleteResultDialogProps) {
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+
+  const handleConfirm = async (): Promise<void> => {
+    setIsDeleting(true);
+    try {
+      await onConfirm();
+      setIsOpen(false);
+    } catch (error) {
+      console.error("Delete failed:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <>
+      <div onClick={() => setIsOpen(true)}>{trigger}</div>
+
+      {isOpen && (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                Delete Report Result
+              </DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this report result? This action cannot be undone and will remove all
+                associated data and exports.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="p-6 space-y-4">
+              <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
+                <div className="flex items-center gap-2 text-red-800">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span className="font-medium">Warning</span>
+                </div>
+                <p className="text-red-700 text-sm mt-1">This will permanently delete:</p>
+                <ul className="text-red-700 text-sm mt-2 ml-4 list-disc">
+                  <li>The report result data</li>
+                  <li>All associated exports</li>
+                  <li>Download links and files</li>
+                </ul>
+              </div>
+
+              <div className="bg-gray-50 p-3 rounded">
+                <p className="font-medium">Result ID: #{resultId.slice(-8)}</p>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isDeleting}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleConfirm} disabled={isDeleting}>
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    Delete Result
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
+  );
+}
+
+// ENHANCED Report Results Dialog with Delete functionality
 function ReportResultsDialog({
   open,
   onOpenChange,
@@ -229,13 +316,15 @@ function ReportResultsDialog({
   onOpenChange: (open: boolean) => void;
   report: any;
 }) {
-  // Use the provider data
+  // Use the provider data - ADD deleteReportResult and refreshStats
   const {
     selectedReportResults,
     isLoadingSelectedResults,
     exportReportResult,
     downloadReportResult,
+    deleteReportResult, // ADD THIS
     setSelectedReportId,
+    refreshStats, // ADD THIS - you may need to add this to your provider
   } = useReportAPI();
 
   const [loadingExport, setLoadingExport] = useState<string | null>(null);
@@ -274,6 +363,22 @@ function ReportResultsDialog({
     }
   };
 
+  // NEW: Delete function
+  const handleDeleteResult = async (resultId: string): Promise<void> => {
+    try {
+      await deleteReportResult(resultId);
+      // Refresh statistics after deletion if available
+      if (refreshStats) {
+        refreshStats();
+      }
+
+      console.log("Result deleted successfully");
+    } catch (error) {
+      console.error("Delete failed:", error);
+      throw error; // Re-throw so the confirmation dialog can handle it
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -299,23 +404,31 @@ function ReportResultsDialog({
             </div>
           ) : (
             <div className="space-y-4">
-              {selectedReportResults.map((result) => (
-                <Card key={result.id} className="border border-gray-200">
+              {selectedReportResults.map((result: any) => (
+                <Card key={result.id} className="border border-gray-200 hover:border-gray-300 transition-colors">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <p className="font-medium">Result #{result.id.slice(-8)}</p>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <p className="font-medium">Result #{result.id.slice(-8)}</p>
+                          <Badge variant="outline">
+                            {result.export_count} {result.export_count === 1 ? "export" : "exports"}
+                          </Badge>
+                        </div>
                         <p className="text-sm text-gray-500">
-                          Created: {new Date(result.created_at).toLocaleDateString()}
+                          Created: {new Date(result.created_at).toLocaleDateString()} at{" "}
+                          {new Date(result.created_at).toLocaleTimeString()}
                         </p>
-                        <Badge variant="outline">{result.export_count} exports</Badge>
                       </div>
+
                       <div className="flex gap-2">
+                        {/* View Button */}
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleDownload(result.id)}
                           disabled={loadingDownload === result.id}
+                          title="View result data"
                         >
                           {loadingDownload === result.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -324,11 +437,14 @@ function ReportResultsDialog({
                           )}
                           View
                         </Button>
+
+                        {/* Export Button */}
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleExport(result.id)}
                           disabled={loadingExport === result.id}
+                          title="Export result to file"
                         >
                           {loadingExport === result.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -337,6 +453,18 @@ function ReportResultsDialog({
                           )}
                           Export
                         </Button>
+
+                        {/* NEW: Delete Button with Confirmation */}
+                        <ConfirmDeleteResultDialog
+                          resultId={result.id}
+                          onConfirm={() => handleDeleteResult(result.id)}
+                          trigger={
+                            <Button variant="destructive" size="sm" title="Delete this result permanently">
+                              <Trash2 className="h-4 w-4" />
+                              Delete
+                            </Button>
+                          }
+                        />
                       </div>
                     </div>
                   </CardContent>
@@ -347,9 +475,14 @@ function ReportResultsDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
+          <div className="flex items-center justify-between w-full">
+            {/* Show total count */}
+            <div className="text-sm text-gray-500">{selectedReportResults?.length || 0} result(s) found</div>
+
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Close
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

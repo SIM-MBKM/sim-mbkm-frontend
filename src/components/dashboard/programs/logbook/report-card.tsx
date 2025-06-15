@@ -1,73 +1,80 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
-import { format, parseISO } from "date-fns"
-import { id } from "date-fns/locale"
-import { Clock, FileUp, Type, Upload, MessageCircle, AlertCircle, CheckCircle, Eye, ExternalLink, Download, Loader2 } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
+import { useState, useEffect } from "react";
+import { format, parseISO } from "date-fns";
+import { id } from "date-fns/locale";
+import {
+  Clock,
+  FileUp,
+  Type,
+  Upload,
+  MessageCircle,
+  AlertCircle,
+  CheckCircle,
+  Eye,
+  ExternalLink,
+  Download,
+  Loader2,
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter
-} from "@/components/ui/dialog"
-import { useSubmitReport, useGetTemporaryLink } from "@/lib/api/hooks"
-import { toast } from "react-toastify"
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { useSubmitReport, useGetTemporaryLink } from "@/lib/api/hooks";
+import { toast } from "react-toastify";
 
 interface Report {
-  id: string
-  report_type: string
-  week: number
-  start_date: string
-  end_date: string
-  report: string | null
-  status: string
-  feedback: string | null
-  report_schedule_id: string // Required field for API calls
-  file_storage_id: string | null // Add this field for file access
+  id: string;
+  report_type: string;
+  week: number;
+  start_date: string;
+  end_date: string;
+  report: string | null;
+  status: string;
+  feedback: string | null;
+  report_schedule_id: string; // Required field for API calls
+  file_storage_id: string | null; // Add this field for file access
 }
 
 interface ReportCardProps {
-  report: Report
-  refetch?: () => void
+  report: Report;
+  refetch?: () => void;
 }
 
 export function ReportCard({ report, refetch }: ReportCardProps) {
-  const [submissionType, setSubmissionType] = useState<"text" | "file">("text")
-  const [textReport, setTextReport] = useState("")
-  const [file, setFile] = useState<File | null>(null)
+  const [submissionType, setSubmissionType] = useState<"text" | "file">("text");
+  const [textReport, setTextReport] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [reportTitle, setReportTitle] = useState(
-    report.report_type === "WEEKLY_REPORT" 
-      ? `Laporan Minggu ${report.week}` 
-      : "Laporan Akhir Program"
-  )
-  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
-  const [isReportDetailOpen, setIsReportDetailOpen] = useState(false)
-  const [isDownloading, setIsDownloading] = useState(false)
-  
+    report.report_type === "WEEKLY_REPORT" ? `Laporan Minggu ${report.week}` : "Laporan Akhir Program"
+  );
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isReportDetailOpen, setIsReportDetailOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
   // Use the submitReport mutation
-  const { 
-    mutate: submitReport, 
-    isPending: isSubmitting
-  } = useSubmitReport()
-  
+  const { mutate: submitReport, isPending: isSubmitting } = useSubmitReport();
+
   // Use the temporary link hook if there's a file_storage_id
   const fileId = report.file_storage_id;
-  const { 
-    data: fileData, 
-    isLoading: isFileLoading, 
+  const {
+    data: fileData,
+    isLoading: isFileLoading,
     error: fileError,
-    refetch: refetchFileLink
-  } = useGetTemporaryLink(fileId || '')
+    refetch: refetchFileLink,
+  } = useGetTemporaryLink(fileId || "");
 
   // Enable the query only when we have a valid fileId and the dialog is open
   const shouldFetchFile = Boolean(fileId) && isReportDetailOpen;
@@ -95,35 +102,35 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
 
   const formatDate = (dateStr: string) => {
     try {
-      return format(parseISO(dateStr), "d MMMM yyyy", { locale: id })
+      return format(parseISO(dateStr), "d MMMM yyyy", { locale: id });
     } catch {
-      return dateStr
+      return dateStr;
     }
-  }
+  };
 
   const handleTextSubmit = () => {
     if (!textReport) {
       toast.error("Silakan isi konten laporan terlebih dahulu");
       return;
     }
-    
+
     if (!report.report_schedule_id) {
       console.error("Missing report_schedule_id:", report);
       toast.error("ID jadwal laporan tidak ditemukan. Silakan coba muat ulang halaman.");
       return;
     }
-    
+
     const reportData = {
       report_schedule_id: report.report_schedule_id,
       title: reportTitle,
       content: textReport,
-      report_type: report.report_type
-    }
+      report_type: report.report_type,
+    };
 
-    console.log("REPORT TYPE", report.report_type)
-    
+    console.log("REPORT TYPE", report.report_type);
+
     console.log("Submitting text report:", reportData);
-    
+
     submitReport(reportData, {
       onSuccess: (data) => {
         console.log("Report submission success:", data);
@@ -137,35 +144,35 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
       onError: (error) => {
         console.error("Report submission error:", error);
         toast.error(`Gagal mengirim laporan: ${error instanceof Error ? error.message : "Terjadi kesalahan"}`);
-      }
+      },
     });
-  }
+  };
 
   const handleFileSubmit = () => {
     if (!file) {
       toast.error("Silakan pilih file terlebih dahulu");
       return;
     }
-    
+
     if (!report.report_schedule_id) {
       console.error("Missing report_schedule_id:", report);
       toast.error("ID jadwal laporan tidak ditemukan. Silakan coba muat ulang halaman.");
       return;
     }
-    
+
     const reportData = {
       report_schedule_id: report.report_schedule_id,
       title: reportTitle,
       report_type: report.report_type,
-      file: file
-    }
+      file: file,
+    };
     console.log("REPORT TYPE", report.report_type);
-    
+
     console.log("Submitting file report:", {
       ...reportData,
-      file: file.name // Just log the file name, not the entire file object
+      file: file.name, // Just log the file name, not the entire file object
     });
-    
+
     submitReport(reportData, {
       onSuccess: (data) => {
         console.log("File submission success:", data);
@@ -179,39 +186,39 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
       onError: (error) => {
         console.error("File submission error:", error);
         toast.error(`Gagal mengunggah laporan: ${error instanceof Error ? error.message : "Terjadi kesalahan"}`);
-      }
+      },
     });
-  }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0])
+      setFile(e.target.files[0]);
     }
-  }
-  
+  };
+
   const handleDownloadFile = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!report.file_storage_id) {
       toast.error("File ID tidak ditemukan");
       return;
     }
-    
+
     try {
       setIsDownloading(true);
-      
+
       // If we don't have the link yet, fetch it
       if (!fileData?.url) {
         await refetchFileLink();
       }
-      
+
       // Now check if we have the URL
       if (fileData?.url) {
         // Create a temporary anchor element to trigger the download
-        const link = window.document.createElement('a');
+        const link = window.document.createElement("a");
         link.href = fileData.url;
-        link.target = '_blank';
+        link.target = "_blank";
         link.download = `report-${report.id}.pdf`;
         window.document.body.appendChild(link);
         link.click();
@@ -227,15 +234,15 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
       setIsDownloading(false);
     }
   };
-  
+
   const handleOpenFileInNewTab = () => {
     if (!report.file_storage_id) {
       toast.error("File ID tidak ditemukan");
       return;
     }
-    
+
     if (fileData?.url) {
-      window.open(fileData.url, '_blank');
+      window.open(fileData.url, "_blank");
     } else {
       toast.error("Gagal mendapatkan link file. Silakan coba lagi.");
       refetchFileLink();
@@ -246,15 +253,15 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
   const getStatusColor = () => {
     switch (report.status) {
       case "APPROVED":
-        return "from-green-600 to-green-700"
+        return "from-green-600 to-green-700";
       case "REJECTED":
-        return "from-red-600 to-red-700"
+        return "from-red-600 to-red-700";
       case "PENDING":
-        return "from-yellow-600 to-yellow-700"
+        return "from-yellow-600 to-yellow-700";
       default:
-        return "from-[#003478] to-[#003478]/90"
+        return "from-[#003478] to-[#003478]/90";
     }
-  }
+  };
 
   // Get status badge style
   const getStatusBadge = () => {
@@ -265,34 +272,34 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
             <CheckCircle className="h-3 w-3" />
             Disetujui
           </Badge>
-        )
+        );
       case "REJECTED":
         return (
           <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200 flex items-center gap-1">
             <AlertCircle className="h-3 w-3" />
             Ditolak
           </Badge>
-        )
+        );
       case "PENDING":
         return (
           <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200 flex items-center gap-1">
             <Clock className="h-3 w-3" />
             Sedang Diproses
           </Badge>
-        )
+        );
       default:
         return (
           <Badge variant="outline" className="bg-white text-[#003478] border-white">
             {report.report ? "Submitted" : "Not Submitted"}
           </Badge>
-        )
+        );
     }
-  }
+  };
 
   // Check if submission is allowed
   const isSubmissionAllowed = () => {
-    return report.status !== "APPROVED" && report.status !== "PENDING"
-  }
+    return report.status !== "APPROVED" && report.status !== "PENDING";
+  };
 
   return (
     <>
@@ -323,18 +330,18 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
                   <span className="font-medium">Laporan ditolak oleh pembimbing akademik</span>
                 </div>
                 <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="text-blue-700 border-blue-200 hover:bg-blue-50 flex items-center gap-1"
                     onClick={() => setIsReportDetailOpen(true)}
                   >
                     <Eye className="h-4 w-4" />
                     Lihat Laporan
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="text-red-700 border-red-200 hover:bg-red-50 flex items-center gap-1"
                     onClick={() => setIsFeedbackOpen(true)}
                   >
@@ -354,9 +361,9 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
                 Laporan ini telah disetujui oleh pembimbing akademik
               </p>
               <div className="flex gap-2 mt-4">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="text-blue-700 border-blue-200 hover:bg-blue-50 flex items-center gap-1"
                   onClick={() => setIsReportDetailOpen(true)}
                 >
@@ -364,9 +371,9 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
                   Lihat Laporan
                 </Button>
                 {report.file_storage_id && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="text-green-700 border-green-200 hover:bg-green-50 flex items-center gap-1"
                     onClick={handleDownloadFile}
                     disabled={isDownloading || isFileLoading}
@@ -396,9 +403,9 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
                 Laporan masih dalam pengecekan oleh pembimbing akademik
               </p>
               <div className="flex gap-2 mt-4">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="text-blue-700 border-blue-200 hover:bg-blue-50 flex items-center gap-1"
                   onClick={() => setIsReportDetailOpen(true)}
                 >
@@ -406,9 +413,9 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
                   Lihat Laporan
                 </Button>
                 {report.file_storage_id && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="text-green-700 border-green-200 hover:bg-green-50 flex items-center gap-1"
                     onClick={handleDownloadFile}
                     disabled={isDownloading || isFileLoading}
@@ -491,7 +498,11 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
                     disabled={!isSubmissionAllowed()}
                   />
                 </div>
-                <div className={`border-2 border-dashed rounded-lg p-6 text-center ${!isSubmissionAllowed() ? 'opacity-60' : ''}`}>
+                <div
+                  className={`border-2 border-dashed rounded-lg p-6 text-center ${
+                    !isSubmissionAllowed() ? "opacity-60" : ""
+                  }`}
+                >
                   <div className="mb-4 flex justify-center">
                     <Upload className="h-10 w-10 text-gray-400" />
                   </div>
@@ -520,8 +531,8 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
                         <FileUp className="h-4 w-4 mr-2 text-gray-500" />
                         <span className="truncate max-w-[200px]">{file.name}</span>
                       </div>
-                      <button 
-                        className="text-red-500 hover:text-red-700" 
+                      <button
+                        className="text-red-500 hover:text-red-700"
                         onClick={() => setFile(null)}
                         disabled={!isSubmissionAllowed()}
                       >
@@ -555,15 +566,10 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="p-4 bg-gray-50 rounded-md border">
-            <p className="text-gray-700">
-              {report.feedback || "Tidak ada feedback yang diberikan."}
-            </p>
+            <p className="text-gray-700">{report.feedback || "Tidak ada feedback yang diberikan."}</p>
           </div>
           <div className="flex justify-end mt-4">
-            <Button 
-              onClick={() => setIsFeedbackOpen(false)}
-              className="bg-[#003478] hover:bg-[#00275a] text-white"
-            >
+            <Button onClick={() => setIsFeedbackOpen(false)} className="bg-[#003478] hover:bg-[#00275a] text-white">
               Tutup
             </Button>
           </div>
@@ -576,11 +582,11 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
           <DialogHeader>
             <DialogTitle>Detail Laporan</DialogTitle>
             <DialogDescription>
-              {report.report_type === "WEEKLY_REPORT" ? `Laporan Minggu ke-${report.week}` : "Laporan Akhir"} - 
-              Periode: {formatDate(report.start_date)} - {formatDate(report.end_date)}
+              {report.report_type === "WEEKLY_REPORT" ? `Laporan Minggu ke-${report.week}` : "Laporan Akhir"} - Periode:{" "}
+              {formatDate(report.start_date)} - {formatDate(report.end_date)}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div>
               <h3 className="text-sm font-medium text-gray-500">Status</h3>
@@ -600,18 +606,16 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
                 )}
               </div>
             </div>
-            
+
             {report.report && !report.file_storage_id && (
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Isi Laporan</h3>
                 <div className="mt-1 p-4 bg-gray-50 rounded-md border max-h-64 overflow-y-auto">
-                  <p className="text-gray-700 whitespace-pre-line">
-                    {report.report}
-                  </p>
+                  <p className="text-gray-700 whitespace-pre-line">{report.report}</p>
                 </div>
               </div>
             )}
-            
+
             {report.file_storage_id && (
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-md border text-center">
@@ -625,24 +629,16 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
                       <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
                       <p className="text-gray-700 mb-2">Gagal memuat dokumen</p>
                       <p className="text-gray-500 text-sm mb-4">Terjadi kesalahan saat mengambil file.</p>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => refetchFileLink()}
-                        className="bg-white hover:bg-gray-50"
-                      >
+                      <Button variant="outline" onClick={() => refetchFileLink()} className="bg-white hover:bg-gray-50">
                         Coba Lagi
                       </Button>
                     </div>
                   ) : fileData?.url ? (
                     <>
-                      {fileData.url.toLowerCase().endsWith('.pdf') ? (
+                      {fileData.url.toLowerCase().endsWith(".pdf") ? (
                         <div className="flex flex-col items-center">
                           <div className="w-full h-96 border rounded mb-4">
-                            <iframe 
-                              src={fileData.url} 
-                              className="w-full h-full" 
-                              title="PDF Preview"
-                            />
+                            <iframe src={fileData.url} className="w-full h-full" title="PDF Preview" />
                           </div>
                           <div className="flex gap-2 justify-center">
                             <Button
@@ -653,7 +649,7 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
                               <ExternalLink className="h-4 w-4" />
                               <span>Buka di Tab Baru</span>
                             </Button>
-                            
+
                             <Button
                               className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
                               onClick={handleDownloadFile}
@@ -667,7 +663,9 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
                         <div className="py-8 flex flex-col items-center">
                           <FileUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                           <p className="text-gray-700 mb-2">Dokumen tidak dapat ditampilkan</p>
-                          <p className="text-gray-500 text-sm mb-4">Tipe file ini tidak dapat ditampilkan secara langsung.</p>
+                          <p className="text-gray-500 text-sm mb-4">
+                            Tipe file ini tidak dapat ditampilkan secara langsung.
+                          </p>
                           <div className="flex gap-2 justify-center">
                             <Button
                               variant="outline"
@@ -677,7 +675,7 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
                               <ExternalLink className="h-4 w-4" />
                               <span>Buka di Tab Baru</span>
                             </Button>
-                            
+
                             <Button
                               className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
                               onClick={handleDownloadFile}
@@ -688,7 +686,7 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
                           </div>
                         </div>
                       )}
-                      
+
                       {fileData.expired_at && (
                         <p className="text-xs text-gray-500 mt-4">
                           Link kedaluwarsa: {new Date(fileData.expired_at).toLocaleString()}
@@ -700,11 +698,7 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
                       <FileUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                       <p className="text-gray-700 mb-2">Dokumen tidak tersedia</p>
                       <p className="text-gray-500 text-sm mb-4">Tidak dapat mengambil link dokumen.</p>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => refetchFileLink()}
-                        className="bg-white hover:bg-gray-50"
-                      >
+                      <Button variant="outline" onClick={() => refetchFileLink()} className="bg-white hover:bg-gray-50">
                         Coba Lagi
                       </Button>
                     </div>
@@ -712,29 +706,24 @@ export function ReportCard({ report, refetch }: ReportCardProps) {
                 </div>
               </div>
             )}
-            
+
             {report.status === "REJECTED" && (
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Feedback Pembimbing</h3>
                 <div className="mt-1 p-4 bg-red-50 rounded-md border">
-                  <p className="text-gray-700">
-                    {report.feedback || "Tidak ada feedback yang diberikan."}
-                  </p>
+                  <p className="text-gray-700">{report.feedback || "Tidak ada feedback yang diberikan."}</p>
                 </div>
               </div>
             )}
           </div>
-          
+
           <DialogFooter>
-            <Button 
-              onClick={() => setIsReportDetailOpen(false)}
-              className="bg-[#003478] hover:bg-[#00275a] text-white"
-            >
+            <Button onClick={() => setIsReportDetailOpen(false)} className="bg-[#003478] hover:bg-[#00275a] text-white">
               Tutup
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }

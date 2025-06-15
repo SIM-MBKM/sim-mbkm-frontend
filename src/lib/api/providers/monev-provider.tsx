@@ -5,6 +5,7 @@ import {
   useEvaluationById,
   useSubmitEvaluation,
   useUpdateEvaluation,
+  useUpdateEvaluationScore, // Add this import
   useFinalizeEvaluation,
   useDeleteEvaluation,
   useUsers,
@@ -20,6 +21,7 @@ import {
   Evaluation,
   EvaluationCreateInput,
   EvaluationUpdateInput,
+  EvaluationScoreUpdateInput, // Add this import
   EvaluationFilter,
 } from "../services/monev-service";
 import type React from "react";
@@ -83,6 +85,7 @@ type MonevAPIContextType = {
   // Actions
   createEvaluation: (evaluationData: EvaluationCreateInput) => Promise<void>;
   updateEvaluation: (evaluationData: EvaluationUpdateInput) => Promise<void>;
+  updateEvaluationScore: (scoreData: EvaluationScoreUpdateInput) => Promise<void>; // Add this line
   finalizeEvaluation: (evaluationId: string) => Promise<void>;
   deleteEvaluation: (evaluationId: string) => Promise<void>;
 
@@ -178,6 +181,7 @@ function MonevAPIProvider({ children }: { children: React.ReactNode }) {
   // Mutation hooks
   const submitEvaluationMutation = useSubmitEvaluation();
   const updateEvaluationMutation = useUpdateEvaluation();
+  const updateEvaluationScoreMutation = useUpdateEvaluationScore(); // Add this line
   const finalizeEvaluationMutation = useFinalizeEvaluation();
   const deleteEvaluationMutation = useDeleteEvaluation();
 
@@ -321,6 +325,29 @@ function MonevAPIProvider({ children }: { children: React.ReactNode }) {
     [updateEvaluationMutation, refreshEvaluations]
   );
 
+  // Add the updateEvaluationScore function
+  const updateEvaluationScore = useCallback(
+    async (scoreData: EvaluationScoreUpdateInput) => {
+      setFormSubmitting(true);
+      try {
+        await updateEvaluationScoreMutation.mutateAsync(scoreData);
+
+        // Refresh both the evaluations list and the selected evaluation
+        refreshEvaluations();
+
+        // If we're updating a score for the currently selected evaluation,
+        // we might want to refetch that specific evaluation to get updated data
+        if (selectedEvaluationId && scoreData.evaluation_id === selectedEvaluationId) {
+          // The useEvaluationById hook should automatically refetch due to query invalidation
+          // from the mutation's onSuccess callback
+        }
+      } finally {
+        setFormSubmitting(false);
+      }
+    },
+    [updateEvaluationScoreMutation, refreshEvaluations, selectedEvaluationId]
+  );
+
   const finalizeEvaluation = useCallback(
     async (evaluationId: string) => {
       setFormSubmitting(true);
@@ -397,6 +424,7 @@ function MonevAPIProvider({ children }: { children: React.ReactNode }) {
     // Actions
     createEvaluation,
     updateEvaluation,
+    updateEvaluationScore, // Add this line
     finalizeEvaluation,
     deleteEvaluation,
 

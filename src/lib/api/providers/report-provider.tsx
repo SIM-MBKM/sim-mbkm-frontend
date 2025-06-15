@@ -92,6 +92,7 @@ type ReportAPIContextType = {
   generateReport: (id: string) => Promise<void>;
   exportReportResult: (resultId: string) => Promise<void>;
   downloadReportResult: (resultId: string) => Promise<string>; // Returns download URL
+  deleteReportResult: (resultId: string) => Promise<void>;
 
   // Form state
   isFormSubmitting: boolean;
@@ -405,6 +406,52 @@ function ReportAPIProvider({ children }: { children: React.ReactNode }) {
     [createReportMutation, refreshReports, toast]
   );
 
+  const deleteReportResult = useCallback(
+    async (resultId: string): Promise<void> => {
+      setLastError(null);
+      try {
+        // Use the existing deleteResultMutation
+        await deleteResultMutation.mutateAsync(resultId);
+
+        toast({
+          title: "Success",
+          description: "Report result has been deleted successfully.",
+          variant: "success",
+        });
+
+        // Update local state - remove the result from all report results
+        setAllReportResults((prev) => {
+          const newMap = new Map(prev);
+          // Find and remove the result from all reports
+          newMap.forEach((results, reportId) => {
+            const filteredResults = results.filter((result) => result.id !== resultId);
+            newMap.set(reportId, filteredResults);
+          });
+          return newMap;
+        });
+
+        // Refresh statistics
+        refreshStats();
+
+        // If this result was from the currently selected report, refresh that too
+        if (selectedReportId) {
+          setSelectedReportId(undefined);
+          setTimeout(() => setSelectedReportId(selectedReportId), 100);
+        }
+      } catch (error: any) {
+        const errorMessage = error?.response?.data?.message || "Failed to delete report result. Please try again.";
+        setLastError(errorMessage);
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        throw error;
+      }
+    },
+    [deleteResultMutation, selectedReportId, refreshStats, toast]
+  );
+
   const updateReport = useCallback(
     async (id: string, reportData: UpdateReportRequest) => {
       setFormSubmitting(true);
@@ -698,6 +745,7 @@ function ReportAPIProvider({ children }: { children: React.ReactNode }) {
     generateReport,
     exportReportResult,
     downloadReportResult,
+    deleteReportResult,
 
     // Form state
     isFormSubmitting,

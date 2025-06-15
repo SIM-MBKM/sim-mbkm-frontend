@@ -1,10 +1,18 @@
-// Improved dashboard component with fixed filtering
-
 "use client";
 
 import type React from "react";
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useMonevAPI } from "@/lib/api/providers/monev-provider";
+import useToast from "@/lib/api/hooks/use-toast";
+import type { UserAlt } from "@/lib/api/services";
+import type {
+  EvaluationList,
+  Evaluation,
+  EvaluationScoreUpdateInput,
+  EvaluationUpdateInput,
+} from "@/lib/api/services/monev-service";
+import { DosenPemonevEvaluationCard } from "../../dosen-pemonev/evaluation-card";
 import {
   ClipboardList,
   Search,
@@ -27,6 +35,7 @@ import {
   UserCheck,
   RefreshCw,
   AlertCircle,
+  User,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,30 +46,656 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useMonevAPI } from "@/lib/api/providers/monev-provider";
-import useToast from "@/lib/api/hooks/use-toast";
-import type { UserAlt } from "@/lib/api/services";
-import type { EvaluationList, Evaluation, EvaluationScoreUpdateInput } from "@/lib/api/services/monev-service";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useUpdateEvaluationScore } from "@/lib/api/hooks";
 
-// Types for components
+// Local types
 interface ScoreFormData {
   id: string;
   score: number | "";
   grade_letter: string;
 }
 
-interface StudentWithRegistration {
-  id: string;
-  auth_user_id: string;
-  name: string;
-  email: string;
-  nrp: string;
-  role_name: string;
-  hasEvaluation: boolean;
-  hasRegistration: boolean;
-  registrationStatus: string | null;
-  activityName: string | null;
-  registration: any;
+// Enhanced View Dialog Component
+function EvaluationViewDialog({
+  evaluation,
+  selectedEvaluation,
+  trigger,
+}: {
+  evaluation: EvaluationList;
+  selectedEvaluation?: Evaluation;
+  trigger: React.ReactNode;
+}) {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "in_progress":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "completed":
+        return "bg-green-100 text-green-800 border-green-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+      <AlertDialogContent className="max-w-3xl bg-white">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <ClipboardList className="h-5 w-5 text-primary" />
+            Evaluation Details
+          </AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="space-y-4 text-left">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Evaluation ID</label>
+                  <p className="text-sm font-mono">#{evaluation.id.slice(-8)}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Status</label>
+                  <div className="mt-1">
+                    <Badge className={getStatusColor(evaluation.status)}>
+                      {evaluation.status.replace("_", " ").toUpperCase()}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Student ID</label>
+                  <p className="text-sm font-mono">{evaluation.mahasiswa_id.slice(-8)}</p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Dosen Pemonev ID</label>
+                  <p className="text-sm font-mono">{evaluation.dosen_pemonev_id.slice(-8)}</p>
+                </div>
+
+                {evaluation.registration_id && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Registration ID</label>
+                    <p className="text-sm font-mono">#{evaluation.registration_id.slice(-8)}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Show scores if available */}
+              {selectedEvaluation && selectedEvaluation.scores && selectedEvaluation.scores.length > 0 && (
+                <div className="border-t pt-4">
+                  <label className="text-sm font-medium text-gray-500 mb-3 block">
+                    Evaluation Scores ({selectedEvaluation.scores.length} subjects)
+                  </label>
+                  <div className="space-y-3">
+                    {selectedEvaluation.scores.map((score, index) => (
+                      <div key={score.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                          <p className="text-sm font-medium">{score.subject_data?.name || `Subject ${index + 1}`}</p>
+                          {score.subject_data?.code && (
+                            <p className="text-xs text-gray-500">Code: {score.subject_data.code}</p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-blue-600">
+                            {score.score !== undefined ? score.score : "N/A"}
+                          </p>
+                          <p className="text-sm text-gray-600">Grade: {score.grade_letter || "N/A"}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Close</AlertDialogCancel>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+// Enhanced Update Dialog Component with Combined Form Submission
+function EvaluationUpdateDialog({
+  evaluation,
+  mahasiswaUsers = [],
+  dosenPemonevUsers = [],
+  onUpdate,
+  onUpdateScore,
+  isLoading = false,
+  trigger,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+}: {
+  evaluation: Evaluation;
+  mahasiswaUsers?: UserAlt[];
+  dosenPemonevUsers?: UserAlt[];
+  onUpdate: (updateData: EvaluationUpdateInput) => Promise<void>;
+  onUpdateScore: (scoreData: EvaluationScoreUpdateInput) => Promise<void>;
+  isLoading?: boolean;
+  trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
+  const { toast } = useToast();
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = controlledOnOpenChange || setInternalOpen;
+
+  const [formData, setFormData] = useState({
+    mahasiswa_id: evaluation.mahasiswa_id || "",
+    dosen_pemonev_id: evaluation.dosen_pemonev_id || "",
+    status: evaluation.status || "pending",
+    registration_id: evaluation.registration_id || "",
+  });
+
+  const [scoresData, setScoresData] = useState<ScoreFormData[]>([]);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [scoreErrors, setScoreErrors] = useState<Record<string, string>>({});
+  const [hasChanges, setHasChanges] = useState(false);
+  const [hasScoreChanges, setHasScoreChanges] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Initialize form data when evaluation changes
+  useEffect(() => {
+    setFormData({
+      mahasiswa_id: evaluation.mahasiswa_id || "",
+      dosen_pemonev_id: evaluation.dosen_pemonev_id || "",
+      status: evaluation.status || "pending",
+      registration_id: evaluation.registration_id || "",
+    });
+
+    if (evaluation.scores && evaluation.scores.length > 0) {
+      setScoresData(
+        evaluation.scores.map((score) => ({
+          id: score.id,
+          score: score.score ?? "",
+          grade_letter: score.grade_letter || "",
+        }))
+      );
+    } else {
+      setScoresData([]);
+    }
+  }, [evaluation]);
+
+  // Check for changes
+  useEffect(() => {
+    const evalChanged =
+      formData.mahasiswa_id !== (evaluation.mahasiswa_id || "") ||
+      formData.dosen_pemonev_id !== (evaluation.dosen_pemonev_id || "") ||
+      formData.status !== (evaluation.status || "pending");
+
+    setHasChanges(evalChanged);
+
+    const scoreChanged = scoresData.some((scoreForm, index) => {
+      const originalScore = evaluation.scores?.[index];
+      if (!originalScore) return false;
+
+      const formScore = typeof scoreForm.score === "number" ? scoreForm.score : 0;
+      const originalScoreValue = originalScore.score ?? 0;
+
+      return formScore !== originalScoreValue || scoreForm.grade_letter !== (originalScore.grade_letter || "");
+    });
+
+    setHasScoreChanges(scoreChanged);
+  }, [formData, scoresData, evaluation]);
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    if (!formData.mahasiswa_id.trim()) errors.mahasiswa_id = "Student is required";
+    if (!formData.dosen_pemonev_id.trim()) errors.dosen_pemonev_id = "Dosen Pemonev is required";
+    if (!formData.status.trim()) errors.status = "Status is required";
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const validateScores = () => {
+    const errors: Record<string, string> = {};
+    scoresData.forEach((score, index) => {
+      const scoreValue = typeof score.score === "number" ? score.score : parseFloat(score.score.toString()) || 0;
+      if (scoreValue < 0 || scoreValue > 100) {
+        errors[`score_${index}`] = "Score must be between 0 and 100";
+      }
+      if (!score.grade_letter.trim()) {
+        errors[`grade_${index}`] = "Grade letter is required";
+      }
+    });
+    setScoreErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const getGradeFromScore = (score: number): string => {
+    if (score >= 85) return "A";
+    if (score >= 80) return "A-";
+    if (score >= 75) return "B+";
+    if (score >= 70) return "B";
+    if (score >= 65) return "B-";
+    if (score >= 60) return "C+";
+    if (score >= 55) return "C";
+    if (score >= 50) return "C-";
+    if (score >= 40) return "D";
+    return "E";
+  };
+
+  const handleScoreChange = (index: number, field: "score" | "grade_letter", value: string | number) => {
+    setScoresData((prev) => {
+      const newScores = [...prev];
+      if (field === "score") {
+        const numValue = typeof value === "number" ? value : parseFloat(value.toString()) || 0;
+        newScores[index] = {
+          ...newScores[index],
+          score: numValue,
+          grade_letter: getGradeFromScore(numValue),
+        };
+      } else if (field === "grade_letter") {
+        newScores[index] = {
+          ...newScores[index],
+          grade_letter: String(value),
+        };
+      }
+      return newScores;
+    });
+  };
+
+  // Enhanced handleSubmit with combined updates
+  const handleSubmit = async () => {
+    const isFormValid = validateForm();
+    const areScoresValid = validateScores();
+
+    if (!isFormValid || !areScoresValid) return;
+
+    if (!hasChanges && !hasScoreChanges) {
+      toast({
+        title: "No Changes",
+        description: "No changes were made to the evaluation.",
+        variant: "default",
+      });
+      setOpen(false);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Step 1: Update evaluation data if changed
+      if (hasChanges) {
+        const updateData: EvaluationUpdateInput = {
+          id: evaluation.id,
+          mahasiswa_id: formData.mahasiswa_id,
+          dosen_pemonev_id: formData.dosen_pemonev_id,
+          registration_id: formData.registration_id,
+          status: formData.status as "pending" | "in_progress" | "completed",
+        };
+
+        await onUpdate(updateData);
+
+        // Show intermediate success for evaluation update
+        toast({
+          title: "Evaluation Updated",
+          description: "Evaluation details updated successfully",
+          variant: "success",
+        });
+      }
+
+      // Step 2: Update scores if changed
+      if (hasScoreChanges) {
+        const scoreUpdatePromises = scoresData
+          .map((scoreForm, index) => {
+            const originalScore = evaluation.scores?.[index];
+            if (!originalScore) return null;
+
+            const formScore =
+              typeof scoreForm.score === "number" ? scoreForm.score : parseFloat(scoreForm.score.toString()) || 0;
+            const originalScoreValue = originalScore.score ?? 0;
+
+            if (formScore !== originalScoreValue || scoreForm.grade_letter !== (originalScore.grade_letter || "")) {
+              const scoreUpdateData: EvaluationScoreUpdateInput = {
+                evaluation_id: evaluation.id,
+                id: scoreForm.id,
+                score: formScore,
+                grade_letter: scoreForm.grade_letter,
+              };
+              return onUpdateScore(scoreUpdateData);
+            }
+            return null;
+          })
+          .filter(Boolean);
+
+        if (scoreUpdatePromises.length > 0) {
+          await Promise.all(scoreUpdatePromises);
+
+          // Show success for score updates
+          toast({
+            title: "Scores Updated",
+            description: `${scoreUpdatePromises.length} score(s) updated successfully`,
+            variant: "success",
+          });
+        }
+      }
+
+      // Final success message
+      toast({
+        title: "Update Complete",
+        description: `All changes have been saved successfully`,
+        variant: "success",
+      });
+
+      setOpen(false);
+    } catch (error) {
+      console.error("Failed to update evaluation:", error);
+      toast({
+        title: "Update Failed",
+        description: error instanceof Error ? error.message : "Failed to update evaluation. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "in_progress":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "completed":
+        return "bg-green-100 text-green-800 border-green-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
+  const findUserEmail = (userId: string, users: UserAlt[]) => {
+    const user = users.find((u) => u.auth_user_id === userId);
+    return user?.email || `User ID: ${userId.slice(-6)}`;
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {trigger || (
+          <Button variant="outline" size="sm" className="gap-2">
+            <Edit className="h-4 w-4" />
+            Edit
+          </Button>
+        )}
+      </DialogTrigger>
+
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
+            <Edit className="h-5 w-5" />
+            Update Evaluation & Scores
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Current Evaluation Info */}
+          <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-gray-900">Current Evaluation</h3>
+              <Badge className={getStatusColor(evaluation.status)}>
+                {evaluation.status.replace("_", " ").toUpperCase()}
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <Label className="text-xs font-medium text-gray-600">Evaluation ID</Label>
+                <p className="font-mono text-gray-900">#{evaluation.id.slice(-8)}</p>
+              </div>
+              <div>
+                <Label className="text-xs font-medium text-gray-600">Registration ID</Label>
+                <p className="font-mono text-gray-900">
+                  {evaluation.registration_id ? `#${evaluation.registration_id.slice(-8)}` : "No Registration ID"}
+                </p>
+              </div>
+              <div>
+                <Label className="text-xs font-medium text-gray-600">Current Student</Label>
+                <p className="text-gray-900">{findUserEmail(evaluation.mahasiswa_id, mahasiswaUsers)}</p>
+              </div>
+              <div>
+                <Label className="text-xs font-medium text-gray-600">Current Dosen Pemonev</Label>
+                <p className="text-gray-900">{findUserEmail(evaluation.dosen_pemonev_id, dosenPemonevUsers)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Update Evaluation Form */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <User className="h-5 w-5" />
+                  Update Evaluation
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="mahasiswa_id" className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Student
+                  </Label>
+                  <Select
+                    value={formData.mahasiswa_id}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, mahasiswa_id: value }))}
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select student" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border border-gray-200">
+                      {mahasiswaUsers.map((student) => (
+                        <SelectItem key={student.auth_user_id} value={student.auth_user_id}>
+                          <div className="flex items-center gap-2">
+                            <span>{student.email}</span>
+                            {student.nrp && <span className="text-xs text-gray-500">({student.nrp})</span>}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formErrors.mahasiswa_id && <p className="text-sm text-red-600">{formErrors.mahasiswa_id}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dosen_pemonev_id" className="flex items-center gap-2">
+                    <UserCheck className="h-4 w-4" />
+                    Dosen Pemonev
+                  </Label>
+                  <Select
+                    value={formData.dosen_pemonev_id}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, dosen_pemonev_id: value }))}
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select Dosen Pemonev" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border border-gray-200">
+                      {dosenPemonevUsers.map((dosen) => (
+                        <SelectItem key={dosen.auth_user_id} value={dosen.auth_user_id}>
+                          {dosen.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formErrors.dosen_pemonev_id && <p className="text-sm text-red-600">{formErrors.dosen_pemonev_id}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="status" className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Status
+                  </Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({ ...prev, status: value as "pending" | "in_progress" | "completed" }))
+                    }
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border border-gray-200">
+                      <SelectItem value="pending">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                          Pending
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="in_progress">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                          In Progress
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="completed">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                          Completed
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {formErrors.status && <p className="text-sm text-red-600">{formErrors.status}</p>}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Update Scores */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Star className="h-5 w-5" />
+                  Update Scores
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {scoresData.length > 0 ? (
+                  <div className="space-y-4">
+                    {scoresData.map((scoreForm, index) => (
+                      <div key={scoreForm.id} className="p-3 border border-gray-200 rounded-lg space-y-3">
+                        <div className="flex items-center gap-2">
+                          <GraduationCap className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm font-medium">
+                            {evaluation.scores?.[index]?.subject_data?.name || `Subject ${index + 1}`}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Score (0-100)</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={scoreForm.score}
+                              onChange={(e) => handleScoreChange(index, "score", e.target.value)}
+                              disabled={isSubmitting}
+                              className="bg-white"
+                            />
+                            {scoreErrors[`score_${index}`] && (
+                              <p className="text-xs text-red-600">{scoreErrors[`score_${index}`]}</p>
+                            )}
+                          </div>
+
+                          <div className="space-y-1">
+                            <Label className="text-xs">Grade</Label>
+                            <Input
+                              value={scoreForm.grade_letter}
+                              onChange={(e) => handleScoreChange(index, "grade_letter", e.target.value)}
+                              disabled={isSubmitting}
+                              className="bg-white"
+                              placeholder="A, B+, C, etc."
+                            />
+                            {scoreErrors[`grade_${index}`] && (
+                              <p className="text-xs text-red-600">{scoreErrors[`grade_${index}`]}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Star className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No scores available for this evaluation</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Changes Indicator */}
+          {(hasChanges || hasScoreChanges) && (
+            <Alert>
+              <AlertDescription className="text-blue-600">
+                Changes detected. Click "Update Evaluation" to save your changes.
+                {hasChanges && hasScoreChanges && " (Both evaluation details and scores will be updated)"}
+                {hasChanges && !hasScoreChanges && " (Only evaluation details will be updated)"}
+                {!hasChanges && hasScoreChanges && " (Only scores will be updated)"}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Progress Indicator during submission */}
+          {isSubmitting && (
+            <Alert>
+              <AlertDescription className="text-green-600 flex items-center gap-2">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full"
+                />
+                Processing updates... Please wait.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting || (!hasChanges && !hasScoreChanges)}
+              className="gap-2"
+            >
+              {isSubmitting ? (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {isSubmitting ? "Updating..." : "Update Evaluation"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 // Stats Card Component
@@ -98,24 +733,30 @@ function StatsCard({
 // Enhanced Evaluation Card Component
 function EnhancedEvaluationCard({
   evaluation,
-  onView,
   onEdit,
   onFinalize,
   onDelete,
   selectedEvaluation,
   selectedEvaluationId,
   isLoadingSelected,
+  onUpdateEvaluation,
   onUpdateScore,
+  isFormSubmitting,
+  mahasiswaUsers = [],
+  dosenPemonevUsers = [],
 }: {
   evaluation: EvaluationList;
-  onView: (id: string) => void;
   onEdit: (id: string) => void;
   onFinalize: (id: string) => void;
   onDelete: (id: string) => void;
   selectedEvaluation?: Evaluation;
   selectedEvaluationId?: string | null;
   isLoadingSelected?: boolean;
+  onUpdateEvaluation: (updateData: EvaluationUpdateInput) => Promise<void>;
   onUpdateScore: (scoreData: EvaluationScoreUpdateInput) => Promise<void>;
+  isFormSubmitting?: boolean;
+  mahasiswaUsers?: UserAlt[];
+  dosenPemonevUsers?: UserAlt[];
 }) {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -143,7 +784,7 @@ function EnhancedEvaluationCard({
     }
   };
 
-  const canUpdateScores = selectedEvaluation && selectedEvaluation.id === evaluation.id && selectedEvaluation.scores;
+  const canUpdate = selectedEvaluation && selectedEvaluation.id === evaluation.id;
 
   return (
     <motion.div
@@ -200,51 +841,124 @@ function EnhancedEvaluationCard({
 
           <div className="flex gap-2 flex-wrap">
             {/* View Details */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onView(evaluation.id)}
-              className="flex-1 gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
-            >
-              <Eye className="h-4 w-4" />
-              View
-            </Button>
+            <EvaluationViewDialog
+              evaluation={evaluation}
+              selectedEvaluation={selectedEvaluation}
+              trigger={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  <Eye className="h-4 w-4" />
+                  View
+                </Button>
+              }
+            />
 
-            {/* Update Scores */}
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => onEdit(evaluation.id)}
-              className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={isLoadingSelected && selectedEvaluationId === evaluation.id}
-            >
-              <Edit className="h-4 w-4" />
-              {isLoadingSelected && selectedEvaluationId === evaluation.id ? "Loading..." : "Edit Scores"}
-            </Button>
-
-            {/* Finalize */}
-            {evaluation.status !== "completed" && (
+            {/* Update Button */}
+            {canUpdate ? (
+              <EvaluationUpdateDialog
+                evaluation={selectedEvaluation}
+                mahasiswaUsers={mahasiswaUsers}
+                dosenPemonevUsers={dosenPemonevUsers}
+                onUpdate={onUpdateEvaluation}
+                onUpdateScore={onUpdateScore}
+                isLoading={isFormSubmitting || false}
+                trigger={
+                  <Button variant="default" size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700 text-white">
+                    <Edit className="h-4 w-4" />
+                    Update
+                  </Button>
+                }
+              />
+            ) : (
               <Button
-                variant="outline"
+                variant="default"
                 size="sm"
-                onClick={() => onFinalize(evaluation.id)}
-                className="gap-2 border-green-300 text-green-700 hover:bg-green-50"
+                onClick={() => onEdit(evaluation.id)}
+                className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={isLoadingSelected && selectedEvaluationId === evaluation.id}
               >
-                <CheckCircle className="h-4 w-4" />
-                Finalize
+                <Edit className="h-4 w-4" />
+                {isLoadingSelected && selectedEvaluationId === evaluation.id ? "Loading..." : "Edit"}
               </Button>
             )}
 
+            {/* Finalize */}
+            {evaluation.status !== "completed" && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 border-green-300 text-green-700 hover:bg-green-50"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    Finalize
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="bg-white">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      Finalize Evaluation
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to finalize this evaluation? This action will mark the evaluation as
+                      completed and cannot be undone.
+                      <br />
+                      <br />
+                      <strong>Evaluation ID:</strong> #{evaluation.id.slice(-8)}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => onFinalize(evaluation.id)}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Finalize Evaluation
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+
             {/* Delete */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onDelete(evaluation.id)}
-              className="gap-2 border-red-300 text-red-700 hover:bg-red-50"
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2 border-red-300 text-red-700 hover:bg-red-50">
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="bg-white">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5 text-red-600" />
+                    Delete Evaluation
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete this evaluation? This action cannot be undone and will permanently
+                    remove all associated data.
+                    <br />
+                    <br />
+                    <strong>Evaluation ID:</strong> #{evaluation.id.slice(-8)}
+                    <br />
+                    <strong>Student ID:</strong> {evaluation.mahasiswa_id.slice(-6)}
+                    <br />
+                    <strong>Status:</strong> {evaluation.status.replace("_", " ").toUpperCase()}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => onDelete(evaluation.id)} className="bg-red-600 hover:bg-red-700">
+                    Delete Evaluation
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </CardContent>
       </Card>
@@ -259,7 +973,7 @@ function StudentAssignmentCard({
   onAssign,
   isLoading,
 }: {
-  student: StudentWithRegistration;
+  student: any; // Using any temporarily since StudentWithRegistration is defined in monev-provider
   dosenPemonevUsers: UserAlt[];
   onAssign: (studentId: string, dosenPemonevId: string, registrationId: string) => void;
   isLoading: boolean;
@@ -295,7 +1009,7 @@ function StudentAssignmentCard({
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Select evaluator" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 {dosenPemonevUsers.map((dosen) => (
                   <SelectItem key={dosen.auth_user_id} value={dosen.auth_user_id}>
                     {dosen.name || dosen.email}
@@ -315,6 +1029,7 @@ function StudentAssignmentCard({
   );
 }
 
+// Main Dashboard Component
 export function MonevManagementDashboard() {
   const {
     evaluations,
@@ -335,6 +1050,7 @@ export function MonevManagementDashboard() {
     dosenPemonevUsers,
     createEvaluation,
     updateEvaluation,
+    updateEvaluationScore,
     finalizeEvaluation,
     deleteEvaluation,
     isFormSubmitting,
@@ -363,6 +1079,8 @@ export function MonevManagementDashboard() {
   useEffect(() => {
     setLocalStatusFilter(statusFilter);
   }, [statusFilter]);
+
+  // Enhanced filter handlers
   const handleSearchChange = useCallback(
     (value: string) => {
       setLocalSearchTerm(value);
@@ -437,13 +1155,7 @@ export function MonevManagementDashboard() {
   const handleUpdateScore = useCallback(
     async (scoreData: EvaluationScoreUpdateInput) => {
       try {
-        // This would be the score update mutation - you may need to add this to your provider
-        // For now, using the general update method
-        await updateEvaluation({
-          id: scoreData.evaluation_id,
-          // Add other fields as needed
-        });
-        refreshEvaluations();
+        await updateEvaluationScore(scoreData);
         toast({
           title: "Success",
           description: "Score updated successfully",
@@ -458,7 +1170,7 @@ export function MonevManagementDashboard() {
         });
       }
     },
-    [updateEvaluation, refreshEvaluations, toast]
+    [updateEvaluationScore, toast]
   );
 
   const handleDeleteEvaluation = useCallback(
@@ -492,7 +1204,7 @@ export function MonevManagementDashboard() {
       toast({
         title: "Refreshing",
         description: "Updating evaluation data...",
-        variant: "info",
+        variant: "default",
       });
 
       // Refresh evaluations
@@ -516,22 +1228,21 @@ export function MonevManagementDashboard() {
     }
   }, [refreshEvaluations, setSelectedEvaluationId, toast]);
 
-  // Calculate additional stats
-  const totalStudents = studentsWithRegistrations.length;
-  const studentsWithApprovedRegistrations = studentsWithRegistrations.filter(
-    (s) => s.hasRegistration && s.registrationStatus === "APPROVED"
-  ).length;
+  // Calculate additional stats with fallbacks
+  const totalStudents = studentsWithRegistrations?.length || 0;
+  const studentsWithApprovedRegistrations =
+    studentsWithRegistrations?.filter((s) => s.hasRegistration && s.registrationStatus === "APPROVED").length || 0;
 
   // Filter status options
   const statusOptions = [
-    { value: "all", label: "All Statuses", count: evaluationStats.total },
-    { value: "pending", label: "Pending", count: evaluationStats.pending },
-    { value: "in_progress", label: "In Progress", count: evaluationStats.inProgress },
-    { value: "completed", label: "Completed", count: evaluationStats.completed },
+    { value: "all", label: "All Statuses", count: evaluationStats?.total || 0 },
+    { value: "pending", label: "Pending", count: evaluationStats?.pending || 0 },
+    { value: "in_progress", label: "In Progress", count: evaluationStats?.inProgress || 0 },
+    { value: "completed", label: "Completed", count: evaluationStats?.completed || 0 },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
         <div className="flex items-center justify-between">
@@ -545,23 +1256,12 @@ export function MonevManagementDashboard() {
             </div>
           </div>
 
-          {/* Quick refresh button */}
-          <Button onClick={handleRefresh} disabled={isRefreshing || isLoading} variant="outline" className="gap-2">
+          <Button onClick={handleRefresh} disabled={isRefreshing} variant="outline" className="gap-2">
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
             {isRefreshing ? "Refreshing..." : "Refresh"}
           </Button>
         </div>
       </motion.div>
-
-      {/* Error Alert */}
-      {evaluations === undefined && !isLoading && (
-        <Alert className="border-destructive/50 text-destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Failed to load evaluations. Please try refreshing the page or check your connection.
-          </AlertDescription>
-        </Alert>
-      )}
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
@@ -581,28 +1281,28 @@ export function MonevManagementDashboard() {
         />
         <StatsCard
           title="Ready for Evaluation"
-          value={studentsReadyForEvaluation.length}
+          value={studentsReadyForEvaluation?.length || 0}
           description="Approved but not evaluated"
           icon={Users}
           color="bg-green-500"
         />
         <StatsCard
           title="Total Evaluations"
-          value={evaluationStats.total}
+          value={evaluationStats?.total || 0}
           description="All evaluations in system"
           icon={ClipboardList}
           color="bg-blue-600"
         />
         <StatsCard
           title="Completed"
-          value={evaluationStats.completed}
+          value={evaluationStats?.completed || 0}
           description="Finished evaluations"
           icon={CheckCircle}
           color="bg-green-600"
         />
         <StatsCard
           title="In Progress"
-          value={evaluationStats.inProgress + evaluationStats.pending}
+          value={(evaluationStats?.inProgress || 0) + (evaluationStats?.pending || 0)}
           description="Active evaluations"
           icon={Clock}
           color="bg-orange-500"
@@ -622,16 +1322,16 @@ export function MonevManagementDashboard() {
             <div>
               <div className="flex justify-between text-sm mb-2">
                 <span>Evaluation Completion Rate</span>
-                <span className="font-medium">{evaluationStats.averageCompletionRate}%</span>
+                <span className="font-medium">{evaluationStats?.averageCompletionRate || 0}%</span>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${evaluationStats.averageCompletionRate}%` }}
+                  style={{ width: `${evaluationStats?.averageCompletionRate || 0}%` }}
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {evaluationStats.completed} of {evaluationStats.total} evaluations completed
+                {evaluationStats?.completed || 0} of {evaluationStats?.total || 0} evaluations completed
               </p>
             </div>
             <div>
@@ -641,7 +1341,7 @@ export function MonevManagementDashboard() {
                   {totalStudents > 0 ? Math.round((studentsWithApprovedRegistrations / totalStudents) * 100) : 0}%
                 </span>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className="bg-blue-500 h-2 rounded-full transition-all duration-300"
                   style={{
@@ -665,13 +1365,13 @@ export function MonevManagementDashboard() {
               value="evaluations"
               className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             >
-              Evaluations ({evaluationStats.total})
+              Evaluations ({evaluationStats?.total || 0})
             </TabsTrigger>
             <TabsTrigger
               value="assignments"
               className="data-[state=active]:bg-green-500 data-[state=active]:text-white"
             >
-              Ready for Assignment ({studentsReadyForEvaluation.length})
+              Ready for Assignment ({studentsReadyForEvaluation?.length || 0})
             </TabsTrigger>
             <TabsTrigger value="students" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
               All Students ({totalStudents})
@@ -807,7 +1507,7 @@ export function MonevManagementDashboard() {
           )}
         </AnimatePresence>
 
-        {/* Tab Contents remain the same ... */}
+        {/* Tab Contents */}
         <TabsContent value="evaluations" className="space-y-4 mt-0">
           {isLoading ? (
             <div className="grid gap-4">
@@ -815,12 +1515,12 @@ export function MonevManagementDashboard() {
                 <Card key={i} className="animate-pulse">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                      <div className="w-12 h-12 bg-gray-200 rounded-full" />
                       <div className="space-y-2 flex-1">
-                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3" />
-                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+                        <div className="h-4 bg-gray-200 rounded w-1/3" />
+                        <div className="h-3 bg-gray-200 rounded w-1/2" />
                       </div>
-                      <div className="w-20 h-8 bg-gray-200 dark:bg-gray-700 rounded" />
+                      <div className="w-20 h-8 bg-gray-200 rounded" />
                     </div>
                   </CardContent>
                 </Card>
@@ -830,7 +1530,7 @@ export function MonevManagementDashboard() {
             <>
               <div className="flex items-center justify-between">
                 <div className="text-sm text-muted-foreground">
-                  Showing {evaluations.length} of {evaluationsPagination.totalItems} evaluations
+                  Showing {evaluations?.length || 0} of {evaluationsPagination.totalItems} evaluations
                   {(localSearchTerm || localStatusFilter !== "all") && (
                     <span className="ml-2 text-primary font-medium">(filtered)</span>
                   )}
@@ -838,17 +1538,10 @@ export function MonevManagementDashboard() {
               </div>
 
               <div className="grid gap-4">
-                {evaluations.map((evaluation) => (
+                {(evaluations || []).map((evaluation) => (
                   <EnhancedEvaluationCard
                     key={evaluation.id}
                     evaluation={evaluation}
-                    onView={(id: string) => {
-                      toast({
-                        title: "View Evaluation",
-                        description: `Opening evaluation ${id}`,
-                        variant: "info",
-                      });
-                    }}
                     onEdit={(id: string) => {
                       setSelectedEvaluationId(id);
                     }}
@@ -858,6 +1551,19 @@ export function MonevManagementDashboard() {
                     selectedEvaluationId={selectedEvaluationId}
                     isLoadingSelected={isLoadingSelectedEvaluation}
                     onUpdateScore={handleUpdateScore}
+                    onUpdateEvaluation={updateEvaluation}
+                    isFormSubmitting={isFormSubmitting}
+                    mahasiswaUsers={
+                      studentsWithRegistrations?.map((s) => ({
+                        id: s.id,
+                        auth_user_id: s.auth_user_id,
+                        email: s.email,
+                        nrp: s.nrp,
+                        role_name: s.role_name,
+                        name: s.name,
+                      })) || []
+                    }
+                    dosenPemonevUsers={dosenPemonevUsers || []}
                   />
                 ))}
               </div>
@@ -934,7 +1640,7 @@ export function MonevManagementDashboard() {
         </TabsContent>
 
         <TabsContent value="assignments" className="space-y-4 mt-0">
-          {studentsReadyForEvaluation.length > 0 ? (
+          {studentsReadyForEvaluation && studentsReadyForEvaluation.length > 0 ? (
             <>
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -977,18 +1683,18 @@ export function MonevManagementDashboard() {
                 <Card key={i} className="animate-pulse">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                      <div className="w-10 h-10 bg-gray-200 rounded-full" />
                       <div className="space-y-2 flex-1">
-                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3" />
-                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+                        <div className="h-4 bg-gray-200 rounded w-1/3" />
+                        <div className="h-3 bg-gray-200 rounded w-1/2" />
                       </div>
-                      <div className="w-20 h-6 bg-gray-200 dark:bg-gray-700 rounded" />
+                      <div className="w-20 h-6 bg-gray-200 rounded" />
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
-          ) : studentsWithRegistrations.length > 0 ? (
+          ) : studentsWithRegistrations && studentsWithRegistrations.length > 0 ? (
             <>
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -1000,13 +1706,13 @@ export function MonevManagementDashboard() {
               </div>
 
               <div className="grid gap-4">
-                {studentsWithRegistrations.map((student) => (
-                  <Card key={student.id} className="border border-gray-200 dark:border-gray-700">
+                {(studentsWithRegistrations || []).map((student) => (
+                  <Card key={student.id} className="border border-gray-200">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-                            <GraduationCap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                            <GraduationCap className="h-5 w-5 text-blue-600" />
                           </div>
                           <div>
                             <h4 className="font-medium">{student.email}</h4>
