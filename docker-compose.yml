@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  sim-mbkm-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sim-mbkm-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+    networks:
+      - sim-mbkm-network
+    restart: unless-stopped
+    # Uncomment jika ingin mount volume untuk development
+    # volumes:
+    #   - .:/app
+    #   - /app/node_modules
+    #   - /app/.next
+
+networks:
+  sim-mbkm-network:
+    driver: bridge
+    # Jika backend sudah ada network sendiri, gunakan external network
+    # external: true
+    # name: your-backend-network-name
