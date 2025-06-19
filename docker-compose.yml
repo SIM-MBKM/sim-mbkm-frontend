@@ -11,6 +11,8 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
+    env_file:
+      - .env
     networks:
       - sim-mbkm-network
     restart: unless-stopped

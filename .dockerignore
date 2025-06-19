@@ -24,8 +24,8 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# Local env files
-.env
+# Local env files (ALLOW .env for build, exclude others)
+# .env (commented out - we NEED this for build)
 .env*.local
 
 # Vercel
